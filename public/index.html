@@ -572,6 +572,10 @@
                             </svg>
                             <span>Jalankan Screener Realtime</span>
                         </button>
+                        <button id="btn-export-screener-pdf" disabled
+                            class="bg-[#101929] hover:bg-[#18253d] text-amber-300 hover:text-white font-bold text-xs py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-2 min-h-[44px] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                            📥 Ekspor PDF
+                        </button>
                     </div>
                 </div>
 
@@ -2108,6 +2112,10 @@
             <span>Backtest</span>
         </button>
     </nav>
+
+    <!-- Vector PDF export libraries -->
+    <script src="/vendor/jspdf.umd.min.js"></script>
+    <script src="/vendor/jspdf.plugin.autotable.min.js"></script>
 
     <!-- App Logic -->
     <script src="/app.js?v=2.0"></script>

@@ -190,6 +190,8 @@ btnTriggerScreener?.addEventListener('click', async () => {
         if (statusEl) statusEl.textContent = `✅ Selesai dalam ${elapsed}s — Top ${totalTopPicks} saham rekomendasi berhasil dikurasi`;
 
         lastScreenerData = data;
+        const pdfButton = document.getElementById('btn-export-screener-pdf');
+        if (pdfButton) pdfButton.disabled = false;
         renderScreenerResults(data);
 
         // Short delay to show 100% completion

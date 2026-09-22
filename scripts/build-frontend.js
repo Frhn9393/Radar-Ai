@@ -13,6 +13,7 @@ const moduleOrder = [
     'analysisModal.js',
     'search.js',
     'screener.js',
+    'pdfExport.js',
     'foreignFlow.js',
     'watchlist.js',
     'portfolio.js',
