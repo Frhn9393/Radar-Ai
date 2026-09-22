@@ -2,17 +2,39 @@ const fs = require('fs');
 const path = require('path');
 const { JSDOM } = require('jsdom');
 
+const app = require('../app');
+
 async function testBrowserDOM() {
     console.log('====================================================');
     console.log('🌐 RUNNING JSDOM BROWSER UI INTEGRATION TEST');
     console.log('====================================================');
+
+    // Auto-start backend server on port 3000 if not already running
+    let server = null;
+    try {
+        server = await new Promise((resolve) => {
+            const s = app.listen(3000, () => {
+                console.log('   (Started in-process express server on :3000)');
+                resolve(s);
+            });
+            s.on('error', (err) => {
+                if (err.code === 'EADDRINUSE') {
+                    console.log('   (Port 3000 already in use, connecting to existing server)');
+                    resolve(null);
+                } else {
+                    console.error('Server start error:', err);
+                    resolve(null);
+                }
+            });
+        });
+    } catch (e) {}
 
     let htmlContent = fs.readFileSync(path.join(__dirname, '../public/index.html'), 'utf8');
     const appJsContent = fs.readFileSync(path.join(__dirname, '../public/app.js'), 'utf8');
 
     // Remove tailwind CDN call and replace external script
     htmlContent = htmlContent.replace('<script src="https://cdn.tailwindcss.com"></script>', '<script>window.tailwind = { config: {} };</script>');
-    htmlContent = htmlContent.replace('<script src="/app.js"></script>', `<script>${appJsContent}</script>`);
+    htmlContent = htmlContent.replace(/<script src="\/app\.js[^"]*"><\/script>/, `<script>${appJsContent}</script>`);
 
     const dom = new JSDOM(htmlContent, {
         url: 'http://localhost:3000',
@@ -20,6 +42,13 @@ async function testBrowserDOM() {
         pretendToBeVisual: true,
         beforeParse(window) {
             window.tailwind = { config: {} };
+            window.alert = (msg) => console.log('   [Alert]:', msg);
+            window.AudioContext = class {
+                createOscillator() { return { connect: () => {}, type: '', frequency: { setValueAtTime: () => {} }, start: () => {}, stop: () => {} }; }
+                createGain() { return { connect: () => {}, gain: { setValueAtTime: () => {}, exponentialRampToValueAtTime: () => {} } }; }
+                get currentTime() { return 0; }
+                get destination() { return {}; }
+            };
             // Polyfill fetch to connect to live server on http://localhost:3000
             window.fetch = async function(url, options) {
                 const fullUrl = url.startsWith('http') ? url : `http://localhost:3000${url}`;
@@ -174,7 +203,12 @@ async function testBrowserDOM() {
     tabScreener.click();
     console.log('   - Clicked tab-screener: screener visible =', !secScreener.classList.contains('hidden'), 'foreign hidden =', secForeign.classList.contains('hidden'));
 
+    if (server) {
+        server.close();
+    }
+
     console.log('\n🎉 ALL JSDOM BROWSER UI INTEGRATION TESTS PASSED 100%!');
+    process.exit(0);
 }
 
 testBrowserDOM().catch(err => {

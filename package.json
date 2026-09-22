@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
+    "build": "node scripts/build-frontend.js",
+    "pretest": "node scripts/build-frontend.js",
     "test": "node test.js",
     "backtest": "node scratch/test_backtest.js"
   },

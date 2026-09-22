@@ -1,4 +1,15 @@
 // ============================================================
+//  STOCKRADAR AI — Frontend Core Engine (Modular Bundle)
+//  Generated automatically from public/js/modules/
+// ============================================================
+
+// --- START MODULE: state.js ---
+// ============================================================
+//  MODULE: state.js
+//  Core state management, DOM element references and currency formatters
+// ============================================================
+
+// ============================================================
 //  STOCKRADAR AI — Frontend Core Engine
 //  Realtime Market Data, M&A Radar, Technical Screener & Sentiment
 // ============================================================
@@ -154,6 +165,14 @@ const btnCloseModal = document.getElementById('btn-close-modal');
 // Audio Element
 const audioAlert = document.getElementById('audio-alert');
 
+// --- END MODULE: state.js ---
+
+// --- START MODULE: utils.js ---
+// ============================================================
+//  MODULE: utils.js
+//  Utility helpers: relative time formatters and audio synthesizer chime
+// ============================================================
+
 // ============================================================
 //  UTILITY: Relative Time Formatter
 // ============================================================
@@ -195,6 +214,14 @@ function playSoundChime() {
         // audio context blocked or unsupported
     }
 }
+
+// --- END MODULE: utils.js ---
+
+// --- START MODULE: navigation.js ---
+// ============================================================
+//  MODULE: navigation.js
+//  Tab navigation and mobile header action handlers
+// ============================================================
 
 // ============================================================
 //  1. TAB NAVIGATION (3 TABS: DEALS, SCREENER, FOREIGN FLOW)
@@ -308,6 +335,14 @@ if (btnMobileRefresh) {
         }
     });
 }
+
+// --- END MODULE: navigation.js ---
+
+// --- START MODULE: deals.js ---
+// ============================================================
+//  MODULE: deals.js
+//  M&A radar deals rendering, filtering, and card click bindings
+// ============================================================
 
 // ============================================================
 //  2. RADAR SAHAM AKUISISI & M&A (32 DEALS)
@@ -481,6 +516,14 @@ filterBtns.forEach(btn => {
     });
 });
 
+// --- END MODULE: deals.js ---
+
+// --- START MODULE: news.js ---
+// ============================================================
+//  MODULE: news.js
+//  Market news feed, corporate ticker, and drawer expandable view
+// ============================================================
+
 // ============================================================
 //  3. GENERAL MARKET NEWS & TICKER
 // ============================================================
@@ -612,6 +655,14 @@ btnToggleNewsMore.addEventListener('click', () => {
     newsExpanded = !newsExpanded;
     renderMarketNews();
 });
+
+// --- END MODULE: news.js ---
+
+// --- START MODULE: analysisModal.js ---
+// ============================================================
+//  MODULE: analysisModal.js
+//  Detailed stock analysis modal, technical indicators, and rights issue tebus
+// ============================================================
 
 // ============================================================
 //  4. DEEP STOCK ANALYSIS MODAL
@@ -1159,6 +1210,14 @@ modalAnalysis.addEventListener('click', (e) => {
     }
 });
 
+// --- END MODULE: analysisModal.js ---
+
+// --- START MODULE: search.js ---
+// ============================================================
+//  MODULE: search.js
+//  Autocomplete search engine, keyboard selection, and suggestions popup
+// ============================================================
+
 // ============================================================
 //  IDX ALL STOCKS DYNAMIC SEARCH & AUTOCOMPLETE ENGINE
 // ============================================================
@@ -1306,6 +1365,14 @@ btnClearSearch.addEventListener('click', () => {
     activeSuggestIndex = -1;
     headerSearchInput.focus();
 });
+
+// --- END MODULE: search.js ---
+
+// --- START MODULE: screener.js ---
+// ============================================================
+//  MODULE: screener.js
+//  Screener candidate tables, session toggles, and sector filtering
+// ============================================================
 
 // ============================================================
 //  5. SCREENER EXECUTION & RENDERING
@@ -1702,6 +1769,14 @@ btnCloseBacktestModalBottom?.addEventListener('click', closeBacktestModal);
 modalBacktest?.addEventListener('click', (e) => {
     if (e.target === modalBacktest) closeBacktestModal();
 });
+
+// --- END MODULE: screener.js ---
+
+// --- START MODULE: foreignFlow.js ---
+// ============================================================
+//  MODULE: foreignFlow.js
+//  Foreign flow tracking: daily, weekly, monthly, and consecutive streak
+// ============================================================
 
 // ============================================================
 //  5B. PELACAKAN TOP FOREIGN BUY & SELL ENGINE
@@ -2152,6 +2227,14 @@ function renderForeignStreakTable() {
     });
 });
 
+// --- END MODULE: foreignFlow.js ---
+
+// --- START MODULE: watchlist.js ---
+// ============================================================
+//  MODULE: watchlist.js
+//  Watchlist drawer, quick removal, and badge sync
+// ============================================================
+
 // ============================================================
 //  6. WATCHLIST DRAWER
 // ============================================================
@@ -2222,6 +2305,14 @@ function renderWatchlistDrawer() {
     });
 }
 
+// --- END MODULE: watchlist.js ---
+
+// --- START MODULE: indices.js ---
+// ============================================================
+//  MODULE: indices.js
+//  Live market indices ribbon updater
+// ============================================================
+
 // ============================================================
 //  7. LIVE MARKET INDICES
 // ============================================================
@@ -2251,6 +2342,14 @@ async function loadMarketIndices() {
         console.warn('Market indices update skipped:', err);
     }
 }
+
+// --- END MODULE: indices.js ---
+
+// --- START MODULE: controls.js ---
+// ============================================================
+//  MODULE: controls.js
+//  Global app controls: stream polling, sound toggle, refresh, and data export
+// ============================================================
 
 // ============================================================
 //  8. CONTROLS: STREAM, SOUND, EXPORT, REFRESH
@@ -2404,6 +2503,14 @@ btnExportData.addEventListener('click', () => {
     link.click();
     document.body.removeChild(link);
 });
+
+// --- END MODULE: controls.js ---
+
+// --- START MODULE: backtest.js ---
+// ============================================================
+//  MODULE: backtest.js
+//  Automated quantitative backtest engine UI, equity canvas, and trade log
+// ============================================================
 
 // ============================================================
 //  AUTOMATED QUANTITATIVE BACKTEST FRONTEND ENGINE
@@ -2856,6 +2963,14 @@ function initBacktestModule() {
     });
 }
 
+// --- END MODULE: backtest.js ---
+
+// --- START MODULE: mobileSearch.js ---
+// ============================================================
+//  MODULE: mobileSearch.js
+//  Mobile search modal controller and quick chip navigation
+// ============================================================
+
 // ============================================================
 //  INITIALIZATION
 // ============================================================
@@ -2940,6 +3055,14 @@ inputMobileSearch?.addEventListener('input', (e) => {
     clearTimeout(mobileSearchDebounce);
     mobileSearchDebounce = setTimeout(async () => {
         try {
+// --- END MODULE: mobileSearch.js ---
+
+// --- START MODULE: init.js ---
+// ============================================================
+//  MODULE: init.js
+//  Application bootstrap and DOM ready initialization
+// ============================================================
+
             const res = await fetch(`/api/search-suggest?q=${encodeURIComponent(q)}`);
             const data = await res.json();
             const matches = data.suggestions || [];
@@ -3005,3 +3128,23 @@ inputMobileSearch?.addEventListener('keydown', (e) => {
         closeMobileSearch();
     }
 });
+
+// --- END MODULE: init.js ---
+
+
+// ============================================================
+//  GLOBAL WINDOW BINDINGS (Compatibility Bridge)
+// ============================================================
+if (typeof window !== 'undefined') {
+    window.executeStockAnalysis = typeof executeStockAnalysis !== 'undefined' ? executeStockAnalysis : window.executeStockAnalysis;
+    window.switchMainTab = typeof switchMainTab !== 'undefined' ? switchMainTab : window.switchMainTab;
+    window.openMobileSearch = typeof openMobileSearch !== 'undefined' ? openMobileSearch : window.openMobileSearch;
+    window.closeMobileSearch = typeof closeMobileSearch !== 'undefined' ? closeMobileSearch : window.closeMobileSearch;
+    window.timeAgo = typeof timeAgo !== 'undefined' ? timeAgo : window.timeAgo;
+    window.playSoundChime = typeof playSoundChime !== 'undefined' ? playSoundChime : window.playSoundChime;
+    window.renderScalpingTable = typeof renderScalpingTable !== 'undefined' ? renderScalpingTable : window.renderScalpingTable;
+    window.switchForeignSubmenu = typeof switchForeignSubmenu !== 'undefined' ? switchForeignSubmenu : window.switchForeignSubmenu;
+    window.renderWatchlistDrawer = typeof renderWatchlistDrawer !== 'undefined' ? renderWatchlistDrawer : window.renderWatchlistDrawer;
+    window.updateWatchlistBadge = typeof updateWatchlistBadge !== 'undefined' ? updateWatchlistBadge : window.updateWatchlistBadge;
+    window.saveWatchlistToStorage = typeof saveWatchlistToStorage !== 'undefined' ? saveWatchlistToStorage : window.saveWatchlistToStorage;
+}
