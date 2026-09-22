@@ -46,6 +46,30 @@ const WATCHLIST_UNIVERSE = [
 
 const UNIQUE_WATCHLIST = Array.from(new Set(WATCHLIST_UNIVERSE));
 
+function calculateSwingRiskReward(areaBuyLow, areaBuyHigh, targetPrice1, cutLoss) {
+    const low = Number(areaBuyLow);
+    const high = Number(areaBuyHigh);
+    const target = Number(targetPrice1);
+    const stop = Number(cutLoss);
+    const avgEntry = (low + high) / 2;
+    const risk = avgEntry - stop;
+    const reward = target - avgEntry;
+    const ratio = risk > 0 ? reward / risk : 0;
+    return {
+        avgEntry,
+        risk,
+        reward,
+        ratio,
+        valid: Number.isFinite(ratio) && risk > 0 && reward > 0 && ratio >= 1,
+        label: `1:${Number.isFinite(ratio) ? ratio.toFixed(2) : '0.00'}`
+    };
+}
+
+function getTechnicalStatus(isSupertrendBullish, rsi, fallbackLabel) {
+    if (!isSupertrendBullish && Number(rsi) < 35) return 'Technical Rebound Setup';
+    return fallbackLabel;
+}
+
 async function runScreener() {
     if (screenerCache && (Date.now() - screenerCacheTime < SCREENER_CACHE_TTL)) {
         return screenerCache;
@@ -106,6 +130,7 @@ async function runScreener() {
             const smartMoney = trendData.smartMoney || { score: 75, status: 'AKUMULASI 🚀', badge: 'Smart Money: 75/100' };
             const pivots = trendData.pivots?.classic || { pivot: price, r1: price, s1: price };
             const candlestick = trendData.candlestick?.pattern || 'Bullish Momentum 🟢';
+            const technicalStatus = getTechnicalStatus(isSupertrendBullish, rsi, label);
 
             // 1. SCALPING CANDIDATES (Sesi 1 & Sesi 2)
             let scalpScore = (intraRange * 3) + (rvol * 15) + (changePct > 0 ? changePct * 2 : -5) + (confidence * 0.5);
@@ -175,14 +200,21 @@ async function runScreener() {
             if (rsi >= 45 && rsi <= 72) dayScore += 10;
             if (smartMoney.score >= 70) dayScore += 10;
 
+            const dayEntryLow = Math.round(price * 0.992);
+            const dayEntryHigh = Math.round(price);
+            const dayTarget = Math.round(price * 1.035);
+            const dayStop = Math.round(price * 0.985);
+            if (dayStop >= dayEntryLow || dayTarget <= dayEntryHigh) return;
+
             candidates.daytrade.push({
                 score: dayScore,
                 item: {
                     ticker, sector, price, changePct: changePct.toFixed(2),
-                    entryZone: `${(price * 0.992).toFixed(0)} - ${price}`,
-                    targetProfit: (price * 1.035).toFixed(0),
-                    stopLoss: (price * 0.985).toFixed(0),
-                    supertrendBadge, rvolBadge, confidence, label,
+                    entryZoneLow: dayEntryLow, entryZoneHigh: dayEntryHigh,
+                    entryZone: `${dayEntryLow} - ${dayEntryHigh}`,
+                    targetProfit: dayTarget,
+                    stopLoss: dayStop,
+                    supertrendBadge, rvolBadge, confidence, label: technicalStatus,
                     smartMoney, pivots, candlestick,
                     backtest: {
                         winRate: '71.8%',
@@ -205,27 +237,39 @@ async function runScreener() {
             if (isSupertrendBullish) swingScore += 10;
             if (smartMoney.score >= 65) swingScore += 10;
 
-            candidates.swing.push({
+            const swingAreaLow = Math.round(ema20 * 0.985);
+            const swingAreaHigh = Math.round(ema20 * 1.015);
+            const swingTarget1 = Math.round(price * 1.08);
+            const swingTarget2 = Math.round(price * 1.15);
+            const swingCutLoss = Math.round(ema50 * 0.96);
+            const swingRR = calculateSwingRiskReward(swingAreaLow, swingAreaHigh, swingTarget1, swingCutLoss);
+
+            // Do not recommend setups where the defined reward does not cover the risk.
+            if (swingRR.valid && swingAreaLow > swingCutLoss && swingAreaHigh >= price * 0.95 && swingAreaLow <= price * 1.05) {
+                candidates.swing.push({
                 score: swingScore,
                 item: {
                     ticker, sector, price, changePct: changePct.toFixed(2),
-                    areaBuy: `${(ema20 * 0.985).toFixed(0)} - ${(ema20 * 1.015).toFixed(0)}`,
-                    targetPrice1: (price * 1.08).toFixed(0),
-                    targetPrice2: (price * 1.15).toFixed(0),
-                    cutLoss: (ema50 * 0.96).toFixed(0),
-                    riskReward: "1:3",
-                    supertrendBadge, rvolBadge, confidence, label,
+                    areaBuyLow: swingAreaLow, areaBuyHigh: swingAreaHigh,
+                    areaBuy: `${swingAreaLow} - ${swingAreaHigh}`,
+                    targetPrice1: swingTarget1,
+                    targetPrice2: swingTarget2,
+                    cutLoss: swingCutLoss,
+                    risk: swingRR.risk, reward: swingRR.reward,
+                    riskReward: swingRR.label,
+                    supertrendBadge, rvolBadge, confidence, label: technicalStatus,
                     smartMoney, pivots, candlestick,
                     backtest: {
                         winRate: '74.2%',
                         profitFactor: '2.70',
-                        riskReward: '1:3.0',
+                        riskReward: swingRR.label,
                         avgHolding: '3 - 10 Hari',
                         strategy: 'VCP & MA Pullback Swing',
                         sampleSize: '294 Sinyal'
                     }
                 }
-            });
+                });
+            }
 
             // 4. BSJP (Beli Sore Jual Pagi)
             let bsjpScore = 0;
@@ -250,12 +294,12 @@ async function runScreener() {
                     ticker, sector, price, changePct: changePct.toFixed(2),
                     rsi: rsi.toFixed(1),
                     pullbackFromHigh: pullbackFromHigh.toFixed(2),
-                    beliSore: `Sesi II (14:30-15:00) ≤ ${price}`,
-                    targetPagi: (price * 1.025).toFixed(0),
-                    stopLoss: (low * 0.99).toFixed(0),
+                    beliSore: `Sesi II (14:30-15:00) ≤ ${Math.round(price).toLocaleString('id-ID')}`,
+                    targetPagi: Math.round(price * 1.025),
+                    stopLoss: Math.round(low * 0.99),
                     estimasiGain: '1.5-3%',
                     riskReward: '1:2',
-                    supertrendBadge, rvolBadge, confidence, label,
+                    supertrendBadge, rvolBadge, confidence, label: technicalStatus,
                     smartMoney, pivots, candlestick,
                     backtest: {
                         winRate: '79.2%',
@@ -290,12 +334,12 @@ async function runScreener() {
                     rsiStatus,
                     adx: adx.toFixed(1),
                     macd: trendData.macd_line ? trendData.macd_line.toFixed(2) : 'N/A',
-                    entryPagi: `Opening (09:00-09:30) ≤ ${price}`,
-                    target: (price * 1.028).toFixed(0),
-                    stopLoss: (price * 0.985).toFixed(0),
+                    entryPagi: `Opening (09:00-09:30) ≤ ${Math.round(price).toLocaleString('id-ID')}`,
+                    target: Math.round(price * 1.028),
+                    stopLoss: Math.round(price * 0.985),
                     jualSebelum: '12:00 WIB',
                     estimasiGain: '2-3.5%',
-                    supertrendBadge, rvolBadge, confidence, label,
+                    supertrendBadge, rvolBadge, confidence, label: technicalStatus,
                     smartMoney, pivots, candlestick,
                     backtest: {
                         winRate: '72.0%',
@@ -402,6 +446,8 @@ async function runScreener() {
 
 module.exports = {
     runScreener,
+    calculateSwingRiskReward,
+    getTechnicalStatus,
     WATCHLIST_UNIVERSE,
     UNIQUE_WATCHLIST
 };

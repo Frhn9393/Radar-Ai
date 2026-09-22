@@ -37,9 +37,13 @@ function renderCorporateNewsTicker() {
     corporateNewsTicker.innerHTML = '';
     if (!allMarketNews.length) return;
 
-    // Take top 8 items and double them for endless scroll
-    const items = [...allMarketNews.slice(0, 10), ...allMarketNews.slice(0, 10)];
-    items.forEach(news => {
+    // Render two identical groups so the CSS -50% loop is seamless.
+    const sourceItems = allMarketNews.slice(0, 10);
+    const items = [sourceItems, sourceItems];
+    items.forEach(group => {
+        const groupEl = document.createElement('div');
+        groupEl.className = 'flex items-center gap-6 shrink-0';
+        group.forEach(news => {
         const item = document.createElement('div');
         item.className = 'inline-flex items-center gap-2 mr-6 text-slate-300 whitespace-nowrap cursor-pointer hover:text-white transition';
 
@@ -56,7 +60,9 @@ function renderCorporateNewsTicker() {
         item.addEventListener('click', () => {
             if (news.link) window.open(news.link, '_blank', 'noopener,noreferrer');
         });
-        corporateNewsTicker.appendChild(item);
+        groupEl.appendChild(item);
+        });
+        corporateNewsTicker.appendChild(groupEl);
     });
 }
 

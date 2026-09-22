@@ -604,9 +604,13 @@ function renderCorporateNewsTicker() {
     corporateNewsTicker.innerHTML = '';
     if (!allMarketNews.length) return;
 
-    // Take top 8 items and double them for endless scroll
-    const items = [...allMarketNews.slice(0, 10), ...allMarketNews.slice(0, 10)];
-    items.forEach(news => {
+    // Render two identical groups so the CSS -50% loop is seamless.
+    const sourceItems = allMarketNews.slice(0, 10);
+    const items = [sourceItems, sourceItems];
+    items.forEach(group => {
+        const groupEl = document.createElement('div');
+        groupEl.className = 'flex items-center gap-6 shrink-0';
+        group.forEach(news => {
         const item = document.createElement('div');
         item.className = 'inline-flex items-center gap-2 mr-6 text-slate-300 whitespace-nowrap cursor-pointer hover:text-white transition';
 
@@ -623,7 +627,9 @@ function renderCorporateNewsTicker() {
         item.addEventListener('click', () => {
             if (news.link) window.open(news.link, '_blank', 'noopener,noreferrer');
         });
-        corporateNewsTicker.appendChild(item);
+        groupEl.appendChild(item);
+        });
+        corporateNewsTicker.appendChild(groupEl);
     });
 }
 
@@ -1453,6 +1459,18 @@ function confCell(confidence, label) {
     `;
 }
 
+function formatPrice(value) {
+    const number = Number(value);
+    return Number.isFinite(number) ? fmtRp.format(number) : '-';
+}
+
+function formatRange(low, high, fallback) {
+    const first = Number(low);
+    const second = Number(high);
+    if (Number.isFinite(first) && Number.isFinite(second)) return `${formatPrice(first)} - ${formatPrice(second)}`;
+    return escapeHtml(fallback || '-');
+}
+
 function getRankBadge(row) {
     if (row.rank === 1) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold tracking-tight shadow-sm">🥇 #1</span>`;
     if (row.rank === 2) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-slate-400/20 text-slate-200 font-bold tracking-tight shadow-sm">🥈 #2</span>`;
@@ -1646,9 +1664,9 @@ function renderScreenerResults(data) {
                         </td>
                         <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
                         <td class="p-3 font-mono font-bold ${parseFloat(row.changePct) >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${parseFloat(row.changePct) >= 0 ? '+' : ''}${row.changePct}%</td>
-                        <td class="p-3 font-mono text-slate-300">${row.entryZone}</td>
-                        <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetProfit)}</td>
-                        <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.stopLoss)}</td>
+                <td class="p-3 font-mono text-slate-300">${formatRange(row.entryZoneLow, row.entryZoneHigh, row.entryZone)}</td>
+                <td class="p-3 font-mono font-semibold text-emerald-400">${formatPrice(row.targetProfit)}</td>
+                <td class="p-3 font-mono text-rose-400">${formatPrice(row.stopLoss)}</td>
                         ${confCell(row.confidence, row.label)}
                     </tr>
                 `;
@@ -1678,10 +1696,10 @@ function renderScreenerResults(data) {
                             <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
                         </td>
                         <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
-                        <td class="p-3 font-mono text-slate-300">${row.areaBuy}</td>
-                        <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetPrice1)}</td>
-                        <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetPrice2)}</td>
-                        <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.cutLoss)}</td>
+                        <td class="p-3 font-mono text-slate-300">${formatRange(row.areaBuyLow, row.areaBuyHigh, row.areaBuy)}</td>
+                        <td class="p-3 font-mono font-semibold text-emerald-400">${formatPrice(row.targetPrice1)}</td>
+                        <td class="p-3 font-mono font-semibold text-emerald-400">${formatPrice(row.targetPrice2)}</td>
+                        <td class="p-3 font-mono text-rose-400">${formatPrice(row.cutLoss)}</td>
                         <td class="p-3 font-mono font-bold text-purple-400">${row.riskReward}</td>
                         ${confCell(row.confidence, row.label)}
                     </tr>
