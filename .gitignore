@@ -1,8 +1,36 @@
+# Dependencies
 node_modules/
 __pycache__/
 *.pyc
+
+# Environment & secrets
 .env
+.env*
+*.pem
+*.key
+*.p12
+*.jks
+*.keystore
+
+# Batch scripts (may contain credentials/paths)
 *.bat
 
+# Vercel
 .vercel
-.env*
+
+# Debug & scratch files
+scratch/
+scratch.html
+
+# IDE & OS
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+Thumbs.db
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
