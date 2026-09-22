@@ -2,10 +2,32 @@ const { JSDOM } = require('jsdom');
 const fs = require('fs');
 const path = require('path');
 
+const app = require('../app');
+
 async function runBrowserTest() {
     console.log('================================================================');
     console.log('       RUNNING HEADLESS JSDOM UI & BUTTON INTERACTION TEST      ');
     console.log('================================================================');
+
+    // Auto-start backend server on port 3000 if not already running
+    let server = null;
+    try {
+        server = await new Promise((resolve) => {
+            const s = app.listen(3000, () => {
+                console.log('   (Started in-process express server on :3000)');
+                resolve(s);
+            });
+            s.on('error', (err) => {
+                if (err.code === 'EADDRINUSE') {
+                    console.log('   (Port 3000 already in use, connecting to existing server)');
+                    resolve(null);
+                } else {
+                    console.error('Server start error:', err);
+                    resolve(null);
+                }
+            });
+        });
+    } catch (e) {}
 
     const html = fs.readFileSync(path.join(__dirname, '../public/index.html'), 'utf8');
     const appJs = fs.readFileSync(path.join(__dirname, '../public/app.js'), 'utf8');
@@ -20,7 +42,8 @@ async function runBrowserTest() {
     const { window } = dom;
     const { document } = window;
 
-    // Polyfill AudioContext and localStorage
+    // Polyfill AudioContext, alert, and localStorage
+    window.alert = (msg) => console.log('   [Alert]:', msg);
     window.AudioContext = class {
         createOscillator() { return { connect: () => {}, type: '', frequency: { setValueAtTime: () => {} }, start: () => {}, stop: () => {} }; }
         createGain() { return { connect: () => {}, gain: { setValueAtTime: () => {}, exponentialRampToValueAtTime: () => {} } }; }
@@ -243,6 +266,10 @@ async function runBrowserTest() {
         process.exit(1);
     }
     console.log('================================================================');
+    if (server) {
+        server.close();
+    }
+    process.exit(0);
 }
 
 runBrowserTest().catch(err => {

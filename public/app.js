@@ -1,4 +1,15 @@
 // ============================================================
+//  STOCKRADAR AI — Frontend Core Engine (Modular Bundle)
+//  Generated automatically from public/js/modules/
+// ============================================================
+
+// --- START MODULE: state.js ---
+// ============================================================
+//  MODULE: state.js
+//  Core state management, DOM element references and currency formatters
+// ============================================================
+
+// ============================================================
 //  STOCKRADAR AI — Frontend Core Engine
 //  Realtime Market Data, M&A Radar, Technical Screener & Sentiment
 // ============================================================
@@ -32,6 +43,8 @@ function saveWatchlistToStorage() {
 function updateWatchlistBadge() {
     const badge = document.querySelector('#btn-open-watchlist span');
     if (badge) badge.textContent = savedWatchlist.length;
+    const mobileBadge = document.getElementById('badge-watchlist-mobile');
+    if (mobileBadge) mobileBadge.textContent = savedWatchlist.length;
 }
 
 const NEWS_AUTO_REFRESH_MS = 60 * 1000; // 1 minute live refresh
@@ -152,6 +165,14 @@ const btnCloseModal = document.getElementById('btn-close-modal');
 // Audio Element
 const audioAlert = document.getElementById('audio-alert');
 
+// --- END MODULE: state.js ---
+
+// --- START MODULE: utils.js ---
+// ============================================================
+//  MODULE: utils.js
+//  Utility helpers: relative time formatters and audio synthesizer chime
+// ============================================================
+
 // ============================================================
 //  UTILITY: Relative Time Formatter
 // ============================================================
@@ -194,6 +215,14 @@ function playSoundChime() {
     }
 }
 
+// --- END MODULE: utils.js ---
+
+// --- START MODULE: navigation.js ---
+// ============================================================
+//  MODULE: navigation.js
+//  Tab navigation and mobile header action handlers
+// ============================================================
+
 // ============================================================
 //  1. TAB NAVIGATION (3 TABS: DEALS, SCREENER, FOREIGN FLOW)
 // ============================================================
@@ -211,11 +240,11 @@ function switchMainTab(tabName) {
     tabs.forEach(t => {
         if (t.btn) {
             if (t.name === tabName) {
-                t.btn.classList.add('active-tab', 'bg-[#101826]', 'border-[#2b3952]', 'text-white');
-                t.btn.classList.remove('text-slate-400', 'border-transparent');
+                t.btn.classList.add('active-tab', 'bg-[#101826]', 'text-white', 'shadow-sm');
+                t.btn.classList.remove('text-slate-400');
             } else {
-                t.btn.classList.remove('active-tab', 'bg-[#101826]', 'border-[#2b3952]', 'text-white');
-                t.btn.classList.add('text-slate-400', 'border-transparent');
+                t.btn.classList.remove('active-tab', 'bg-[#101826]', 'text-white', 'shadow-sm');
+                t.btn.classList.add('text-slate-400');
             }
         }
         if (t.sec) {
@@ -224,6 +253,18 @@ function switchMainTab(tabName) {
             } else {
                 t.sec.classList.add('hidden');
             }
+        }
+    });
+
+    // Update Mobile Bottom Navigation bar states
+    document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
+        const targetTab = btn.getAttribute('data-tab');
+        if (targetTab === tabName) {
+            btn.classList.add('active', 'text-cyan-400', 'bg-cyan-500/15');
+            btn.classList.remove('text-slate-400');
+        } else {
+            btn.classList.remove('active', 'text-cyan-400', 'bg-cyan-500/15');
+            btn.classList.add('text-slate-400');
         }
     });
 
@@ -246,6 +287,62 @@ tabDeals?.addEventListener('click', () => switchMainTab('deals'));
 tabScreener?.addEventListener('click', () => switchMainTab('screener'));
 tabForeign?.addEventListener('click', () => switchMainTab('foreign'));
 tabBacktest?.addEventListener('click', () => switchMainTab('backtest'));
+
+// Mobile Navigation and Header Quick Action Event Listeners
+document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const tab = btn.getAttribute('data-tab');
+        if (tab) {
+            switchMainTab(tab);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    });
+});
+
+const btnMobileSearchToggle = document.getElementById('btn-mobile-search-toggle');
+const headerRightControls = document.getElementById('header-right-controls');
+if (btnMobileSearchToggle && headerRightControls) {
+    btnMobileSearchToggle.addEventListener('click', () => {
+        const isHidden = headerRightControls.classList.contains('hidden');
+        if (isHidden) {
+            headerRightControls.classList.remove('hidden');
+            headerRightControls.classList.add('flex');
+            headerSearchInput?.focus();
+        } else {
+            headerRightControls.classList.add('hidden');
+            headerRightControls.classList.remove('flex');
+        }
+    });
+}
+
+const btnMobileWatchlist = document.getElementById('btn-mobile-watchlist');
+if (btnMobileWatchlist && drawerWatchlist) {
+    btnMobileWatchlist.addEventListener('click', () => {
+        renderWatchlistDrawer();
+        drawerWatchlist.classList.remove('hidden');
+        drawerWatchlist.classList.add('flex');
+    });
+}
+
+const btnMobileRefresh = document.getElementById('btn-mobile-refresh');
+if (btnMobileRefresh) {
+    btnMobileRefresh.addEventListener('click', () => {
+        btnRefreshAll?.click();
+        const icon = btnMobileRefresh.querySelector('svg');
+        if (icon) {
+            icon.classList.add('animate-spin');
+            setTimeout(() => icon.classList.remove('animate-spin'), 600);
+        }
+    });
+}
+
+// --- END MODULE: navigation.js ---
+
+// --- START MODULE: deals.js ---
+// ============================================================
+//  MODULE: deals.js
+//  M&A radar deals rendering, filtering, and card click bindings
+// ============================================================
 
 // ============================================================
 //  2. RADAR SAHAM AKUISISI & M&A (32 DEALS)
@@ -284,25 +381,25 @@ function renderDeals() {
 
     filtered.forEach(deal => {
         const card = document.createElement('div');
-        card.className = 'card-radar rounded-xl p-5 flex flex-col justify-between group';
+        card.className = 'card-radar rounded-xl p-3.5 sm:p-5 flex flex-col justify-between group overflow-hidden w-full';
 
         // Badge type color configuration
-        let typeBadgeClass = 'bg-emerald-950/70 border-emerald-500/50 text-emerald-400';
+        let typeBadgeClass = 'bg-emerald-950/70 shadow-sm text-emerald-400';
         let typeIcon = '✓';
         if (deal.type === 'negosiasi') {
-            typeBadgeClass = 'bg-blue-950/70 border-blue-500/50 text-blue-400';
+            typeBadgeClass = 'bg-blue-950/70 text-blue-400 shadow-sm';
             typeIcon = '🤝';
         } else if (deal.type === 'rumor') {
-            typeBadgeClass = 'bg-purple-950/70 border-purple-500/50 text-purple-400';
+            typeBadgeClass = 'bg-purple-950/70 text-purple-400 shadow-sm';
             typeIcon = '🔮';
         } else if (deal.typeLabel === 'CONFIRMED') {
-            typeBadgeClass = 'bg-amber-950/70 border-amber-500/50 text-amber-400';
+            typeBadgeClass = 'bg-amber-950/70 text-amber-400 shadow-sm';
             typeIcon = '✓';
         }
 
         // Emiten tags
         const tagsHtml = deal.tickers.map(t => {
-            return `<span class="ticker-pill bg-[#062430] hover:bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 text-xs font-mono font-bold px-2.5 py-0.5 rounded cursor-pointer transition" data-ticker="${t}">$${t}</span>`;
+            return `<span class="ticker-pill bg-[#062430] hover:bg-cyan-500/20 shadow-sm text-cyan-300 text-xs font-mono font-bold px-2.5 py-0.5 rounded cursor-pointer transition" data-ticker="${t}">$${t}</span>`;
         }).join(' ');
 
         // Primary ticker to analyze on click
@@ -313,64 +410,64 @@ function renderDeals() {
         card.innerHTML = `
             <div>
                 <!-- Top Row: Badges -->
-                <div class="flex items-center justify-between gap-2 mb-3">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-extrabold border ${typeBadgeClass} uppercase tracking-wide">
+                <div class="flex items-center justify-between gap-2 mb-2.5">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-extrabold ${typeBadgeClass} uppercase tracking-wide truncate">
                         <span>${typeIcon}</span>
-                        <span>${deal.typeLabel}</span>
+                        <span class="truncate">${deal.typeLabel}</span>
                     </span>
-                    <span class="border border-amber-500/40 text-amber-400 text-[11px] font-bold px-2 py-0.5 rounded-md font-mono">
+                    <span class="bg-amber-950/40 text-amber-400 text-[11px] font-bold px-2 py-0.5 rounded-md font-mono shadow-sm shrink-0">
                         ${deal.accuracy}% Akurasi
                     </span>
                 </div>
 
                 <!-- Second Row: Tickers & Source + Exact Realtime Time -->
-                <div class="flex items-center justify-between gap-2 my-2.5">
-                    <div class="flex flex-wrap items-center gap-1.5">
+                <div class="flex flex-wrap items-center justify-between gap-2 my-2">
+                    <div class="flex flex-wrap items-center gap-1.5 min-w-0">
                         ${tagsHtml}
                     </div>
-                    <div class="flex items-center gap-1.5 text-right flex-shrink-0">
-                        <span class="text-xs text-slate-400 font-medium">${deal.source}</span>
+                    <div class="flex items-center gap-1.5 text-right shrink-0">
+                        <span class="text-xs text-slate-400 font-medium truncate max-w-[100px]">${deal.source}</span>
                         <span class="text-slate-600 text-xs">•</span>
-                        <span class="inline-flex items-center gap-1 text-[11px] text-emerald-400/90 font-mono font-bold bg-[#071d22] border border-emerald-500/30 px-1.5 py-0.5 rounded" title="Waktu Tayang: ${deal.timeStr} (${deal.dateStr})">
+                        <span class="inline-flex items-center gap-1 text-[11px] text-emerald-400/90 font-mono font-bold bg-[#071d22] shadow-sm px-1.5 py-0.5 rounded" title="Waktu Tayang: ${deal.timeStr} (${deal.dateStr})">
                             <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2"/></svg>
                             <span>${deal.timeAgo || 'Baru saja'}</span>
-                            <span class="text-slate-400 font-normal">(${deal.timeStr})</span>
+                            <span class="text-slate-400 font-normal hidden sm:inline">(${deal.timeStr})</span>
                         </span>
                     </div>
                 </div>
 
                 <!-- Headline -->
-                <h3 class="text-sm font-bold text-white leading-snug my-3 group-hover:text-amber-300 transition-colors line-clamp-2">
+                <h3 class="text-sm font-bold text-white leading-snug my-2.5 group-hover:text-amber-300 transition-colors line-clamp-2 break-words">
                     ${deal.title}
                 </h3>
             </div>
 
             <div>
                 <!-- Deal Value Box -->
-                <div class="bg-[#070b14] border border-[#162133] rounded-lg p-2.5 flex items-center justify-between my-3">
-                    <span class="text-amber-400/90 text-xs font-semibold flex items-center gap-1">
+                <div class="bg-[#070b14] rounded-lg p-2.5 flex flex-col xs:flex-row xs:items-center justify-between gap-1 my-2.5 shadow-inner">
+                    <span class="text-amber-400/90 text-xs font-semibold flex items-center gap-1 shrink-0">
                         <span class="text-amber-400 font-bold">$</span> Estimasi Nilai Deal:
                     </span>
-                    <span class="text-amber-400 font-bold text-xs font-mono text-right ml-2">${deal.dealValue}</span>
+                    <span class="text-amber-400 font-bold text-xs font-mono text-left xs:text-right break-words leading-tight">${deal.dealValue}</span>
                 </div>
 
                 <!-- Footer Row: Impact, Baca Berita & Lihat Analisis -->
-                <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-800/60">
-                    <span class="text-[10px] sm:text-[11px] font-extrabold text-slate-300 tracking-wider uppercase truncate">
+                <div class="flex flex-wrap items-center justify-between gap-2 pt-2">
+                    <span class="text-[10px] sm:text-[11px] font-extrabold text-slate-300 tracking-wider uppercase truncate max-w-[130px] sm:max-w-none">
                         ${deal.impact}
                     </span>
-                    <div class="flex items-center gap-2 flex-shrink-0">
+                    <div class="flex items-center gap-2 shrink-0 ml-auto">
                         <!-- Direct news link button -->
                         <a href="${newsLink}" target="_blank" rel="noopener noreferrer"
-                           class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-950/60 hover:bg-sky-900/80 border border-sky-500/40 hover:border-sky-400 text-sky-300 hover:text-sky-100 font-bold text-[11px] transition-all duration-200"
+                           class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-950/60 hover:bg-sky-900/80 shadow-sm text-sky-300 hover:text-sky-100 font-bold text-[11px] transition-all duration-200"
                            title="Buka artikel berita langsung di sumber aslinya">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 2v4M8 2v4M3 10h18"/>
                             </svg>
-                            Baca Berita
+                            <span>Baca Berita</span>
                         </a>
                         <!-- Analyze stock button -->
-                        <button class="btn-inspect-deal text-amber-400 hover:text-amber-300 font-bold text-xs flex items-center gap-1 transition flex-shrink-0" data-ticker="${primaryTicker}">
+                        <button class="btn-inspect-deal text-amber-400 hover:text-amber-300 font-bold text-xs flex items-center gap-1 transition shrink-0" data-ticker="${primaryTicker}">
                             <span>Analisis</span>
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                         </button>
@@ -419,6 +516,14 @@ filterBtns.forEach(btn => {
     });
 });
 
+// --- END MODULE: deals.js ---
+
+// --- START MODULE: news.js ---
+// ============================================================
+//  MODULE: news.js
+//  Market news feed, corporate ticker, and drawer expandable view
+// ============================================================
+
 // ============================================================
 //  3. GENERAL MARKET NEWS & TICKER
 // ============================================================
@@ -458,8 +563,8 @@ function renderCorporateNewsTicker() {
         if (news.category) tag = news.category.toUpperCase().substring(0, 5);
 
         item.innerHTML = `
-            <span class="bg-[#101929] border border-slate-700/80 text-cyan-400 text-[10px] font-bold px-1.5 py-0.5 rounded font-mono">[${tag}]</span>
-            <span class="bg-emerald-950/70 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded">${news.timeStr || news.timeAgo}</span>
+            <span class="bg-[#101929] text-cyan-400 text-[10px] font-bold px-1.5 py-0.5 rounded font-mono shadow-sm">[${tag}]</span>
+            <span class="bg-emerald-950/70 text-emerald-400 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded shadow-sm">${news.timeStr || news.timeAgo}</span>
             <span class="font-medium text-xs">${news.title}</span>
             <span class="text-emerald-400 font-bold text-xs ml-1">↗</span>
             <span class="text-slate-700 ml-3">•</span>
@@ -496,28 +601,28 @@ function renderMarketNews() {
         card.href = news.link;
         card.target = '_blank';
         card.rel = 'noopener noreferrer';
-        card.className = 'bg-[#0d1424] hover:bg-[#111a2e] border border-[#1a2333] hover:border-slate-700 rounded-xl p-4 flex flex-col justify-between transition-all duration-200 group block';
+        card.className = 'bg-[#0d1424] hover:bg-[#111a2e] rounded-xl p-3.5 sm:p-4 flex flex-col justify-between transition-all duration-200 group block shadow-md hover:shadow-xl overflow-hidden w-full';
 
         card.innerHTML = `
             <div>
                 <div class="flex items-center justify-between gap-2 mb-2">
-                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-[#101a2c] text-cyan-400 border border-cyan-500/30">
+                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-[#101a2c] text-cyan-400 shadow-sm shrink-0">
                         ${news.category || 'Market'}
                     </span>
-                    <span class="inline-flex items-center gap-1 text-[11px] text-emerald-400/90 font-mono font-semibold bg-[#071d22] border border-emerald-500/30 px-2 py-0.5 rounded">
+                    <span class="inline-flex items-center gap-1 text-[11px] text-emerald-400/90 font-mono font-semibold bg-[#071d22] shadow-sm px-2 py-0.5 rounded shrink-0">
                         <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2"/></svg>
                         <span>${news.timeAgo || timeAgo(news.pubDate)}</span>
-                        <span class="text-slate-400 font-normal">(${news.timeStr})</span>
+                        <span class="text-slate-400 font-normal hidden sm:inline">(${news.timeStr})</span>
                     </span>
                 </div>
-                <h4 class="text-xs sm:text-sm font-semibold text-slate-200 group-hover:text-amber-300 leading-snug line-clamp-2 mb-3">
+                <h4 class="text-xs sm:text-sm font-semibold text-slate-200 group-hover:text-amber-300 leading-snug line-clamp-2 mb-3 break-words">
                     ${news.title}
                 </h4>
             </div>
-            <div class="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-slate-800/50">
-                <span class="truncate max-w-[140px] font-medium">${news.source}</span>
-                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-sky-400 bg-sky-950/60 hover:bg-sky-900/80 border border-sky-500/30 px-2 py-0.5 rounded transition">
-                    Baca Berita
+            <div class="flex items-center justify-between text-[11px] text-slate-400 pt-2 gap-2">
+                <span class="truncate max-w-[120px] sm:max-w-[180px] font-medium">${news.source}</span>
+                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-sky-400 bg-sky-950/60 hover:bg-sky-900/80 shadow-sm px-2 py-0.5 rounded transition shrink-0">
+                    <span>Baca Berita</span>
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                 </span>
             </div>
@@ -551,6 +656,14 @@ btnToggleNewsMore.addEventListener('click', () => {
     renderMarketNews();
 });
 
+// --- END MODULE: news.js ---
+
+// --- START MODULE: analysisModal.js ---
+// ============================================================
+//  MODULE: analysisModal.js
+//  Detailed stock analysis modal, technical indicators, and rights issue tebus
+// ============================================================
+
 // ============================================================
 //  4. DEEP STOCK ANALYSIS MODAL
 // ============================================================
@@ -559,10 +672,10 @@ function updateModalWatchlistButton(ticker) {
     const isSaved = savedWatchlist.includes(ticker);
     if (isSaved) {
         textModalWatchlist.textContent = '✓ Tersimpan';
-        btnModalToggleWatchlist.className = 'bg-purple-950/80 border border-purple-500 text-purple-300 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-sm';
+        btnModalToggleWatchlist.className = 'bg-purple-900/70 text-purple-200 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-sm';
     } else {
         textModalWatchlist.textContent = '+ Watchlist';
-        btnModalToggleWatchlist.className = 'bg-[#121c2e] hover:bg-[#1a273f] border border-purple-500/40 text-purple-300 hover:text-white px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition';
+        btnModalToggleWatchlist.className = 'bg-[#121c2e] hover:bg-[#1a273f] shadow-sm text-purple-300 hover:text-white px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition';
     }
 }
 
@@ -623,9 +736,7 @@ function populateAnalysisModal(data) {
 
     const mktStat = document.getElementById('modal-market-status');
     mktStat.textContent = rt.marketStatus || 'OPEN';
-    mktStat.className = rt.marketStatus === 'OPEN'
-        ? 'px-2.5 py-0.5 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50'
-        : 'px-2.5 py-0.5 rounded-full text-xs font-bold border bg-slate-700 text-slate-300 border-slate-600';
+    mktStat.className = rt.marketStatus === 'OPEN' ? 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 shadow-sm' : 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-800 text-slate-300 shadow-sm';
 
     // Price ribbon
     document.getElementById('modal-price').textContent = fmtRp.format(rt.lastPrice);
@@ -642,13 +753,13 @@ function populateAnalysisModal(data) {
     const valStatusEl = document.getElementById('modal-val-status');
     valStatusEl.textContent = val.status;
     if (val.status === 'UNDERVALUED' || val.status.includes('UNDERVALUED')) {
-        valStatusEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40';
+        valStatusEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-500/20 text-emerald-400 shadow-sm';
     } else if (val.status === 'OVERVALUED') {
-        valStatusEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-rose-500/20 text-rose-400 border border-rose-500/40';
+        valStatusEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-rose-500/20 text-rose-400 shadow-sm';
     } else if (val.status.includes('TURNAROUND')) {
-        valStatusEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm';
+        valStatusEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-cyan-500/20 text-cyan-300 shadow-sm shadow-sm';
     } else {
-        valStatusEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-amber-500/20 text-amber-400 border border-amber-500/40';
+        valStatusEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-amber-500/20 text-amber-400 shadow-sm';
     }
 
     document.getElementById('modal-val-fair').textContent = val.fairValue ? fmtRp.format(val.fairValue) : 'N/A';
@@ -673,11 +784,11 @@ function populateAnalysisModal(data) {
     const trendStatEl = document.getElementById('modal-trend-status');
     trendStatEl.textContent = trend.status || 'NEUTRAL';
     if (trend.status === 'UPTREND') {
-        trendStatEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40';
+        trendStatEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-500/20 text-emerald-400 shadow-sm';
     } else if (trend.status === 'DOWNTREND') {
-        trendStatEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-rose-500/20 text-rose-400 border border-rose-500/40';
+        trendStatEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-rose-500/20 text-rose-400 shadow-sm';
     } else {
-        trendStatEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-amber-500/20 text-amber-400 border border-amber-500/40';
+        trendStatEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-amber-500/20 text-amber-400 shadow-sm';
     }
 
     const stEl = document.getElementById('modal-trend-supertrend');
@@ -736,13 +847,13 @@ function populateAnalysisModal(data) {
         const label = fin.sentimentLabel || fin.healthStatus || 'Q-Report';
         finBadgeEl.textContent = label;
         if (label.includes('TURNAROUND') || label.includes('PEMULIHAN')) {
-            finBadgeEl.className = 'px-2.5 py-0.5 rounded text-[11px] font-black bg-emerald-500/25 text-emerald-300 border border-emerald-500/60 shadow-[0_0_10px_rgba(16,185,129,0.25)]';
+            finBadgeEl.className = 'px-2.5 py-0.5 rounded text-[11px] font-black bg-emerald-500/25 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.25)]';
         } else if (label.includes('KUAT') || label.includes('POSITIF') || label.includes('SEHAT')) {
-            finBadgeEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40';
+            finBadgeEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-500/20 text-emerald-400 shadow-sm';
         } else if (label.includes('WASPADA') || label.includes('RUGI')) {
-            finBadgeEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-rose-500/20 text-rose-400 border border-rose-500/40';
+            finBadgeEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-rose-500/20 text-rose-400 shadow-sm';
         } else {
-            finBadgeEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-amber-500/20 text-amber-400 border border-amber-500/40';
+            finBadgeEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-amber-500/20 text-amber-400 shadow-sm';
         }
     }
 
@@ -838,15 +949,15 @@ function populateAnalysisModal(data) {
     if (sumBadgeEl) {
         if (fin.isTurnaround) {
             sumBadgeEl.textContent = 'TURNAROUND / PEMULIHAN';
-            sumBadgeEl.className = 'px-2 py-0.5 rounded text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm';
+            sumBadgeEl.className = 'px-2 py-0.5 rounded text-[10px] font-black bg-emerald-500/20 text-emerald-300 shadow-sm shadow-sm';
             sumBadgeEl.classList.remove('hidden');
         } else if (fin.isCostEfficient) {
             sumBadgeEl.textContent = 'EFISIENSI BIAYA (MARGIN NAIK)';
-            sumBadgeEl.className = 'px-2 py-0.5 rounded text-[10px] font-black bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm';
+            sumBadgeEl.className = 'px-2 py-0.5 rounded text-[10px] font-black bg-cyan-500/20 text-cyan-300 shadow-sm shadow-sm';
             sumBadgeEl.classList.remove('hidden');
         } else if (fin.healthStatus && fin.healthStatus !== 'MODERAT') {
             sumBadgeEl.textContent = fin.sentimentLabel || fin.healthStatus;
-            sumBadgeEl.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700';
+            sumBadgeEl.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300 shadow-sm';
             sumBadgeEl.classList.remove('hidden');
         } else {
             sumBadgeEl.classList.add('hidden');
@@ -861,16 +972,16 @@ function populateAnalysisModal(data) {
     const rec = fin.analystRecommendation || val.recommendation;
     if (!rec || rec.toLowerCase() === 'none') {
         recEl.textContent = 'NEUTRAL / KONSENSUS MINIM';
-        recEl.className = 'bg-slate-800 text-slate-300 border border-slate-700 px-3 py-1 rounded-full text-xs font-bold uppercase';
+        recEl.className = 'bg-slate-800 text-slate-300 shadow-sm px-3 py-1 rounded-full text-xs font-bold uppercase';
     } else if (rec.toLowerCase().includes('buy')) {
         recEl.textContent = rec.toUpperCase();
-        recEl.className = 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 px-3 py-1 rounded-full text-xs font-black uppercase';
+        recEl.className = 'bg-emerald-500/20 text-emerald-400 shadow-sm px-3 py-1 rounded-full text-xs font-black uppercase';
     } else if (rec.toLowerCase().includes('sell')) {
         recEl.textContent = rec.toUpperCase();
-        recEl.className = 'bg-rose-500/20 text-rose-400 border border-rose-500/50 px-3 py-1 rounded-full text-xs font-black uppercase';
+        recEl.className = 'bg-rose-500/20 text-rose-400 shadow-sm px-3 py-1 rounded-full text-xs font-black uppercase';
     } else {
         recEl.textContent = rec.toUpperCase();
-        recEl.className = 'bg-amber-500/20 text-amber-400 border border-amber-500/50 px-3 py-1 rounded-full text-xs font-black uppercase';
+        recEl.className = 'bg-amber-500/20 text-amber-400 shadow-sm px-3 py-1 rounded-full text-xs font-black uppercase';
     }
 
     const targetPrice = fin.targetPrice || val.targetMeanPrice;
@@ -900,11 +1011,11 @@ function populateAnalysisModal(data) {
             const st = ff.daily?.status || ff.weekly?.phase || 'NETRAL ⚪';
             ffStatusEl.textContent = st;
             if (st.includes('AKUMULASI') || st.includes('Mark-Up')) {
-                ffStatusEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40';
+                ffStatusEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-500/20 text-emerald-400 shadow-sm';
             } else if (st.includes('DISTRIBUSI') || st.includes('Distribution')) {
-                ffStatusEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-rose-500/20 text-rose-400 border border-rose-500/40';
+                ffStatusEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-rose-500/20 text-rose-400 shadow-sm';
             } else {
-                ffStatusEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40';
+                ffStatusEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-cyan-500/20 text-cyan-300 shadow-sm';
             }
         }
         if (ffNet1dEl) {
@@ -949,7 +1060,7 @@ function populateAnalysisModal(data) {
     if (data.news && data.news.length > 0) {
         data.news.forEach(n => {
             const item = document.createElement('div');
-            item.className = 'bg-[#070b13] hover:bg-[#111827] border border-slate-800 p-3 rounded-lg flex flex-col justify-between transition group gap-2';
+            item.className = 'bg-[#070b13] hover:bg-[#111827] shadow-sm p-3 rounded-lg flex flex-col justify-between transition group gap-2';
             item.innerHTML = `
                 <div>
                     <div class="flex items-center justify-between text-[10px] text-slate-500 mb-1">
@@ -961,7 +1072,7 @@ function populateAnalysisModal(data) {
                 </div>
                 <div class="flex justify-end pt-1">
                     <a href="${n.link}" target="_blank" rel="noopener noreferrer"
-                       class="inline-flex items-center gap-1 text-[11px] font-bold text-sky-300 hover:text-sky-100 bg-sky-950/60 hover:bg-sky-900/80 border border-sky-500/30 px-2.5 py-1 rounded transition">
+                       class="inline-flex items-center gap-1 text-[11px] font-bold text-sky-300 hover:text-sky-100 bg-sky-950/60 hover:bg-sky-900/80 shadow-sm px-2.5 py-1 rounded transition">
                         <span>Baca Berita Lengkap</span>
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                     </a>
@@ -982,13 +1093,13 @@ function populateAnalysisModal(data) {
         if (badge) {
             if (ri.hasRightsIssue && ri.isCorporateActionActive) {
                 badge.textContent = 'HMETD AKTIF 🔥';
-                badge.className = 'px-2.5 py-1 rounded-full text-xs font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-sm';
+                badge.className = 'px-2.5 py-1 rounded-full text-xs font-black bg-emerald-500/20 text-emerald-300 shadow-sm shadow-sm';
             } else if (ri.hasRightsIssue) {
                 badge.textContent = ri.status || 'HISTORIS BENCHMARK';
-                badge.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/50';
+                badge.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 shadow-sm';
             } else {
                 badge.textContent = 'SIMULASI HMETD';
-                badge.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700';
+                badge.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-300 shadow-sm';
             }
         }
 
@@ -1099,6 +1210,14 @@ modalAnalysis.addEventListener('click', (e) => {
     }
 });
 
+// --- END MODULE: analysisModal.js ---
+
+// --- START MODULE: search.js ---
+// ============================================================
+//  MODULE: search.js
+//  Autocomplete search engine, keyboard selection, and suggestions popup
+// ============================================================
+
 // ============================================================
 //  IDX ALL STOCKS DYNAMIC SEARCH & AUTOCOMPLETE ENGINE
 // ============================================================
@@ -1142,15 +1261,15 @@ async function showSearchSuggestions(query) {
             }
 
             searchSuggestDropdown.innerHTML = matches.map((item, idx) => `
-                <div class="suggest-item flex items-center justify-between p-2.5 hover:bg-[#131e33] border-b border-[#141e30] last:border-b-0 cursor-pointer transition select-none ${idx === activeSuggestIndex ? 'bg-[#142036]' : ''}" data-ticker="${item.ticker}">
+                <div class="suggest-item flex items-center justify-between p-2.5 hover:bg-[#131e33]   cursor-pointer transition select-none ${idx === activeSuggestIndex ? 'bg-[#142036]' : ''}" data-ticker="${item.ticker}">
                     <div class="flex items-center gap-2.5">
-                        <span class="bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 text-xs font-mono font-bold px-2 py-0.5 rounded shadow-sm">$${item.ticker}</span>
+                        <span class="bg-cyan-500/20 text-cyan-400 shadow-sm text-xs font-mono font-bold px-2 py-0.5 rounded shadow-sm">$${item.ticker}</span>
                         <div class="flex flex-col text-left">
                             <span class="text-xs font-bold text-white leading-tight">${item.name}</span>
                             <span class="text-[10px] text-slate-400 leading-tight">${item.sector}</span>
                         </div>
                     </div>
-                    <span class="text-[10px] text-emerald-400 font-mono font-semibold bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-800/40 flex items-center gap-1">
+                    <span class="text-[10px] text-emerald-400 font-mono font-semibold bg-emerald-950/40 px-1.5 py-0.5 rounded shadow-sm flex items-center gap-1">
                         ANALISIS ➔
                     </span>
                 </div>
@@ -1247,6 +1366,14 @@ btnClearSearch.addEventListener('click', () => {
     headerSearchInput.focus();
 });
 
+// --- END MODULE: search.js ---
+
+// --- START MODULE: screener.js ---
+// ============================================================
+//  MODULE: screener.js
+//  Screener candidate tables, session toggles, and sector filtering
+// ============================================================
+
 // ============================================================
 //  5. SCREENER EXECUTION & RENDERING
 // ============================================================
@@ -1259,12 +1386,12 @@ function renderScalpingTable(session = 'sesi1') {
     const targetInfo = document.getElementById('scalp-target-info');
 
     if (session === 'sesi1') {
-        if (btnSesi1) btnSesi1.className = 'scalp-sesi-btn active bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-bold px-3 py-1 rounded-lg transition flex items-center gap-1.5 shadow-sm';
-        if (btnSesi2) btnSesi2.className = 'scalp-sesi-btn text-slate-400 hover:text-slate-200 border border-transparent text-xs font-bold px-3 py-1 rounded-lg transition flex items-center gap-1.5 ml-1';
+        if (btnSesi1) btnSesi1.className = 'scalp-sesi-btn active bg-emerald-500/20 text-emerald-400 text-xs font-bold px-3 py-1 rounded-lg transition flex items-center gap-1.5 shadow-sm';
+        if (btnSesi2) btnSesi2.className = 'scalp-sesi-btn text-slate-400 hover:text-slate-200 text-xs font-bold px-3 py-1 rounded-lg transition flex items-center gap-1.5 ml-1';
         if (targetInfo) targetInfo.textContent = 'Target Gain: 1.5% - 2.5% | Jam: 09:00 - 11:30 WIB';
     } else {
-        if (btnSesi1) btnSesi1.className = 'scalp-sesi-btn text-slate-400 hover:text-slate-200 border border-transparent text-xs font-bold px-3 py-1 rounded-lg transition flex items-center gap-1.5';
-        if (btnSesi2) btnSesi2.className = 'scalp-sesi-btn active bg-amber-500/20 text-amber-400 border border-amber-500/40 text-xs font-bold px-3 py-1 rounded-lg transition flex items-center gap-1.5 shadow-sm ml-1';
+        if (btnSesi1) btnSesi1.className = 'scalp-sesi-btn text-slate-400 hover:text-slate-200 text-xs font-bold px-3 py-1 rounded-lg transition flex items-center gap-1.5';
+        if (btnSesi2) btnSesi2.className = 'scalp-sesi-btn active bg-amber-500/20 text-amber-400 text-xs font-bold px-3 py-1 rounded-lg transition flex items-center gap-1.5 shadow-sm ml-1';
         if (targetInfo) targetInfo.textContent = 'Target Gain: 1.8% - 3.0% | Jam: 13:30 - 15:50 WIB';
     }
 
@@ -1288,7 +1415,7 @@ function renderScalpingTable(session = 'sesi1') {
         function confCell(confidence, label) {
             const color = confidence >= 75 ? 'text-emerald-400' : confidence >= 55 ? 'text-amber-400' : 'text-orange-400';
             const barColor = confidence >= 75 ? 'bg-emerald-400' : confidence >= 55 ? 'bg-amber-400' : 'bg-orange-400';
-            const badgeBg = confidence >= 75 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : confidence >= 55 ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-orange-500/20 text-orange-400 border-orange-500/30';
+            const badgeBg = confidence >= 75 ? 'bg-emerald-500/20 text-emerald-400 shadow-sm' : confidence >= 55 ? 'bg-amber-500/20 text-amber-400 shadow-sm' : 'bg-orange-500/20 text-orange-400 shadow-sm';
             return `
                 <td class="p-3">
                     <div class="flex items-center gap-2">
@@ -1299,24 +1426,24 @@ function renderScalpingTable(session = 'sesi1') {
                     </div>
                 </td>
                 <td class="p-3">
-                    <span class="text-[10px] px-2 py-0.5 rounded border font-semibold ${badgeBg}">${label}</span>
+                    <span class="text-[10px] px-2 py-0.5 rounded font-semibold shadow-sm ${badgeBg}">${label}</span>
                 </td>
             `;
         }
 
         function getRankBadge(row) {
-            if (row.rank === 1) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold tracking-tight">🥇 #1</span>`;
-            if (row.rank === 2) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-slate-400/20 text-slate-200 border border-slate-400/40 font-bold tracking-tight">🥈 #2</span>`;
-            if (row.rank === 3) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-700/20 text-amber-400 border border-amber-700/40 font-bold tracking-tight">🥉 #3</span>`;
+            if (row.rank === 1) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold tracking-tight shadow-sm">🥇 #1</span>`;
+            if (row.rank === 2) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-slate-400/20 text-slate-200 font-bold tracking-tight shadow-sm">🥈 #2</span>`;
+            if (row.rank === 3) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-700/20 text-amber-400 font-bold tracking-tight shadow-sm">🥉 #3</span>`;
             return '';
         }
 
         const rankBadge = getRankBadge(row);
-        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800/50 font-sans font-semibold">${row.supertrendBadge}</span>` : '';
-        const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 border border-amber-800/50 font-sans font-semibold">${row.rvolBadge}</span>` : '';
+        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
+        const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${row.rvolBadge}</span>` : '';
 
         tbodyScalp.innerHTML += `
-            <tr class="border-b border-slate-800/60 hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
+            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
                 <td class="p-3 font-mono">
                     <div class="flex items-center gap-1.5">
                         <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
@@ -1327,7 +1454,7 @@ function renderScalpingTable(session = 'sesi1') {
                 <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
                 <td class="p-3 font-mono font-bold ${parseFloat(row.changePct) >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${parseFloat(row.changePct) >= 0 ? '+' : ''}${row.changePct}%</td>
                 <td class="p-3 font-mono text-slate-300">${row.range}%</td>
-                <td class="p-3 font-mono font-bold text-cyan-300 whitespace-nowrap"><span class="bg-cyan-950/40 border border-cyan-800/50 px-2 py-0.5 rounded text-xs">${antrean}</span></td>
+                <td class="p-3 font-mono font-bold text-cyan-300 whitespace-nowrap"><span class="bg-cyan-950/40 shadow-sm px-2 py-0.5 rounded text-xs">${antrean}</span></td>
                 <td class="p-3 font-mono text-amber-300 font-semibold whitespace-nowrap text-xs">🕒 ${jam}</td>
                 <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetProfit)}</td>
                 <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.stopLoss)}</td>
@@ -1419,7 +1546,7 @@ function renderScreenerResults(data) {
     function confCell(confidence, label) {
         const color = confidence >= 75 ? 'text-emerald-400' : confidence >= 55 ? 'text-amber-400' : 'text-orange-400';
         const barColor = confidence >= 75 ? 'bg-emerald-400' : confidence >= 55 ? 'bg-amber-400' : 'bg-orange-400';
-        const badgeBg = confidence >= 75 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : confidence >= 55 ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-orange-500/20 text-orange-400 border-orange-500/30';
+        const badgeBg = confidence >= 75 ? 'bg-emerald-500/20 text-emerald-400 shadow-sm' : confidence >= 55 ? 'bg-amber-500/20 text-amber-400 shadow-sm' : 'bg-orange-500/20 text-orange-400 shadow-sm';
         return `
             <td class="p-3">
                 <div class="flex items-center gap-2">
@@ -1430,15 +1557,15 @@ function renderScreenerResults(data) {
                 </div>
             </td>
             <td class="p-3">
-                <span class="text-[10px] px-2 py-0.5 rounded border font-semibold ${badgeBg}">${label}</span>
+                <span class="text-[10px] px-2 py-0.5 rounded font-semibold shadow-sm ${badgeBg}">${label}</span>
             </td>
         `;
     }
 
     function getRankBadge(row) {
-        if (row.rank === 1) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold tracking-tight">🥇 #1</span>`;
-        if (row.rank === 2) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-slate-400/20 text-slate-200 border border-slate-400/40 font-bold tracking-tight">🥈 #2</span>`;
-        if (row.rank === 3) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-700/20 text-amber-400 border border-amber-700/40 font-bold tracking-tight">🥉 #3</span>`;
+        if (row.rank === 1) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold tracking-tight shadow-sm">🥇 #1</span>`;
+        if (row.rank === 2) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-slate-400/20 text-slate-200 font-bold tracking-tight shadow-sm">🥈 #2</span>`;
+        if (row.rank === 3) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-700/20 text-amber-400 font-bold tracking-tight shadow-sm">🥉 #3</span>`;
         return '';
     }
 
@@ -1450,11 +1577,11 @@ function renderScreenerResults(data) {
     tbodyDay.innerHTML = '';
     (data.daytrade || []).forEach(row => {
         const rankBadge = getRankBadge(row);
-        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800/50 font-sans font-semibold">${row.supertrendBadge}</span>` : '';
-        const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 border border-amber-800/50 font-sans font-semibold">${row.rvolBadge}</span>` : '';
+        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
+        const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${row.rvolBadge}</span>` : '';
 
         tbodyDay.innerHTML += `
-            <tr class="border-b border-slate-800/60 hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
+            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
                 <td class="p-3 font-mono">
                     <div class="flex items-center gap-1.5">
                         <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
@@ -1478,11 +1605,11 @@ function renderScreenerResults(data) {
     tbodySwing.innerHTML = '';
     (data.swing || []).forEach(row => {
         const rankBadge = getRankBadge(row);
-        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800/50 font-sans font-semibold">${row.supertrendBadge}</span>` : '';
-        const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 border border-amber-800/50 font-sans font-semibold">${row.rvolBadge}</span>` : '';
+        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
+        const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${row.rvolBadge}</span>` : '';
 
         tbodySwing.innerHTML += `
-            <tr class="border-b border-slate-800/60 hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
+            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
                 <td class="p-3 font-mono">
                     <div class="flex items-center gap-1.5">
                         <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
@@ -1507,11 +1634,11 @@ function renderScreenerResults(data) {
     tbodyBsjp.innerHTML = '';
     (data.bsjp || []).forEach(row => {
         const rankBadge = getRankBadge(row);
-        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800/50 font-sans font-semibold">${row.supertrendBadge}</span>` : '';
-        const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 border border-amber-800/50 font-sans font-semibold">${row.rvolBadge}</span>` : '';
+        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
+        const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${row.rvolBadge}</span>` : '';
 
         tbodyBsjp.innerHTML += `
-            <tr class="border-b border-slate-800/60 hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
+            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
                 <td class="p-3 font-mono">
                     <div class="flex items-center gap-1.5">
                         <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
@@ -1536,11 +1663,11 @@ function renderScreenerResults(data) {
     tbodyBpjp.innerHTML = '';
     (data.bpjp || []).forEach(row => {
         const rankBadge = getRankBadge(row);
-        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800/50 font-sans font-semibold">${row.supertrendBadge}</span>` : '';
-        const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 border border-amber-800/50 font-sans font-semibold">${row.rvolBadge}</span>` : '';
+        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
+        const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${row.rvolBadge}</span>` : '';
 
         tbodyBpjp.innerHTML += `
-            <tr class="border-b border-slate-800/60 hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
+            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
                 <td class="p-3 font-mono">
                     <div class="flex items-center gap-1.5">
                         <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
@@ -1566,10 +1693,10 @@ function renderScreenerResults(data) {
     tbodyLong.innerHTML = '';
     (data.longterm || []).forEach(row => {
         const rankBadge = getRankBadge(row);
-        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800/50 font-sans font-semibold">${row.supertrendBadge}</span>` : '';
+        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
 
         tbodyLong.innerHTML += `
-            <tr class="border-b border-slate-800/60 hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
+            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
                 <td class="p-3 font-mono">
                     <div class="flex items-center gap-1.5">
                         <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
@@ -1610,14 +1737,14 @@ screenerSectorSelect?.addEventListener('change', () => {
 });
 btnViewTop3?.addEventListener('click', () => {
     screenerViewLimit = 'top3';
-    if (btnViewTop3) btnViewTop3.className = 'view-limit-btn active bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-bold px-3 py-1 rounded-lg transition shadow-sm';
-    if (btnViewAll) btnViewAll.className = 'view-limit-btn text-slate-400 hover:text-slate-200 border border-transparent text-xs font-bold px-3 py-1 rounded-lg transition';
+    if (btnViewTop3) btnViewTop3.className = 'view-limit-btn active bg-emerald-500/20 text-emerald-400 shadow-sm text-xs font-bold px-3 py-1 rounded-lg transition shadow-sm';
+    if (btnViewAll) btnViewAll.className = 'view-limit-btn text-slate-400 hover:text-slate-200 text-xs font-bold px-3 py-1 rounded-lg transition';
     if (lastScreenerData) renderScreenerResults(lastScreenerData);
 });
 btnViewAll?.addEventListener('click', () => {
     screenerViewLimit = 'all';
-    if (btnViewAll) btnViewAll.className = 'view-limit-btn active bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-bold px-3 py-1 rounded-lg transition shadow-sm';
-    if (btnViewTop3) btnViewTop3.className = 'view-limit-btn text-slate-400 hover:text-slate-200 border border-transparent text-xs font-bold px-3 py-1 rounded-lg transition';
+    if (btnViewAll) btnViewAll.className = 'view-limit-btn active bg-emerald-500/20 text-emerald-400 shadow-sm text-xs font-bold px-3 py-1 rounded-lg transition shadow-sm';
+    if (btnViewTop3) btnViewTop3.className = 'view-limit-btn text-slate-400 hover:text-slate-200 text-xs font-bold px-3 py-1 rounded-lg transition';
     if (lastScreenerData) renderScreenerResults(lastScreenerData);
 });
 
@@ -1642,6 +1769,14 @@ btnCloseBacktestModalBottom?.addEventListener('click', closeBacktestModal);
 modalBacktest?.addEventListener('click', (e) => {
     if (e.target === modalBacktest) closeBacktestModal();
 });
+
+// --- END MODULE: screener.js ---
+
+// --- START MODULE: foreignFlow.js ---
+// ============================================================
+//  MODULE: foreignFlow.js
+//  Foreign flow tracking: daily, weekly, monthly, and consecutive streak
+// ============================================================
 
 // ============================================================
 //  5B. PELACAKAN TOP FOREIGN BUY & SELL ENGINE
@@ -1674,19 +1809,19 @@ function filterForeignList(list) {
 function switchForeignSubmenu(submenuName) {
     activeForeignSubmenu = submenuName;
     const subBtns = [
-        { el: btnForeignDaily, view: viewForeignDaily, name: 'daily', activeClass: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40' },
-        { el: btnForeignWeekly, view: viewForeignWeekly, name: 'weekly', activeClass: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40' },
-        { el: btnForeignMonthly, view: viewForeignMonthly, name: 'monthly', activeClass: 'bg-purple-500/20 text-purple-300 border-purple-500/40' },
-        { el: btnForeignStreak, view: viewForeignStreak, name: 'streak', activeClass: 'bg-amber-500/30 text-amber-300 border-amber-500/50' }
+        { el: btnForeignDaily, view: viewForeignDaily, name: 'daily', activeClass: 'bg-cyan-500/20 text-cyan-300 shadow-sm' },
+        { el: btnForeignWeekly, view: viewForeignWeekly, name: 'weekly', activeClass: 'bg-cyan-500/20 text-cyan-300 shadow-sm' },
+        { el: btnForeignMonthly, view: viewForeignMonthly, name: 'monthly', activeClass: 'bg-purple-500/20 text-purple-300 shadow-sm' },
+        { el: btnForeignStreak, view: viewForeignStreak, name: 'streak', activeClass: 'bg-amber-500/30 text-amber-300 shadow-sm' }
     ];
 
     subBtns.forEach(sub => {
         if (sub.el) {
-            sub.el.classList.remove('bg-cyan-500/20', 'text-cyan-300', 'border-cyan-500/40', 'bg-purple-500/20', 'text-purple-300', 'border-purple-500/40', 'bg-amber-500/30', 'text-amber-300', 'border-amber-500/50');
+            sub.el.classList.remove('bg-cyan-500/20', 'text-cyan-300', 'shadow-sm', 'bg-purple-500/20', 'text-purple-300', 'bg-amber-500/30', 'text-amber-300');
             if (sub.name === submenuName) {
-                sub.el.className = `foreign-sub-btn active ${sub.activeClass} border text-xs font-bold px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 shadow-sm cursor-pointer`;
+                sub.el.className = `foreign-sub-btn active ${sub.activeClass} text-xs font-bold px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 shadow-sm cursor-pointer`;
             } else {
-                sub.el.className = 'foreign-sub-btn text-slate-400 hover:text-slate-200 border border-transparent text-xs font-bold px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer';
+                sub.el.className = 'foreign-sub-btn text-slate-400 hover:text-slate-200 text-xs font-bold px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer';
             }
         }
         if (sub.view) {
@@ -1768,9 +1903,9 @@ function renderForeignTables() {
 }
 
 function getForeignRankBadge(rank) {
-    if (rank === 1) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold">🥇 #1</span>`;
-    if (rank === 2) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-slate-400/20 text-slate-200 border border-slate-400/40 font-bold">🥈 #2</span>`;
-    if (rank === 3) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-700/20 text-amber-400 border border-amber-700/40 font-bold">🥉 #3</span>`;
+    if (rank === 1) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold shadow-sm">🥇 #1</span>`;
+    if (rank === 2) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-slate-400/20 text-slate-200 font-bold shadow-sm">🥈 #2</span>`;
+    if (rank === 3) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-700/20 text-amber-400 font-bold shadow-sm">🥉 #3</span>`;
     return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-slate-800 text-slate-400 font-bold font-mono">#${rank}</span>`;
 }
 
@@ -1790,14 +1925,14 @@ function renderForeignDailyTables() {
             const chgColor = chg >= 0 ? 'text-emerald-400' : 'text-rose-400';
             const sign = chg >= 0 ? '+' : '';
             const statusBadge = row.status?.includes('MASIF')
-                ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-400 font-extrabold'
-                : 'bg-cyan-950/80 border-cyan-500/40 text-cyan-300 font-bold';
+                ? 'bg-emerald-950/80 shadow-sm text-emerald-400 font-extrabold'
+                : 'bg-cyan-950/80 shadow-sm text-cyan-300 font-bold';
 
             const buyVal = row.foreignBuyVal ? fmtRpMiliar(row.foreignBuyVal) : null;
             const sellVal = row.foreignSellVal ? fmtRpMiliar(row.foreignSellVal) : null;
 
             tbodyForeignDailyBuy.innerHTML += `
-                <tr class="border-b border-slate-800/60 hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+                <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
                     <td class="p-3 font-mono">
                         <div class="flex items-center gap-2">
                             ${getForeignRankBadge(idx + 1)}
@@ -1826,7 +1961,7 @@ function renderForeignDailyTables() {
                         </div>
                     </td>
                     <td class="p-3">
-                        <span class="text-[10px] px-2 py-0.5 rounded border ${statusBadge}">${row.status || 'AKUMULASI 🟢'}</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded shadow-sm ${statusBadge}">${row.status || 'AKUMULASI 🟢'}</span>
                     </td>
                 </tr>
             `;
@@ -1846,14 +1981,14 @@ function renderForeignDailyTables() {
             const chgColor = chg >= 0 ? 'text-emerald-400' : 'text-rose-400';
             const sign = chg >= 0 ? '+' : '';
             const statusBadge = row.status?.includes('MASIF')
-                ? 'bg-rose-950/80 border-rose-500/50 text-rose-400 font-extrabold'
-                : 'bg-rose-950/60 border-rose-800/40 text-rose-300 font-bold';
+                ? 'bg-rose-950/80 shadow-sm text-rose-400 font-extrabold'
+                : 'bg-rose-950/60 shadow-sm text-rose-300 font-bold';
 
             const buyVal = row.foreignBuyVal ? fmtRpMiliar(row.foreignBuyVal) : null;
             const sellVal = row.foreignSellVal ? fmtRpMiliar(row.foreignSellVal) : null;
 
             tbodyForeignDailySell.innerHTML += `
-                <tr class="border-b border-slate-800/60 hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+                <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
                     <td class="p-3 font-mono">
                         <div class="flex items-center gap-2">
                             ${getForeignRankBadge(idx + 1)}
@@ -1882,7 +2017,7 @@ function renderForeignDailyTables() {
                         </div>
                     </td>
                     <td class="p-3">
-                        <span class="text-[10px] px-2 py-0.5 rounded border ${statusBadge}">${row.status || 'DISTRIBUSI 🔴'}</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded shadow-sm ${statusBadge}">${row.status || 'DISTRIBUSI 🔴'}</span>
                     </td>
                 </tr>
             `;
@@ -1911,27 +2046,27 @@ function renderForeignWeeklyTable() {
 
         let accelBadge = '<span class="bg-slate-800 text-slate-300 text-[10px] px-2 py-0.5 rounded font-mono font-bold">STEADY ⚖️</span>';
         if (row.flowAcceleration >= 1.2) {
-            accelBadge = '<span class="bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 text-[10px] px-2 py-0.5 rounded font-mono font-extrabold">ACCELERATING ⚡</span>';
+            accelBadge = '<span class="bg-emerald-950/80 shadow-sm text-emerald-400 text-[10px] px-2 py-0.5 rounded font-mono font-extrabold">ACCELERATING ⚡</span>';
         } else if (row.flowAcceleration < 0.8) {
-            accelBadge = '<span class="bg-amber-950/60 border border-amber-800/40 text-amber-400 text-[10px] px-2 py-0.5 rounded font-mono font-semibold">DECELERATING 🔻</span>';
+            accelBadge = '<span class="bg-amber-950/60 shadow-sm text-amber-400 text-[10px] px-2 py-0.5 rounded font-mono font-semibold">DECELERATING 🔻</span>';
         }
 
-        let phaseBadge = '<span class="bg-cyan-950/80 border border-cyan-800/50 text-cyan-300 text-[10px] px-2 py-0.5 rounded font-bold">Akumulasi 🟢</span>';
+        let phaseBadge = '<span class="bg-cyan-950/80 shadow-sm text-cyan-300 text-[10px] px-2 py-0.5 rounded font-bold">Akumulasi 🟢</span>';
         const ph = row.phase || row.institutionalPhase || '';
         if (ph.includes('Mark-Up') || ph.includes('Markup')) {
-            phaseBadge = '<span class="bg-emerald-950/80 border border-emerald-500/50 text-emerald-400 text-[10px] px-2 py-0.5 rounded font-extrabold">Mark-Up 🚀</span>';
+            phaseBadge = '<span class="bg-emerald-950/80 shadow-sm text-emerald-400 text-[10px] px-2 py-0.5 rounded font-extrabold">Mark-Up 🚀</span>';
         } else if (ph.includes('Re-Accumulation') || ph.includes('Akumulasi')) {
-            phaseBadge = '<span class="bg-cyan-950/80 border border-cyan-800/50 text-cyan-300 text-[10px] px-2 py-0.5 rounded font-bold">Re-Accumulation 📈</span>';
+            phaseBadge = '<span class="bg-cyan-950/80 shadow-sm text-cyan-300 text-[10px] px-2 py-0.5 rounded font-bold">Re-Accumulation 📈</span>';
         } else if (ph.includes('Absorption') || ph.includes('Serap')) {
-            phaseBadge = '<span class="bg-indigo-950/80 border border-indigo-800/50 text-indigo-300 text-[10px] px-2 py-0.5 rounded font-bold">Absorption 🛡️</span>';
+            phaseBadge = '<span class="bg-indigo-950/80 shadow-sm text-indigo-300 text-[10px] px-2 py-0.5 rounded font-bold">Absorption 🛡️</span>';
         } else if (ph.includes('Markdown')) {
-            phaseBadge = '<span class="bg-rose-950/90 border border-rose-600/60 text-rose-400 text-[10px] px-2 py-0.5 rounded font-extrabold">Markdown 🔻</span>';
+            phaseBadge = '<span class="bg-rose-950/90 shadow-sm text-rose-400 text-[10px] px-2 py-0.5 rounded font-extrabold">Markdown 🔻</span>';
         } else if (ph.includes('Distribution') || ph.includes('Distribusi')) {
-            phaseBadge = '<span class="bg-rose-950/80 border border-rose-800/50 text-rose-400 text-[10px] px-2 py-0.5 rounded font-bold">Distribution ⚠️</span>';
+            phaseBadge = '<span class="bg-rose-950/80 shadow-sm text-rose-400 text-[10px] px-2 py-0.5 rounded font-bold">Distribution ⚠️</span>';
         }
 
         tbodyForeignWeekly.innerHTML += `
-            <tr class="border-b border-slate-800/60 hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
                 <td class="p-3 font-mono">
                     <div class="flex items-center gap-2">
                         ${getForeignRankBadge(idx + 1)}
@@ -1974,16 +2109,16 @@ function renderForeignMonthlyTable() {
         const pnl = parseFloat(row.foreignFloatingPL !== undefined ? row.foreignFloatingPL : (row.floatingPnlPct || 0));
         const pnlColor = pnl >= 0 ? 'text-emerald-400' : 'text-rose-400';
 
-        let baseBadge = '<span class="bg-cyan-950/80 border border-cyan-800/40 text-cyan-300 text-[10px] px-2 py-0.5 rounded font-bold">BUILDING BASE ⭐⭐</span>';
+        let baseBadge = '<span class="bg-cyan-950/80 shadow-sm text-cyan-300 text-[10px] px-2 py-0.5 rounded font-bold">BUILDING BASE ⭐⭐</span>';
         const bs = row.baseScore || row.baseBuildingScore || 50;
         if (bs >= 70) {
-            baseBadge = '<span class="bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 text-[10px] px-2 py-0.5 rounded font-extrabold">SOLID BASE ⭐⭐⭐</span>';
+            baseBadge = '<span class="bg-emerald-950/80 shadow-sm text-emerald-400 text-[10px] px-2 py-0.5 rounded font-extrabold">SOLID BASE ⭐⭐⭐</span>';
         } else if (bs < 40) {
             baseBadge = '<span class="bg-slate-800 text-slate-400 text-[10px] px-2 py-0.5 rounded font-semibold">TESTING BASE ⭐</span>';
         }
 
         tbodyForeignMonthly.innerHTML += `
-            <tr class="border-b border-slate-800/60 hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
                 <td class="p-3 font-mono">
                     <div class="flex items-center gap-2">
                         ${getForeignRankBadge(idx + 1)}
@@ -2045,7 +2180,7 @@ function renderForeignStreakTable() {
         const profitFactor = row.profitFactor || row.backtest?.profitFactor || '2.80';
 
         tbodyForeignStreak.innerHTML += `
-            <tr class="border-b border-slate-800/60 hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
                 <td class="p-3 font-mono">
                     <div class="flex items-center gap-2">
                         ${getForeignRankBadge(idx + 1)}
@@ -2055,7 +2190,7 @@ function renderForeignStreakTable() {
                 </td>
                 <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(currentPrice)}</td>
                 <td class="p-3">
-                    <span class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2.5 py-0.5 rounded-full font-bold font-mono text-xs whitespace-nowrap">
+                    <span class="bg-amber-500/20 text-amber-300 shadow-sm px-2.5 py-0.5 rounded-full font-bold font-mono text-xs whitespace-nowrap">
                         ${streakDays} Hari ${flame}
                     </span>
                 </td>
@@ -2063,14 +2198,14 @@ function renderForeignStreakTable() {
                 <td class="p-3 font-mono font-semibold text-cyan-300">${fmtRpMiliar(avgDaily)}</td>
                 <td class="p-3 font-mono font-bold ${gainColor}">${gain >= 0 ? '+' : ''}${gain.toFixed(2)}%</td>
                 <td class="p-3">
-                    <span class="bg-purple-950/80 border border-purple-500/40 text-purple-300 font-extrabold text-[10px] px-2 py-0.5 rounded">
+                    <span class="bg-purple-950/80 shadow-sm text-purple-300 font-extrabold text-[10px] px-2 py-0.5 rounded">
                         ${conviction}
                     </span>
                 </td>
                 <td class="p-3 font-mono text-emerald-400 font-semibold">${entryZone}</td>
                 <td class="p-3 font-mono text-rose-400 font-semibold">${trailingStop}</td>
                 <td class="p-3">
-                    <span class="bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 px-2 py-0.5 rounded text-[11px] font-mono font-bold whitespace-nowrap">
+                    <span class="bg-emerald-950/80 shadow-sm text-emerald-400 px-2 py-0.5 rounded text-[11px] font-mono font-bold whitespace-nowrap">
                         Win ${winRate} | PF ${profitFactor}
                     </span>
                 </td>
@@ -2091,6 +2226,14 @@ function renderForeignStreakTable() {
         }
     });
 });
+
+// --- END MODULE: foreignFlow.js ---
+
+// --- START MODULE: watchlist.js ---
+// ============================================================
+//  MODULE: watchlist.js
+//  Watchlist drawer, quick removal, and badge sync
+// ============================================================
 
 // ============================================================
 //  6. WATCHLIST DRAWER
@@ -2126,10 +2269,10 @@ function renderWatchlistDrawer() {
     }
     savedWatchlist.forEach(ticker => {
         const item = document.createElement('div');
-        item.className = 'bg-[#0e1626] border border-slate-800 hover:border-slate-600 p-3 rounded-xl flex items-center justify-between transition';
+        item.className = 'bg-[#0e1626] shadow-sm  p-3 rounded-xl flex items-center justify-between transition';
         item.innerHTML = `
             <div class="flex items-center gap-3 cursor-pointer flex-1" data-action="analyze">
-                <span class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-mono font-bold text-xs flex items-center justify-center">$</span>
+                <span class="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 font-mono font-bold text-xs flex items-center justify-center shadow-sm">$</span>
                 <div>
                     <h5 class="font-bold text-white font-mono text-sm">${ticker}</h5>
                     <p class="text-[11px] text-slate-400">Emiten Terpantau Radar</p>
@@ -2139,7 +2282,7 @@ function renderWatchlistDrawer() {
                 <button class="text-amber-400 hover:text-amber-300 font-bold text-xs flex items-center gap-1 cursor-pointer" data-action="analyze">
                     Analisa ↗
                 </button>
-                <button class="w-7 h-7 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs flex items-center justify-center transition cursor-pointer" title="Hapus dari Watchlist" data-action="remove">
+                <button class="w-7 h-7 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs flex items-center justify-center transition cursor-pointer shadow-sm" title="Hapus dari Watchlist" data-action="remove">
                     ✕
                 </button>
             </div>
@@ -2161,6 +2304,14 @@ function renderWatchlistDrawer() {
         watchlistItemsContainer.appendChild(item);
     });
 }
+
+// --- END MODULE: watchlist.js ---
+
+// --- START MODULE: indices.js ---
+// ============================================================
+//  MODULE: indices.js
+//  Live market indices ribbon updater
+// ============================================================
 
 // ============================================================
 //  7. LIVE MARKET INDICES
@@ -2191,6 +2342,14 @@ async function loadMarketIndices() {
         console.warn('Market indices update skipped:', err);
     }
 }
+
+// --- END MODULE: indices.js ---
+
+// --- START MODULE: controls.js ---
+// ============================================================
+//  MODULE: controls.js
+//  Global app controls: stream polling, sound toggle, refresh, and data export
+// ============================================================
 
 // ============================================================
 //  8. CONTROLS: STREAM, SOUND, EXPORT, REFRESH
@@ -2344,6 +2503,14 @@ btnExportData.addEventListener('click', () => {
     link.click();
     document.body.removeChild(link);
 });
+
+// --- END MODULE: controls.js ---
+
+// --- START MODULE: backtest.js ---
+// ============================================================
+//  MODULE: backtest.js
+//  Automated quantitative backtest engine UI, equity canvas, and trade log
+// ============================================================
 
 // ============================================================
 //  AUTOMATED QUANTITATIVE BACKTEST FRONTEND ENGINE
@@ -2654,8 +2821,8 @@ function renderTradeLog(trades = []) {
     tbody.innerHTML = filtered.map(t => {
         const isWin = t.status === 'WIN';
         const statusBadge = isWin
-            ? '<span class="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">WIN</span>'
-            : '<span class="px-2 py-0.5 rounded text-[10px] font-black bg-rose-500/20 text-rose-400 border border-rose-500/40">LOSS</span>';
+            ? '<span class="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-500/20 text-emerald-400 shadow-sm">WIN</span>'
+            : '<span class="px-2 py-0.5 rounded text-[10px] font-black bg-rose-500/20 text-rose-400 shadow-sm">LOSS</span>';
         const pnlFormatted = `${t.netPnl >= 0 ? '+' : ''}${fmtRp.format(t.netPnl)}`;
         const pnlColor = isWin ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold';
         const returnFormatted = `${t.gainPct >= 0 ? '+' : ''}${t.gainPct.toFixed(2)}%`;
@@ -2796,6 +2963,14 @@ function initBacktestModule() {
     });
 }
 
+// --- END MODULE: backtest.js ---
+
+// --- START MODULE: mobileSearch.js ---
+// ============================================================
+//  MODULE: mobileSearch.js
+//  Mobile search modal controller and quick chip navigation
+// ============================================================
+
 // ============================================================
 //  INITIALIZATION
 // ============================================================
@@ -2808,3 +2983,168 @@ document.addEventListener('DOMContentLoaded', () => {
     initBacktestModule(); // Initialize Automated Backtest module
     startAutoStream();
 });
+
+
+// ============================================================
+//  MOBILE SEARCH MODAL ENGINE
+// ============================================================
+const modalMobileSearch = document.getElementById('modal-mobile-search');
+const btnMobileSearchPill = document.getElementById('btn-mobile-search-pill');
+const btnCloseMobileSearch = document.getElementById('btn-close-mobile-search');
+const inputMobileSearch = document.getElementById('input-mobile-search');
+const btnClearMobileSearch = document.getElementById('btn-clear-mobile-search');
+const mobileSearchResults = document.getElementById('mobile-search-results');
+const mobileSearchQuickPicks = document.getElementById('mobile-search-quick-picks');
+let mobileSearchDebounce = null;
+
+function openMobileSearch() {
+    if (!modalMobileSearch) return;
+    modalMobileSearch.classList.remove('hidden');
+    modalMobileSearch.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => inputMobileSearch?.focus(), 50);
+}
+
+function closeMobileSearch() {
+    if (!modalMobileSearch) return;
+    modalMobileSearch.classList.add('hidden');
+    modalMobileSearch.classList.remove('flex');
+    document.body.style.overflow = '';
+    if (inputMobileSearch) inputMobileSearch.value = '';
+    if (mobileSearchResults) mobileSearchResults.innerHTML = '';
+    if (mobileSearchQuickPicks) mobileSearchQuickPicks.classList.remove('hidden');
+    if (btnClearMobileSearch) btnClearMobileSearch.classList.add('hidden');
+}
+
+btnMobileSearchPill?.addEventListener('click', openMobileSearch);
+btnCloseMobileSearch?.addEventListener('click', closeMobileSearch);
+
+btnClearMobileSearch?.addEventListener('click', () => {
+    if (inputMobileSearch) {
+        inputMobileSearch.value = '';
+        inputMobileSearch.focus();
+    }
+    if (mobileSearchResults) mobileSearchResults.innerHTML = '';
+    if (mobileSearchQuickPicks) mobileSearchQuickPicks.classList.remove('hidden');
+    btnClearMobileSearch.classList.add('hidden');
+});
+
+// Quick chip clicks in mobile search
+document.querySelectorAll('.mobile-quick-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+        const ticker = chip.getAttribute('data-ticker');
+        if (ticker) {
+            closeMobileSearch();
+            executeStockAnalysis(ticker);
+        }
+    });
+});
+
+inputMobileSearch?.addEventListener('input', (e) => {
+    const q = (e.target.value || '').trim().replace(/^[$#]/, '');
+    if (q) {
+        btnClearMobileSearch?.classList.remove('hidden');
+        mobileSearchQuickPicks?.classList.add('hidden');
+    } else {
+        btnClearMobileSearch?.classList.add('hidden');
+        mobileSearchQuickPicks?.classList.remove('hidden');
+        if (mobileSearchResults) mobileSearchResults.innerHTML = '';
+        return;
+    }
+
+    clearTimeout(mobileSearchDebounce);
+    mobileSearchDebounce = setTimeout(async () => {
+        try {
+// --- END MODULE: mobileSearch.js ---
+
+// --- START MODULE: init.js ---
+// ============================================================
+//  MODULE: init.js
+//  Application bootstrap and DOM ready initialization
+// ============================================================
+
+            const res = await fetch(`/api/search-suggest?q=${encodeURIComponent(q)}`);
+            const data = await res.json();
+            const matches = data.suggestions || [];
+
+            if (!mobileSearchResults) return;
+            if (matches.length === 0) {
+                mobileSearchResults.innerHTML = `
+                    <div class="bg-[#0d1424] p-4 rounded-xl text-center space-y-2 cursor-pointer shadow-lg" id="mobile-fallback-action">
+                        <p class="text-sm font-bold text-white">Analisis langsung emiten <span class="text-amber-400 font-mono font-black">$${q.toUpperCase()}</span></p>
+                        <p class="text-xs text-slate-400">Tekan di sini untuk memuat data kuantitatif</p>
+                    </div>
+                `;
+                document.getElementById('mobile-fallback-action')?.addEventListener('click', () => {
+                    closeMobileSearch();
+                    executeStockAnalysis(q.toUpperCase());
+                });
+                return;
+            }
+
+            mobileSearchResults.innerHTML = matches.map(item => `
+                <div class="mobile-search-item bg-[#0d1424] hover:bg-[#131e33] p-3.5 rounded-xl flex items-center justify-between cursor-pointer transition shadow-md" data-ticker="${item.ticker}">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-300 font-mono font-black text-sm shrink-0">
+                            $${item.ticker.slice(0, 3)}
+                        </div>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2">
+                                <span class="font-mono font-black text-white text-sm">$${item.ticker}</span>
+                                <span class="text-[10px] px-1.5 py-0.5 rounded bg-[#162035] text-slate-300 font-medium truncate">${item.sector || 'IDX'}</span>
+                            </div>
+                            <p class="text-xs text-slate-400 truncate mt-0.5">${item.name}</p>
+                        </div>
+                    </div>
+                    <span class="text-xs font-bold text-emerald-400 font-mono bg-emerald-950/60 px-2.5 py-1 rounded-lg shrink-0 ml-2">
+                        Buka ➔
+                    </span>
+                </div>
+            `).join('');
+
+            mobileSearchResults.querySelectorAll('.mobile-search-item').forEach(el => {
+                el.addEventListener('click', () => {
+                    const ticker = el.getAttribute('data-ticker');
+                    if (ticker) {
+                        closeMobileSearch();
+                        executeStockAnalysis(ticker);
+                    }
+                });
+            });
+        } catch (err) {
+            console.error('Mobile search error:', err);
+        }
+    }, 50);
+});
+
+inputMobileSearch?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        const val = inputMobileSearch.value.trim().toUpperCase().replace(/^[$#]/, '');
+        if (val) {
+            closeMobileSearch();
+            executeStockAnalysis(val);
+        }
+    } else if (e.key === 'Escape') {
+        closeMobileSearch();
+    }
+});
+
+// --- END MODULE: init.js ---
+
+
+// ============================================================
+//  GLOBAL WINDOW BINDINGS (Compatibility Bridge)
+// ============================================================
+if (typeof window !== 'undefined') {
+    window.executeStockAnalysis = typeof executeStockAnalysis !== 'undefined' ? executeStockAnalysis : window.executeStockAnalysis;
+    window.switchMainTab = typeof switchMainTab !== 'undefined' ? switchMainTab : window.switchMainTab;
+    window.openMobileSearch = typeof openMobileSearch !== 'undefined' ? openMobileSearch : window.openMobileSearch;
+    window.closeMobileSearch = typeof closeMobileSearch !== 'undefined' ? closeMobileSearch : window.closeMobileSearch;
+    window.timeAgo = typeof timeAgo !== 'undefined' ? timeAgo : window.timeAgo;
+    window.playSoundChime = typeof playSoundChime !== 'undefined' ? playSoundChime : window.playSoundChime;
+    window.renderScalpingTable = typeof renderScalpingTable !== 'undefined' ? renderScalpingTable : window.renderScalpingTable;
+    window.switchForeignSubmenu = typeof switchForeignSubmenu !== 'undefined' ? switchForeignSubmenu : window.switchForeignSubmenu;
+    window.renderWatchlistDrawer = typeof renderWatchlistDrawer !== 'undefined' ? renderWatchlistDrawer : window.renderWatchlistDrawer;
+    window.updateWatchlistBadge = typeof updateWatchlistBadge !== 'undefined' ? updateWatchlistBadge : window.updateWatchlistBadge;
+    window.saveWatchlistToStorage = typeof saveWatchlistToStorage !== 'undefined' ? saveWatchlistToStorage : window.saveWatchlistToStorage;
+}

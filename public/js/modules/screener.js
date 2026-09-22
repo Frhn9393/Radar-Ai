@@ -1,0 +1,400 @@
+// ============================================================
+//  MODULE: screener.js
+//  Screener candidate tables, session toggles, and sector filtering
+// ============================================================
+
+// ============================================================
+//  5. SCREENER EXECUTION & RENDERING
+// ============================================================
+
+function renderScalpingTable(session = 'sesi1') {
+    activeScalpSession = session;
+    const tbodyScalp = document.getElementById('tbody-scalping');
+    const btnSesi1 = document.getElementById('btn-scalp-sesi1');
+    const btnSesi2 = document.getElementById('btn-scalp-sesi2');
+    const targetInfo = document.getElementById('scalp-target-info');
+
+    if (session === 'sesi1') {
+        if (btnSesi1) btnSesi1.className = 'scalp-sesi-btn active bg-emerald-500/20 text-emerald-400 text-xs font-bold px-3 py-1 rounded-lg transition flex items-center gap-1.5 shadow-sm';
+        if (btnSesi2) btnSesi2.className = 'scalp-sesi-btn text-slate-400 hover:text-slate-200 text-xs font-bold px-3 py-1 rounded-lg transition flex items-center gap-1.5 ml-1';
+        if (targetInfo) targetInfo.textContent = 'Target Gain: 1.5% - 2.5% | Jam: 09:00 - 11:30 WIB';
+    } else {
+        if (btnSesi1) btnSesi1.className = 'scalp-sesi-btn text-slate-400 hover:text-slate-200 text-xs font-bold px-3 py-1 rounded-lg transition flex items-center gap-1.5';
+        if (btnSesi2) btnSesi2.className = 'scalp-sesi-btn active bg-amber-500/20 text-amber-400 text-xs font-bold px-3 py-1 rounded-lg transition flex items-center gap-1.5 shadow-sm ml-1';
+        if (targetInfo) targetInfo.textContent = 'Target Gain: 1.8% - 3.0% | Jam: 13:30 - 15:50 WIB';
+    }
+
+    if (!tbodyScalp) return;
+    tbodyScalp.innerHTML = '';
+
+    const list = session === 'sesi1'
+        ? (lastScreenerData?.scalpingSesi1 || lastScreenerData?.scalping || [])
+        : (lastScreenerData?.scalpingSesi2 || lastScreenerData?.scalping || []);
+
+    if (!list || list.length === 0) {
+        tbodyScalp.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500 italic">Tidak ada saham lolos filter scalping ${session === 'sesi1' ? 'Sesi 1' : 'Sesi 2'} saat ini.</td></tr>`;
+        return;
+    }
+
+    list.forEach(row => {
+        const tick = (row.price < 200 ? 1 : row.price < 500 ? 2 : row.price < 2000 ? 5 : row.price < 5000 ? 10 : 25);
+        const antrean = row.antreanBeli || (session === 'sesi1' ? `Antre Bid Rp ${fmtRp.format(row.price - tick)} - Rp ${fmtRp.format(row.price)} (Bid 1-2)` : `Antre Bid Rp ${fmtRp.format(row.price - 2 * tick)} - Rp ${fmtRp.format(row.price - tick)} (Bid 2-3)`);
+        const jam = row.jamEksekusi || (session === 'sesi1' ? '09:00 - 09:30 WIB' : '13:30 - 14:15 WIB');
+
+        function confCell(confidence, label) {
+            const color = confidence >= 75 ? 'text-emerald-400' : confidence >= 55 ? 'text-amber-400' : 'text-orange-400';
+            const barColor = confidence >= 75 ? 'bg-emerald-400' : confidence >= 55 ? 'bg-amber-400' : 'bg-orange-400';
+            const badgeBg = confidence >= 75 ? 'bg-emerald-500/20 text-emerald-400 shadow-sm' : confidence >= 55 ? 'bg-amber-500/20 text-amber-400 shadow-sm' : 'bg-orange-500/20 text-orange-400 shadow-sm';
+            return `
+                <td class="p-3">
+                    <div class="flex items-center gap-2">
+                        <span class="${color} font-bold font-mono text-xs">${confidence}%</span>
+                        <div class="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                            <div class="${barColor} h-full rounded-full" style="width:${confidence}%"></div>
+                        </div>
+                    </div>
+                </td>
+                <td class="p-3">
+                    <span class="text-[10px] px-2 py-0.5 rounded font-semibold shadow-sm ${badgeBg}">${label}</span>
+                </td>
+            `;
+        }
+
+        function getRankBadge(row) {
+            if (row.rank === 1) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold tracking-tight shadow-sm">🥇 #1</span>`;
+            if (row.rank === 2) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-slate-400/20 text-slate-200 font-bold tracking-tight shadow-sm">🥈 #2</span>`;
+            if (row.rank === 3) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-700/20 text-amber-400 font-bold tracking-tight shadow-sm">🥉 #3</span>`;
+            return '';
+        }
+
+        const rankBadge = getRankBadge(row);
+        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
+        const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${row.rvolBadge}</span>` : '';
+
+        tbodyScalp.innerHTML += `
+            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
+                <td class="p-3 font-mono">
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                        ${rankBadge}
+                    </div>
+                    <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
+                </td>
+                <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
+                <td class="p-3 font-mono font-bold ${parseFloat(row.changePct) >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${parseFloat(row.changePct) >= 0 ? '+' : ''}${row.changePct}%</td>
+                <td class="p-3 font-mono text-slate-300">${row.range}%</td>
+                <td class="p-3 font-mono font-bold text-cyan-300 whitespace-nowrap"><span class="bg-cyan-950/40 shadow-sm px-2 py-0.5 rounded text-xs">${antrean}</span></td>
+                <td class="p-3 font-mono text-amber-300 font-semibold whitespace-nowrap text-xs">🕒 ${jam}</td>
+                <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetProfit)}</td>
+                <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.stopLoss)}</td>
+                ${confCell(row.confidence, row.label)}
+            </tr>
+        `;
+    });
+}
+
+// Bind Sesi 1 & Sesi 2 buttons
+document.getElementById('btn-scalp-sesi1')?.addEventListener('click', () => {
+    renderScalpingTable('sesi1');
+});
+document.getElementById('btn-scalp-sesi2')?.addEventListener('click', () => {
+    renderScalpingTable('sesi2');
+});
+
+btnTriggerScreener.addEventListener('click', async () => {
+    btnTriggerScreener.disabled = true;
+    screenerLoading.classList.remove('hidden');
+    screenerResultsWrapper.classList.add('hidden');
+    screenerBtnIcon.classList.add('animate-spin');
+
+    // ── Live Elapsed Timer & Progress ──────────────────────────
+    const timerEl = document.getElementById('screener-timer');
+    const statusEl = document.getElementById('screener-scan-status');
+    const progressBar = document.getElementById('screener-progress-bar');
+    let elapsed = 0;
+    let progress = 0;
+    if (timerEl) timerEl.textContent = '0s';
+    if (progressBar) progressBar.style.width = '0%';
+    if (statusEl) statusEl.textContent = 'Menginisialisasi engine...';
+
+    const statusMessages = [
+        'Mengambil data harga real-time...',
+        'Menghitung Supertrend (10, 3.0)...',
+        'Menghitung MA 20 / 50 Golden Alignment...',
+        'Mendeteksi lonjakan Volume Spike (RVol)...',
+        'Analisis RSI & MACD expansion...',
+        'Filter anti-gorengan ketat & likuiditas...',
+        'Menentukan antrean Bid scalping...',
+        'Menghitung stop-loss & target profit...',
+        'Menyusun 3 rekomendasi terbaik tiap kategori...',
+        'Finalisasi analisis teknikal...'
+    ];
+
+    const timerInterval = setInterval(() => {
+        elapsed++;
+        if (timerEl) timerEl.textContent = elapsed + 's';
+
+        // Simulate progress (cap at 90% until real response arrives)
+        if (progress < 90) {
+            progress += (90 - progress) * 0.08;
+            if (progressBar) progressBar.style.width = Math.round(progress) + '%';
+        }
+
+        // Cycle status messages
+        const msgIdx = Math.min(Math.floor(elapsed / 3), statusMessages.length - 1);
+        if (statusEl) statusEl.textContent = statusMessages[msgIdx];
+    }, 1000);
+
+    try {
+        const res = await fetch('/api/screener');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Gagal menjalankan screener');
+
+        // Complete the progress bar
+        if (progressBar) progressBar.style.width = '100%';
+        const totalTopPicks = (data.scalping?.length || 0) + (data.daytrade?.length || 0) + (data.swing?.length || 0) + (data.bsjp?.length || 0) + (data.bpjp?.length || 0) + (data.longterm?.length || 0);
+        if (statusEl) statusEl.textContent = `✅ Selesai dalam ${elapsed}s — Top ${totalTopPicks} saham rekomendasi berhasil dikurasi`;
+
+        lastScreenerData = data;
+        renderScreenerResults(data);
+
+        // Short delay to show 100% completion
+        await new Promise(r => setTimeout(r, 500));
+        screenerResultsWrapper.classList.remove('hidden');
+    } catch (err) {
+        alert('Kendala Screener: ' + err.message);
+    } finally {
+        clearInterval(timerInterval);
+        screenerLoading.classList.add('hidden');
+        btnTriggerScreener.disabled = false;
+        screenerBtnIcon.classList.remove('animate-spin');
+    }
+});
+
+function renderScreenerResults(data) {
+    function confCell(confidence, label) {
+        const color = confidence >= 75 ? 'text-emerald-400' : confidence >= 55 ? 'text-amber-400' : 'text-orange-400';
+        const barColor = confidence >= 75 ? 'bg-emerald-400' : confidence >= 55 ? 'bg-amber-400' : 'bg-orange-400';
+        const badgeBg = confidence >= 75 ? 'bg-emerald-500/20 text-emerald-400 shadow-sm' : confidence >= 55 ? 'bg-amber-500/20 text-amber-400 shadow-sm' : 'bg-orange-500/20 text-orange-400 shadow-sm';
+        return `
+            <td class="p-3">
+                <div class="flex items-center gap-2">
+                    <span class="${color} font-bold font-mono text-xs">${confidence}%</span>
+                    <div class="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                        <div class="${barColor} h-full rounded-full" style="width:${confidence}%"></div>
+                    </div>
+                </div>
+            </td>
+            <td class="p-3">
+                <span class="text-[10px] px-2 py-0.5 rounded font-semibold shadow-sm ${badgeBg}">${label}</span>
+            </td>
+        `;
+    }
+
+    function getRankBadge(row) {
+        if (row.rank === 1) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold tracking-tight shadow-sm">🥇 #1</span>`;
+        if (row.rank === 2) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-slate-400/20 text-slate-200 font-bold tracking-tight shadow-sm">🥈 #2</span>`;
+        if (row.rank === 3) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-700/20 text-amber-400 font-bold tracking-tight shadow-sm">🥉 #3</span>`;
+        return '';
+    }
+
+    // 1. Scalping (rendered with session support)
+    renderScalpingTable(activeScalpSession || 'sesi1');
+
+    // 2. Daytrade
+    const tbodyDay = document.getElementById('tbody-daytrade');
+    tbodyDay.innerHTML = '';
+    (data.daytrade || []).forEach(row => {
+        const rankBadge = getRankBadge(row);
+        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
+        const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${row.rvolBadge}</span>` : '';
+
+        tbodyDay.innerHTML += `
+            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
+                <td class="p-3 font-mono">
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                        ${rankBadge}
+                    </div>
+                    <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
+                </td>
+                <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
+                <td class="p-3 font-mono font-bold ${parseFloat(row.changePct) >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${parseFloat(row.changePct) >= 0 ? '+' : ''}${row.changePct}%</td>
+                <td class="p-3 font-mono text-slate-300">${row.entryZone}</td>
+                <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetProfit)}</td>
+                <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.stopLoss)}</td>
+                ${confCell(row.confidence, row.label)}
+            </tr>
+        `;
+    });
+    if (!data.daytrade?.length) tbodyDay.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-slate-500 italic">Tidak ada saham lolos filter daytrade ketat saat ini.</td></tr>`;
+
+    // 3. Swing
+    const tbodySwing = document.getElementById('tbody-swing');
+    tbodySwing.innerHTML = '';
+    (data.swing || []).forEach(row => {
+        const rankBadge = getRankBadge(row);
+        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
+        const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${row.rvolBadge}</span>` : '';
+
+        tbodySwing.innerHTML += `
+            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
+                <td class="p-3 font-mono">
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                        ${rankBadge}
+                    </div>
+                    <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
+                </td>
+                <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
+                <td class="p-3 font-mono text-slate-300">${row.areaBuy}</td>
+                <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetPrice1)}</td>
+                <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetPrice2)}</td>
+                <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.cutLoss)}</td>
+                <td class="p-3 font-mono font-bold text-purple-400">${row.riskReward}</td>
+                ${confCell(row.confidence, row.label)}
+            </tr>
+        `;
+    });
+    if (!data.swing?.length) tbodySwing.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-slate-500 italic">Tidak ada saham lolos filter swing ketat saat ini.</td></tr>`;
+
+    // 4. BSJP
+    const tbodyBsjp = document.getElementById('tbody-bsjp');
+    tbodyBsjp.innerHTML = '';
+    (data.bsjp || []).forEach(row => {
+        const rankBadge = getRankBadge(row);
+        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
+        const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${row.rvolBadge}</span>` : '';
+
+        tbodyBsjp.innerHTML += `
+            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
+                <td class="p-3 font-mono">
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                        ${rankBadge}
+                    </div>
+                    <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
+                </td>
+                <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
+                <td class="p-3 font-mono font-semibold ${parseFloat(row.rsi) > 60 ? 'text-amber-400' : 'text-emerald-400'}">${row.rsi}</td>
+                <td class="p-3 font-mono text-slate-300">${row.pullbackFromHigh}%</td>
+                <td class="p-3 text-amber-400 text-xs">${row.beliSore}</td>
+                <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetPagi)}</td>
+                <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.stopLoss)}</td>
+                ${confCell(row.confidence, row.label)}
+            </tr>
+        `;
+    });
+    if (!data.bsjp?.length) tbodyBsjp.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-slate-500 italic">Tidak ada saham lolos filter BSJP ketat saat ini.</td></tr>`;
+
+    // 5. BPJP
+    const tbodyBpjp = document.getElementById('tbody-bpjp');
+    tbodyBpjp.innerHTML = '';
+    (data.bpjp || []).forEach(row => {
+        const rankBadge = getRankBadge(row);
+        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
+        const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${row.rvolBadge}</span>` : '';
+
+        tbodyBpjp.innerHTML += `
+            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
+                <td class="p-3 font-mono">
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                        ${rankBadge}
+                    </div>
+                    <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
+                </td>
+                <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
+                <td class="p-3 font-mono font-semibold text-emerald-400">${row.rsi} <span class="text-[10px] text-cyan-300 font-sans">(${row.rsiStatus || 'Bounce'})</span></td>
+                <td class="p-3 font-mono text-purple-400">${row.adx}</td>
+                <td class="p-3 font-mono text-slate-300">${row.macd}</td>
+                <td class="p-3 text-pink-400 text-xs">${row.entryPagi}</td>
+                <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.target)}</td>
+                <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.stopLoss)}</td>
+                ${confCell(row.confidence, row.label)}
+            </tr>
+        `;
+    });
+    if (!data.bpjp?.length) tbodyBpjp.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500 italic">Tidak ada saham lolos filter BPJP oversold saat ini.</td></tr>`;
+
+    // 6. Jangka Panjang
+    const tbodyLong = document.getElementById('tbody-longterm');
+    tbodyLong.innerHTML = '';
+    (data.longterm || []).forEach(row => {
+        const rankBadge = getRankBadge(row);
+        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
+
+        tbodyLong.innerHTML += `
+            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
+                <td class="p-3 font-mono">
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                        ${rankBadge}
+                    </div>
+                    <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge}</div>
+                </td>
+                <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
+                <td class="p-3 font-mono font-semibold text-amber-400">${row.rsi}</td>
+                <td class="p-3 font-mono text-slate-300">${fmtRp.format(row.ema200)}</td>
+                <td class="p-3 font-mono text-slate-400">${fmtRp.format(row.support)}</td>
+                <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetKonservatif)}</td>
+                <td class="p-3 font-mono font-extrabold text-emerald-300">${fmtRp.format(row.targetAgresif)}</td>
+                <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.cutLoss)}</td>
+                ${confCell(row.confidence, row.label)}
+            </tr>
+        `;
+    });
+    if (!data.longterm?.length) tbodyLong.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500 italic">Tidak ada saham lolos filter jangka panjang saat ini.</td></tr>`;
+}
+
+// Delegated click handler for all screener tables (guarantees clickability regardless of scope)
+['tbody-scalping', 'tbody-daytrade', 'tbody-swing', 'tbody-bsjp', 'tbody-bpjp', 'tbody-longterm'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('click', (e) => {
+        const tr = e.target.closest('tr[data-ticker]');
+        if (tr) {
+            const ticker = tr.getAttribute('data-ticker');
+            if (ticker) executeStockAnalysis(ticker);
+        }
+    });
+});
+
+// Screener Sector & View Limit Event Listeners
+screenerSectorSelect?.addEventListener('change', () => {
+    if (lastScreenerData) renderScreenerResults(lastScreenerData);
+});
+btnViewTop3?.addEventListener('click', () => {
+    screenerViewLimit = 'top3';
+    if (btnViewTop3) btnViewTop3.className = 'view-limit-btn active bg-emerald-500/20 text-emerald-400 shadow-sm text-xs font-bold px-3 py-1 rounded-lg transition shadow-sm';
+    if (btnViewAll) btnViewAll.className = 'view-limit-btn text-slate-400 hover:text-slate-200 text-xs font-bold px-3 py-1 rounded-lg transition';
+    if (lastScreenerData) renderScreenerResults(lastScreenerData);
+});
+btnViewAll?.addEventListener('click', () => {
+    screenerViewLimit = 'all';
+    if (btnViewAll) btnViewAll.className = 'view-limit-btn active bg-emerald-500/20 text-emerald-400 shadow-sm text-xs font-bold px-3 py-1 rounded-lg transition shadow-sm';
+    if (btnViewTop3) btnViewTop3.className = 'view-limit-btn text-slate-400 hover:text-slate-200 text-xs font-bold px-3 py-1 rounded-lg transition';
+    if (lastScreenerData) renderScreenerResults(lastScreenerData);
+});
+
+// Backtest Modal Event Listeners
+const openBacktestModal = () => {
+    if (modalBacktest) {
+        modalBacktest.classList.remove('hidden');
+        modalBacktest.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+    }
+};
+const closeBacktestModal = () => {
+    if (modalBacktest) {
+        modalBacktest.classList.add('hidden');
+        modalBacktest.classList.remove('flex');
+        document.body.style.overflow = 'auto';
+    }
+};
+btnOpenBacktestModal?.addEventListener('click', openBacktestModal);
+btnCloseBacktestModal?.addEventListener('click', closeBacktestModal);
+btnCloseBacktestModalBottom?.addEventListener('click', closeBacktestModal);
+modalBacktest?.addEventListener('click', (e) => {
+    if (e.target === modalBacktest) closeBacktestModal();
+});
