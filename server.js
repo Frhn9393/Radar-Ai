@@ -26,9 +26,16 @@ const PORT = process.env.PORT || 3000;
 
 // Security & performance headers
 app.use(cors());
+// Disable static caching so modifications are immediately visible without hard refresh
+app.use((req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    next();
+});
 app.use(express.static(path.join(__dirname, 'public'), {
-    maxAge: '1h',
-    etag: true
+    maxAge: 0,
+    etag: false
 }));
 app.use(express.json());
 

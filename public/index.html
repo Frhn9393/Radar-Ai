@@ -121,16 +121,16 @@
             -webkit-mask-image: linear-gradient(to right, transparent, black 40px, black calc(100% - 40px), transparent);
         }
 
-        /* Glassmorphism card glow */
+        /* Modern borderless dark surface with soft depth */
         .card-radar {
             background: #0d1424;
-            border: 1px solid #1a2333;
+            box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.45);
             transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .card-radar:hover {
-            border-color: #2b3952;
-            box-shadow: 0 10px 25px -5px rgba(0, 230, 153, 0.05), 0 8px 10px -6px rgba(245, 158, 11, 0.05);
+            background: #111a2e;
+            box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.65), 0 0 20px 0 rgba(0, 230, 153, 0.04);
             transform: translateY(-2px);
         }
 
@@ -142,56 +142,119 @@
         .glow-green {
             box-shadow: 0 0 15px rgba(0, 230, 153, 0.25);
         }
+
+        /* Utility for hiding scrollbars on smooth swipe pills */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Sticky first column (Stock ticker) for mobile horizontal tables */
+        @media (max-width: 768px) {
+            .table-sticky-col th:first-child,
+            .table-sticky-col td:first-child {
+                position: sticky;
+                left: 0;
+                z-index: 20;
+                background-color: #0b101a;
+                box-shadow: 2px 0 8px rgba(0, 0, 0, 0.6);
+            }
+            .table-sticky-col thead th:first-child {
+                background-color: #070b13;
+                z-index: 30;
+            }
+        }
+
+        /* Safe area spacing for mobile devices with home indicator */
+        .safe-pb {
+            padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+        }
+
+        /* Minimum touch target size compliance */
+        .touch-target-44 {
+            min-height: 44px;
+            min-width: 44px;
+        }
     </style>
 </head>
 
 <body class="antialiased min-h-screen flex flex-col">
 
     <!-- ================= 1. HEADER (STOCKRADAR AI) ================= -->
-    <header class="bg-[#090d16] border-b border-[#172033] py-2.5 px-4 md:px-6 sticky top-0 z-50">
-        <div class="max-w-[1550px] mx-auto flex flex-col lg:flex-row items-center justify-between gap-3">
+    <header class="bg-[#090d16] py-2 lg:py-2.5 shadow-md px-3 sm:px-4 md:px-6 sticky top-0 z-50">
+        <div class="max-w-[1550px] mx-auto flex flex-col lg:flex-row items-center justify-between gap-2.5 lg:gap-3">
 
-            <!-- Left: Brand Logo & Subtitle -->
+            <!-- Left / Top Bar: Brand Logo & Mobile Action Bar -->
             <div class="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-start">
-                <div class="flex items-center gap-2.5 cursor-pointer" onclick="window.location.reload()">
+                <div class="flex items-center gap-2 sm:gap-2.5 cursor-pointer flex-shrink-0" onclick="window.location.reload()">
                     <!-- Icon Pulse/Radar -->
                     <div
-                        class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00e699] to-[#059669] flex items-center justify-center shadow-lg shadow-emerald-500/20 text-black">
-                        <svg class="w-6 h-6 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-[#00e699] to-[#059669] flex items-center justify-center shadow-lg shadow-emerald-500/20 text-black">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6">
                             </path>
                         </svg>
                     </div>
                     <div>
                         <div class="flex items-center gap-1.5 leading-none">
-                            <span class="text-xl font-extrabold text-white tracking-tight">STOCKRADAR</span>
+                            <span class="text-lg sm:text-xl font-extrabold text-white tracking-tight">STOCKRADAR</span>
                             <span
-                                class="bg-[#00e699] text-[#052e1f] font-black text-[11px] px-1.5 py-0.5 rounded shadow-sm">AI</span>
+                                class="bg-[#00e699] text-[#052e1f] font-black text-[10px] sm:text-[11px] px-1.5 py-0.5 rounded shadow-sm">AI</span>
                         </div>
-                        <p class="text-[11px] text-slate-400 font-normal mt-1">Radar Berita Realtime, Sentimen NLP &
-                            Screener Saham</p>
+                        <p class="text-[10px] sm:text-[11px] text-slate-400 font-normal mt-0.5 hidden xs:block sm:block">Radar Berita, Sentimen NLP & Screener</p>
                     </div>
                 </div>
 
-                <!-- Mobile menu toggle for small screens -->
-                <button id="btn-mobile-nav" class="lg:hidden text-slate-400 hover:text-white p-2">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 6h16M4 12h16m-7 6h7"></path>
-                    </svg>
-                </button>
+                <!-- Mobile Header Quick Actions (Visible only on mobile/tablet < lg) -->
+                <div class="flex items-center gap-1.5 flex-1 lg:flex-initial justify-end lg:justify-start lg:hidden">
+                    <!-- Mobile Search Pill Trigger (Sleek, prominent, easy to tap) -->
+                    <button id="btn-mobile-search-pill"
+                        class="flex-1 flex items-center gap-2 bg-[#0c1322] hover:bg-[#121c30] text-slate-400 hover:text-white px-3 py-2 rounded-xl text-xs transition cursor-pointer mx-1 min-h-[40px] shadow-sm"
+                        title="Cari Saham IDX">
+                        <svg class="w-4 h-4 text-cyan-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <span class="truncate font-medium text-left">Cari saham...</span>
+                        <span class="ml-auto text-[10px] text-slate-500 font-mono bg-[#162035] px-1.5 py-0.5 rounded hidden xs:inline">BBCA</span>
+                    </button>
+
+                    <!-- Mobile Watchlist Button (Stroke-free) -->
+                    <button id="btn-mobile-watchlist"
+                        class="relative bg-[#0c1322] hover:bg-[#121c30] text-slate-300 p-2 rounded-xl transition min-h-[40px] min-w-[40px] flex items-center justify-center cursor-pointer shadow-sm shrink-0"
+                        title="Lihat Watchlist Saham" aria-label="Buka Watchlist Saham">
+                        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+                        </svg>
+                        <span id="badge-watchlist-mobile"
+                            class="absolute -top-1 -right-1 bg-purple-600 text-white font-bold text-[9px] w-4 h-4 rounded-full flex items-center justify-center ring-2 ring-[#07090e]">10</span>
+                    </button>
+
+                    <!-- Mobile Refresh Button (Stroke-free) -->
+                    <button id="btn-mobile-refresh"
+                        class="bg-[#0c1322] hover:bg-[#121c30] text-slate-300 p-2 rounded-xl transition min-h-[40px] min-w-[40px] flex items-center justify-center cursor-pointer shadow-sm shrink-0"
+                        title="Segarkan Data Realtime" aria-label="Segarkan Data Realtime">
+                        <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
             </div>
 
-            <!-- Center: Navigation Pills -->
+            <!-- Center: Desktop Navigation Pills (Hidden on mobile, pristine on lg) -->
             <nav id="header-nav"
-                class="flex flex-wrap items-center gap-2 bg-[#060910] p-1 rounded-full border border-[#172033] w-full lg:w-auto justify-center">
+                class="hidden lg:flex flex-wrap items-center gap-2 bg-[#060910] p-1 rounded-full shadow-inner w-auto justify-center">
                 <button id="tab-deals"
-                    class="nav-tab active-tab bg-[#101826] border border-[#2b3952] text-white font-semibold px-4 py-1.5 rounded-full text-xs sm:text-sm flex items-center gap-2 transition shadow-inner">
+                    class="nav-tab active-tab bg-[#101826] shadow-sm text-white font-semibold px-4 py-1.5 rounded-full text-xs sm:text-sm flex items-center gap-2 transition shadow-inner cursor-pointer">
                     <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                     <span>Feed Berita & M&A</span>
                 </button>
                 <button id="tab-screener"
-                    class="nav-tab text-slate-400 hover:text-slate-200 border border-transparent font-medium px-4 py-1.5 rounded-full text-xs sm:text-sm flex items-center gap-2 transition">
+                    class="nav-tab text-slate-400 hover:text-slate-200 hover:bg-[#0c121e] font-medium px-4 py-1.5 rounded-full text-xs sm:text-sm flex items-center gap-2 transition cursor-pointer">
                     <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd"
                             d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
@@ -200,32 +263,33 @@
                     <span>Rekomendasi Teknikal, BSJP & BPJP</span>
                 </button>
                 <button id="tab-foreign"
-                    class="nav-tab text-slate-400 hover:text-slate-200 border border-transparent font-medium px-4 py-1.5 rounded-full text-xs sm:text-sm flex items-center gap-2 transition">
+                    class="nav-tab text-slate-400 hover:text-slate-200 hover:bg-[#0c121e] font-medium px-4 py-1.5 rounded-full text-xs sm:text-sm flex items-center gap-2 transition cursor-pointer">
                     <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                     <span>Pelacakan Top Foreign Buy & Sell</span>
-                    <span class="bg-cyan-950/80 border border-cyan-500/50 text-cyan-300 font-extrabold text-[10px] px-1.5 py-0.2 rounded">BARU</span>
+                    <span class="bg-cyan-950/80 text-cyan-300 font-extrabold text-[10px] px-1.5 py-0.5 rounded shadow-sm">BARU</span>
                 </button>
                 <button id="tab-backtest"
-                    class="nav-tab text-slate-400 hover:text-slate-200 border border-transparent font-medium px-4 py-1.5 rounded-full text-xs sm:text-sm flex items-center gap-2 transition">
+                    class="nav-tab text-slate-400 hover:text-slate-200 hover:bg-[#0c121e] font-medium px-4 py-1.5 rounded-full text-xs sm:text-sm flex items-center gap-2 transition cursor-pointer">
                     <svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                     </svg>
                     <span>Backtest Otomatis</span>
-                    <span class="bg-violet-950/80 border border-violet-500/50 text-violet-300 font-extrabold text-[10px] px-1.5 py-0.2 rounded animate-pulse">QUANT</span>
+                    <span class="bg-violet-950/80 text-violet-300 font-extrabold text-[10px] px-1.5 py-0.5 rounded animate-pulse shadow-sm">QUANT</span>
                 </button>
             </nav>
 
-            <!-- Right: Search Bar & Utility Controls -->
-            <div class="flex items-center gap-2.5 w-full lg:w-auto justify-end">
+            <!-- Right: Search Bar & Utility Controls (Desktop: flex; Mobile: expandable full-width) -->
+            <div id="header-right-controls"
+                class="hidden lg:flex items-center gap-2.5 w-full lg:w-auto justify-end pt-2 lg:pt-0 pt-2 lg:pt-0">
 
                 <!-- Quick Search Bar with Dynamic Suggestions Dropdown -->
                 <div class="relative w-full sm:w-64">
                     <div
-                        class="relative flex items-center bg-[#070b13] border border-[#1f2c42] rounded-full px-3 py-1.5 focus-within:border-emerald-500 transition-all duration-200">
+                        class="relative flex items-center bg-[#070b13] rounded-full px-3.5 py-1.5 focus-within:ring-2 focus-within:ring-cyan-500/60 shadow-sm transition-all duration-200">
                         <svg class="w-4 h-4 text-slate-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor"
                             viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -235,7 +299,7 @@
                             placeholder="Ketik kode / nama (e.g. BBCA, Astra)..."
                             class="bg-transparent text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none uppercase w-full font-mono font-semibold"
                             autocomplete="off" spellcheck="false">
-                        <button id="btn-clear-search" class="text-slate-500 hover:text-slate-300 p-0.5 ml-1"
+                        <button id="btn-clear-search" class="text-slate-500 hover:text-slate-300 p-0.5 ml-1 cursor-pointer"
                             title="Hapus pencarian">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -246,21 +310,21 @@
 
                     <!-- Dynamic Autocomplete Dropdown -->
                     <div id="search-suggest-dropdown"
-                        class="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-full sm:w-80 bg-[#090e1a] border border-[#1d2a42] rounded-xl shadow-2xl overflow-hidden z-50 hidden max-h-80 overflow-y-auto backdrop-blur-md">
+                        class="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-full sm:w-80 bg-[#090e1a] rounded-xl shadow-2xl overflow-hidden z-50 hidden max-h-80 overflow-y-auto backdrop-blur-md">
                         <!-- Populated dynamically via JS -->
                     </div>
                 </div>
 
                 <!-- LIVE Indicator Pill -->
                 <div
-                    class="bg-[#052e1f]/80 border border-emerald-500/40 text-emerald-400 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm whitespace-nowrap">
+                    class="bg-[#052e1f]/80 text-emerald-400 shadow-sm text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm whitespace-nowrap">
                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
                     <span>LIVE</span>
                 </div>
 
                 <!-- Sound Alert Toggle -->
                 <button id="btn-toggle-sound" title="Notifikasi Suara: Aktif"
-                    class="bg-[#0b101c] hover:bg-[#131b2c] border border-[#1f2c42] text-slate-300 hover:text-white p-2 rounded-full transition">
+                    class="bg-[#0b101c] hover:bg-[#131b2c] text-slate-300 hover:text-white p-2 rounded-full shadow-sm transition cursor-pointer min-h-[38px] min-w-[38px] flex items-center justify-center">
                     <svg id="icon-sound" class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -271,7 +335,7 @@
 
                 <!-- Watchlist / Bookmark Badge (10) -->
                 <button id="btn-open-watchlist" title="Lihat Watchlist Saham Terdeteksi"
-                    class="relative bg-[#0b101c] hover:bg-[#131b2c] border border-[#1f2c42] text-slate-300 hover:text-white p-2 rounded-full transition">
+                    class="relative bg-[#0b101c] hover:bg-[#131b2c] text-slate-300 hover:text-white p-2 rounded-full transition cursor-pointer min-h-[38px] min-w-[38px] flex items-center justify-center shadow-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
@@ -282,7 +346,7 @@
 
                 <!-- Refresh Button -->
                 <button id="btn-refresh-all" title="Segarkan Data Realtime"
-                    class="bg-[#0b101c] hover:bg-[#131b2c] border border-[#1f2c42] text-slate-300 hover:text-white p-2 rounded-full transition">
+                    class="bg-[#0b101c] hover:bg-[#131b2c] text-slate-300 hover:text-white p-2 rounded-full transition cursor-pointer min-h-[38px] min-w-[38px] flex items-center justify-center shadow-sm">
                     <svg id="icon-refresh" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
@@ -292,7 +356,7 @@
 
                 <!-- Ekspor Button -->
                 <button id="btn-export-data"
-                    class="border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 transition">
+                    class="bg-[#0b101c] hover:bg-emerald-500/15 text-emerald-400 text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap min-h-[38px]">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
@@ -305,16 +369,17 @@
     </header>
 
     <!-- ================= 2. INDEX TICKER BAR ================= -->
-    <div class="bg-[#060a12] border-b border-[#141d2d] py-1.5 overflow-hidden relative flex items-center">
+    <div class="bg-[#060a12] py-1 sm:py-1.5 overflow-hidden relative flex items-center">
         <!-- Stationary Label -->
         <div
-            class="flex-shrink-0 z-20 bg-[#060a12] pl-4 pr-3 py-0.5 flex items-center gap-1.5 text-xs font-extrabold text-emerald-400 border-r border-slate-800 shadow-[5px_0_10px_rgba(6,10,18,1)]">
+            class="flex-shrink-0 z-20 bg-[#060a12] pl-2 sm:pl-4 pr-2 sm:pr-3 py-0.5 flex items-center gap-1 sm:gap-1.5 text-xs font-extrabold text-emerald-400 shadow-[5px_0_10px_rgba(6,10,18,1)]">
             <svg class="w-3.5 h-3.5 animate-pulse text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd"
                     d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
                     clip-rule="evenodd"></path>
             </svg>
-            <span class="tracking-wider">INDEX TICKER:</span>
+            <span class="tracking-wider hidden sm:inline">INDEX TICKER:</span>
+            <span class="tracking-wider sm:hidden">IDX:</span>
         </div>
 
         <!-- Scrolling Ticker Items -->
@@ -384,13 +449,13 @@
     </div>
 
     <!-- ================= 3. SECONDARY CORPORATE NEWS TICKER ================= -->
-    <div class="bg-[#070c16] border-b border-[#131b2a] py-2 overflow-hidden relative flex items-center">
+    <div class="bg-[#070c16] py-1.5 sm:py-2 overflow-hidden relative flex items-center">
         <div class="w-full overflow-hidden ticker-mask px-2">
             <div id="corporate-news-ticker" class="marquee-news-track flex items-center gap-6 text-xs">
                 <!-- Fallback item before live load -->
                 <div class="flex items-center gap-4 text-slate-300">
                     <span
-                        class="bg-[#121c2e] border border-slate-700 text-cyan-400 text-[10px] font-bold px-2 py-0.5 rounded">IDX</span>
+                        class="bg-[#121c2e] text-cyan-400 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">IDX</span>
                     <span>Memuat siaran berita aksi korporasi & rumor pasar terkini...</span>
                 </div>
             </div>
@@ -398,7 +463,7 @@
     </div>
 
     <!-- ================= MAIN DASHBOARD CONTAINER ================= -->
-    <main class="max-w-[1550px] mx-auto p-4 md:p-6 w-full space-y-6 flex-1">
+    <main class="max-w-[1550px] mx-auto p-3 sm:p-4 md:p-6 w-full space-y-4 sm:space-y-6 flex-1 pb-24 lg:pb-8">
 
         <!-- Stream Status & Quick Stats Bar -->
         <div class="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400 px-1">
@@ -422,7 +487,7 @@
             </div>
 
             <button id="btn-toggle-stream"
-                class="bg-[#0d131f] hover:bg-[#152033] border border-slate-700/80 text-slate-300 hover:text-white px-3.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 transition">
+                class="bg-[#0d131f] hover:bg-[#152033] shadow-sm text-slate-300 hover:text-white px-3.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 transition">
                 <svg id="icon-stream-status" class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor"
                     viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -436,27 +501,27 @@
         <section id="section-deals" class="space-y-6">
 
             <!-- Radar Saham Container -->
-            <div class="bg-[#0b101a] border border-[#1a2436] rounded-2xl p-5 md:p-7 shadow-2xl">
+            <div class="bg-[#0b101a] rounded-2xl p-4 sm:p-5 md:p-7 shadow-2xl overflow-hidden">
 
                 <!-- Section Header -->
                 <div
-                    class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-[#172233]">
-                    <div class="flex items-start gap-3.5">
+                    class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 sm:pb-6 ">
+                    <div class="flex items-start gap-3 sm:gap-3.5">
                         <!-- Radar Target Icon -->
                         <div
-                            class="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 flex-shrink-0 mt-0.5">
-                            <svg class="w-6 h-6 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400 flex-shrink-0 mt-0.5">
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <circle cx="12" cy="12" r="9" stroke-width="2"></circle>
                                 <circle cx="12" cy="12" r="5" stroke-width="2"></circle>
                                 <circle cx="12" cy="12" r="1.5" fill="currentColor"></circle>
                             </svg>
                         </div>
                         <div>
-                            <div class="flex flex-wrap items-center gap-2.5">
-                                <h2 class="text-xl md:text-2xl font-black text-white tracking-wide">RADAR SAHAM AKUISISI
+                            <div class="flex flex-wrap items-center gap-2">
+                                <h2 class="text-lg sm:text-xl md:text-2xl font-black text-white tracking-wide">RADAR SAHAM AKUISISI
                                     & M&A</h2>
                                 <span id="badge-total-deals"
-                                    class="bg-amber-950/80 border border-amber-500/60 text-amber-400 font-extrabold text-[11px] px-2.5 py-0.5 rounded-md tracking-wider">32
+                                    class="bg-amber-950/80 text-amber-400 shadow-sm font-extrabold text-[10px] sm:text-[11px] px-2 py-0.5 rounded-md tracking-wider">32
                                     DEAL TERDETEKSI</span>
                             </div>
                             <p class="text-xs sm:text-sm text-slate-400 font-normal mt-1">Pelacak otomatis saham emiten
@@ -464,30 +529,30 @@
                         </div>
                     </div>
 
-                    <!-- Category Filter Tabs -->
+                    <!-- Category Filter Tabs (Horizontal scroll on mobile) -->
                     <div
-                        class="flex flex-wrap items-center gap-1.5 bg-[#070b13] p-1 rounded-full border border-[#182335]">
+                        class="flex items-center gap-1.5 bg-[#070b13] p-1 rounded-xl sm:rounded-full overflow-x-auto shadow-inner no-scrollbar max-w-full">
                         <button data-filter="all"
-                            class="filter-btn active bg-amber-500 text-black font-extrabold text-xs px-4 py-1.5 rounded-full transition shadow-md">
+                            class="filter-btn active bg-amber-500 text-black font-extrabold text-xs px-3.5 sm:px-4 py-1.5 rounded-full transition shadow-md whitespace-nowrap min-h-[36px] flex items-center justify-center cursor-pointer">
                             Semua (<span id="count-filter-all">32</span>)
                         </button>
                         <button data-filter="resmi"
-                            class="filter-btn text-slate-300 hover:text-white font-semibold text-xs px-3.5 py-1.5 rounded-full transition">
+                            class="filter-btn text-slate-300 hover:text-white font-semibold text-xs px-3 sm:px-3.5 py-1.5 rounded-full transition whitespace-nowrap min-h-[36px] flex items-center justify-center cursor-pointer">
                             Resmi
                         </button>
                         <button data-filter="negosiasi"
-                            class="filter-btn text-slate-300 hover:text-white font-semibold text-xs px-3.5 py-1.5 rounded-full transition">
+                            class="filter-btn text-slate-300 hover:text-white font-semibold text-xs px-3 sm:px-3.5 py-1.5 rounded-full transition whitespace-nowrap min-h-[36px] flex items-center justify-center cursor-pointer">
                             Negosiasi
                         </button>
                         <button data-filter="rumor"
-                            class="filter-btn text-slate-300 hover:text-white font-semibold text-xs px-3.5 py-1.5 rounded-full transition">
+                            class="filter-btn text-slate-300 hover:text-white font-semibold text-xs px-3 sm:px-3.5 py-1.5 rounded-full transition whitespace-nowrap min-h-[36px] flex items-center justify-center cursor-pointer">
                             Rumor / Penjajakan
                         </button>
                     </div>
                 </div>
 
                 <!-- Deal Cards Grid (3 Columns) -->
-                <div id="deals-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 pt-6">
+                <div id="deals-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 pt-4 sm:pt-6">
                     <!-- Populated dynamically via app.js -->
                 </div>
 
@@ -506,9 +571,9 @@
             </div>
 
             <!-- Live Market News Feed (Below M&A Radar) -->
-            <div class="bg-[#0b101a] border border-[#1a2436] rounded-2xl p-5 md:p-7 shadow-xl space-y-5">
+            <div class="bg-[#0b101a] rounded-2xl p-4 sm:p-5 md:p-7 shadow-xl space-y-5 overflow-hidden">
                 <div
-                    class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#172233]">
+                    class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 ">
                     <div>
                         <h3 class="text-lg font-bold text-white flex items-center gap-2">
                             <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
@@ -520,7 +585,7 @@
 
                     <div class="flex items-center gap-2.5 w-full sm:w-auto">
                         <select id="news-category-select"
-                            class="bg-[#070b13] border border-[#1f2c42] text-xs rounded-lg px-3 py-1.5 text-slate-300 focus:outline-none focus:border-emerald-500 font-medium">
+                            class="bg-[#070b13] text-xs rounded-lg px-3 py-1.5 text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/60 shadow-sm font-medium">
                             <option value="all">Semua Kategori</option>
                             <option value="IHSG">IHSG & Indeks</option>
                             <option value="Aksi Korporasi">Aksi Korporasi & M&A</option>
@@ -531,7 +596,7 @@
                             <option value="Makro">Makro Ekonomi</option>
                         </select>
                         <button id="btn-refresh-feed"
-                            class="bg-[#0d131f] hover:bg-[#152033] border border-slate-700 text-slate-300 hover:text-white p-2 rounded-lg transition"
+                            class="bg-[#0d131f] hover:bg-[#152033] text-slate-300 shadow-sm hover:text-white p-2 rounded-lg transition"
                             title="Refresh Berita">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -550,7 +615,7 @@
                 <!-- Show more button -->
                 <div id="news-more-wrapper" class="text-center pt-2">
                     <button id="btn-toggle-news-more"
-                        class="bg-[#0f1726] hover:bg-[#152238] border border-slate-700 text-xs font-bold text-slate-200 px-6 py-2.5 rounded-full transition inline-flex items-center gap-2">
+                        class="bg-[#0f1726] hover:bg-[#152238] shadow-md text-xs font-bold text-slate-200 px-6 py-2.5 rounded-full transition inline-flex items-center gap-2">
                         <span>Tampilkan Lebih Banyak Berita</span>
                         <svg class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor"
                             viewBox="0 0 24 24">
@@ -568,8 +633,8 @@
 
             <!-- Screener Control Card -->
             <div
-                class="bg-[#0b101a] border border-[#1a2436] p-6 rounded-2xl shadow-xl space-y-4">
-                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 border-b border-[#172233]">
+                class="bg-[#0b101a] p-6 rounded-2xl shadow-xl space-y-4">
+                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 ">
                     <div>
                         <div class="flex flex-wrap items-center gap-2.5">
                             <h2 class="text-xl md:text-2xl font-black text-white flex items-center gap-2">
@@ -580,7 +645,7 @@
                                 </svg>
                                 SCREENER SAHAM PROFESIONAL (BACKTEST TERUJI)
                             </h2>
-                            <span class="bg-emerald-950/80 border border-emerald-500/50 text-emerald-400 font-extrabold text-[11px] px-2.5 py-0.5 rounded-md tracking-wide">
+                            <span class="bg-emerald-950/80 text-emerald-400 shadow-sm font-extrabold text-[11px] px-2.5 py-0.5 rounded-md tracking-wide">
                                 WIN RATE 71% - 82% 🎯
                             </span>
                         </div>
@@ -589,9 +654,9 @@
                         </p>
                     </div>
 
-                    <div class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
                         <button id="btn-open-backtest-modal"
-                            class="bg-[#101929] hover:bg-[#18253d] border border-cyan-500/40 hover:border-cyan-400 text-cyan-300 hover:text-white font-bold text-xs py-2.5 px-4 rounded-xl transition flex items-center gap-2 shadow-sm">
+                            class="bg-[#101929] hover:bg-[#18253d] text-cyan-300 shadow-sm hover:text-white font-bold text-xs py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-2 shadow-sm min-h-[44px] cursor-pointer">
                             <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
@@ -600,7 +665,7 @@
                         </button>
 
                         <button id="btn-trigger-screener"
-                            class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-black font-extrabold text-sm py-2.5 px-6 rounded-xl transition shadow-lg shadow-emerald-500/20 flex items-center gap-2">
+                            class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-black font-extrabold text-sm py-2.5 px-6 rounded-xl transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 min-h-[44px] cursor-pointer">
                             <svg id="screener-btn-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M13 10V3L4 14h7v7l9-11h-7z"></path>
@@ -618,7 +683,7 @@
                             Filter Sektor:
                         </span>
                         <select id="screener-sector-select"
-                            class="bg-[#070b13] border border-[#1f2c42] text-xs rounded-lg px-3 py-1.5 text-slate-300 focus:outline-none focus:border-emerald-500 font-medium">
+                            class="bg-[#070b13] shadow-sm text-xs rounded-lg px-3 py-1.5 text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/60 font-medium">
                             <option value="all">Semua Sektor (80+ Emiten Terpilih)</option>
                             <option value="Financials">Perbankan & Finansial (BBCA, BBRI, BMRI, dkk)</option>
                             <option value="Energy">Energi & Komoditas Batubara (ADRO, PTBA, MEDC, dkk)</option>
@@ -631,14 +696,14 @@
                     </div>
 
                     <!-- View Limit Mode -->
-                    <div class="flex items-center gap-1.5 self-end sm:self-auto bg-[#070b13] p-1 rounded-xl border border-[#1c293d]">
+                    <div class="flex items-center gap-1.5 self-end sm:self-auto bg-[#070b13] p-1 rounded-xl shadow-inner">
                         <span class="text-slate-500 px-2 text-[11px] font-medium">Tampilan:</span>
                         <button id="btn-view-top3"
-                            class="view-limit-btn active bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-bold px-3 py-1 rounded-lg transition shadow-sm">
+                            class="view-limit-btn active bg-emerald-500/20 text-emerald-400 shadow-sm text-xs font-bold px-3 py-1 rounded-lg transition shadow-sm">
                             Top 3 Rekomendasi
                         </button>
                         <button id="btn-view-all"
-                            class="view-limit-btn text-slate-400 hover:text-slate-200 border border-transparent text-xs font-bold px-3 py-1 rounded-lg transition">
+                            class="view-limit-btn text-slate-400 hover:text-slate-200 text-xs font-bold px-3 py-1 rounded-lg transition">
                             Semua Lolos (Top 10)
                         </button>
                     </div>
@@ -647,7 +712,7 @@
 
             <!-- Screener Loading State -->
             <div id="screener-loading"
-                class="hidden bg-[#0b101a] border border-[#1a2436] p-10 rounded-2xl text-center space-y-5 shadow-xl">
+                class="hidden bg-[#0b101a] p-10 rounded-2xl text-center space-y-5 shadow-xl">
                 <!-- Spinner ring -->
                 <div class="relative w-20 h-20 mx-auto">
                     <div class="absolute inset-0 border-4 border-emerald-500/10 rounded-full"></div>
@@ -680,38 +745,42 @@
             <div id="screener-results-wrapper" class="hidden space-y-6">
 
                 <!-- 1. Scalping Table (Sesi 1 & Sesi 2) -->
-                <div class="bg-[#0b101a] rounded-2xl border border-[#1a2436] overflow-hidden shadow-lg">
+                <div class="bg-[#0b101a] rounded-2xl overflow-hidden shadow-xl">
                     <div
-                        class="bg-[#0e1626] p-4 border-b border-[#1a2436] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        class="bg-[#0e1626] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div class="flex flex-wrap items-center gap-3">
                             <h3 class="font-bold text-white text-base flex items-center gap-2">
                                 <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></span>
                                 <span>Scalping Intraday</span>
                                 <span
-                                    class="bg-cyan-950/80 border border-cyan-800/60 text-cyan-400 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">TOP
+                                    class="bg-cyan-950/80  text-cyan-400 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">TOP
                                     3 PILIHAN</span>
                             </h3>
                             <!-- Sesi 1 & Sesi 2 Toggle Buttons -->
-                            <div class="flex items-center bg-[#070b13] p-1 rounded-xl border border-[#1d293d]">
+                            <div class="flex items-center bg-[#070b13] p-1 rounded-xl shadow-inner">
                                 <button id="btn-scalp-sesi1"
-                                    class="scalp-sesi-btn active bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-bold px-3 py-1 rounded-lg transition flex items-center gap-1.5 shadow-sm">
+                                    class="scalp-sesi-btn active bg-emerald-500/20 text-emerald-400 shadow-sm text-xs font-bold px-3 py-1 rounded-lg transition flex items-center gap-1.5 shadow-sm">
                                     <span>🌅 Sesi 1 (Pagi 09:00 - 11:30)</span>
                                 </button>
                                 <button id="btn-scalp-sesi2"
-                                    class="scalp-sesi-btn text-slate-400 hover:text-slate-200 border border-transparent text-xs font-bold px-3 py-1 rounded-lg transition flex items-center gap-1.5 ml-1">
+                                    class="scalp-sesi-btn text-slate-400 hover:text-slate-200 text-xs font-bold px-3 py-1 rounded-lg transition flex items-center gap-1.5 ml-1">
                                     <span>🌇 Sesi 2 (Siang 13:30 - 15:50)</span>
                                 </button>
                             </div>
                         </div>
                         <div class="text-xs text-slate-400 flex items-center">
                             <span id="scalp-target-info"
-                                class="bg-[#070c14] border border-[#1c293d] px-2.5 py-1 rounded-lg text-cyan-400 font-mono font-semibold">Target
+                                class="bg-[#070c14] px-2.5 py-1 shadow-inner rounded-lg text-cyan-400 font-mono font-semibold">Target
                                 Gain: 1.5% - 2.5% | Jam: 09:00 - 11:30 WIB</span>
                         </div>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
-                            <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase border-b border-[#1a2436]">
+                        <div class="text-[10px] text-slate-400 sm:hidden px-3 py-1.5 bg-[#070b13]  flex items-center justify-between">
+                            <span class="flex items-center gap-1"><svg class="w-3 h-3 text-cyan-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg> Geser ke kanan untuk rincian</span>
+                            <span class="text-cyan-400 font-mono text-[9px] bg-cyan-950/80 px-1.5 py-0.5 rounded ">KODE TERKUNCI</span>
+                        </div>
+                        <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap table-sticky-col">
+                            <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase ">
                                 <tr>
                                     <th class="p-3">Saham</th>
                                     <th class="p-3">Harga</th>
@@ -731,20 +800,24 @@
                 </div>
 
                 <!-- 2. Daytrade Table -->
-                <div class="bg-[#0b101a] rounded-2xl border border-[#1a2436] overflow-hidden shadow-lg">
-                    <div class="bg-[#0e1626] p-4 border-b border-[#1a2436] flex items-center justify-between">
+                <div class="bg-[#0b101a] rounded-2xl overflow-hidden shadow-xl">
+                    <div class="bg-[#0e1626] p-4 flex items-center justify-between">
                         <h3 class="font-bold text-white text-base flex items-center gap-2">
                             <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
                             <span>Daytrade (Momentum Bullish)</span>
                             <span
-                                class="bg-emerald-950/80 border border-emerald-800/60 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">TOP
+                                class="bg-emerald-950/80  text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">TOP
                                 3 PILIHAN</span>
                         </h3>
                         <span class="text-xs text-slate-400">Target Gain ~3% | Stop Loss ~1.5%</span>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
-                            <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase border-b border-[#1a2436]">
+                        <div class="text-[10px] text-slate-400 sm:hidden px-3 py-1.5 bg-[#070b13]  flex items-center justify-between">
+                            <span class="flex items-center gap-1"><svg class="w-3 h-3 text-cyan-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg> Geser ke kanan untuk rincian</span>
+                            <span class="text-cyan-400 font-mono text-[9px] bg-cyan-950/80 px-1.5 py-0.5 rounded ">KODE TERKUNCI</span>
+                        </div>
+                        <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap table-sticky-col">
+                            <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase ">
                                 <tr>
                                     <th class="p-3">Saham</th>
                                     <th class="p-3">Harga</th>
@@ -762,20 +835,24 @@
                 </div>
 
                 <!-- 3. Swing Table -->
-                <div class="bg-[#0b101a] rounded-2xl border border-[#1a2436] overflow-hidden shadow-lg">
-                    <div class="bg-[#0e1626] p-4 border-b border-[#1a2436] flex items-center justify-between">
+                <div class="bg-[#0b101a] rounded-2xl overflow-hidden shadow-xl">
+                    <div class="bg-[#0e1626] p-4 flex items-center justify-between">
                         <h3 class="font-bold text-white text-base flex items-center gap-2">
                             <span class="w-2.5 h-2.5 rounded-full bg-purple-400"></span>
                             <span>Swing Trade (Multi-Day Breakout)</span>
                             <span
-                                class="bg-purple-950/80 border border-purple-800/60 text-purple-400 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">TOP
+                                class="bg-purple-950/80  text-purple-400 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">TOP
                                 3 PILIHAN</span>
                         </h3>
                         <span class="text-xs text-slate-400">Risk : Reward 1:3</span>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
-                            <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase border-b border-[#1a2436]">
+                        <div class="text-[10px] text-slate-400 sm:hidden px-3 py-1.5 bg-[#070b13]  flex items-center justify-between">
+                            <span class="flex items-center gap-1"><svg class="w-3 h-3 text-cyan-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg> Geser ke kanan untuk rincian</span>
+                            <span class="text-cyan-400 font-mono text-[9px] bg-cyan-950/80 px-1.5 py-0.5 rounded ">KODE TERKUNCI</span>
+                        </div>
+                        <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap table-sticky-col">
+                            <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase ">
                                 <tr>
                                     <th class="p-3">Saham</th>
                                     <th class="p-3">Harga</th>
@@ -794,20 +871,24 @@
                 </div>
 
                 <!-- 4. BSJP Table -->
-                <div class="bg-[#0b101a] rounded-2xl border border-[#1a2436] overflow-hidden shadow-lg">
-                    <div class="bg-[#0e1626] p-4 border-b border-[#1a2436] flex items-center justify-between">
+                <div class="bg-[#0b101a] rounded-2xl overflow-hidden shadow-xl">
+                    <div class="bg-[#0e1626] p-4 flex items-center justify-between">
                         <h3 class="font-bold text-white text-base flex items-center gap-2">
                             <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
                             <span>Beli Sore Jual Pagi (BSJP)</span>
                             <span
-                                class="bg-amber-950/80 border border-amber-800/60 text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">TOP
+                                class="bg-amber-950/80  text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">TOP
                                 3 PILIHAN</span>
                         </h3>
                         <span class="text-xs text-slate-400">Akumulasi Sesi II (14:30 - 15:00)</span>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
-                            <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase border-b border-[#1a2436]">
+                        <div class="text-[10px] text-slate-400 sm:hidden px-3 py-1.5 bg-[#070b13]  flex items-center justify-between">
+                            <span class="flex items-center gap-1"><svg class="w-3 h-3 text-cyan-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg> Geser ke kanan untuk rincian</span>
+                            <span class="text-cyan-400 font-mono text-[9px] bg-cyan-950/80 px-1.5 py-0.5 rounded ">KODE TERKUNCI</span>
+                        </div>
+                        <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap table-sticky-col">
+                            <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase ">
                                 <tr>
                                     <th class="p-3">Saham</th>
                                     <th class="p-3">Harga</th>
@@ -826,20 +907,24 @@
                 </div>
 
                 <!-- 5. BPJP Table -->
-                <div class="bg-[#0b101a] rounded-2xl border border-[#1a2436] overflow-hidden shadow-lg">
-                    <div class="bg-[#0e1626] p-4 border-b border-[#1a2436] flex items-center justify-between">
+                <div class="bg-[#0b101a] rounded-2xl overflow-hidden shadow-xl">
+                    <div class="bg-[#0e1626] p-4 flex items-center justify-between">
                         <h3 class="font-bold text-white text-base flex items-center gap-2">
                             <span class="w-2.5 h-2.5 rounded-full bg-pink-400"></span>
-                            <span>Beli Pagi Jual Pagi (BPJP) — Morning Momentum & Rebound</span>
+                            <span>Beli Pagi Jual Pagi (BPJP): Morning Momentum & Rebound</span>
                             <span
-                                class="bg-pink-950/80 border border-pink-800/60 text-pink-400 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">TOP
+                                class="bg-pink-950/80  text-pink-400 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">TOP
                                 3 PILIHAN</span>
                         </h3>
                         <span class="text-xs text-slate-400">Entry Pukul 09:00 - 09:30 WIB</span>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
-                            <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase border-b border-[#1a2436]">
+                        <div class="text-[10px] text-slate-400 sm:hidden px-3 py-1.5 bg-[#070b13]  flex items-center justify-between">
+                            <span class="flex items-center gap-1"><svg class="w-3 h-3 text-cyan-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg> Geser ke kanan untuk rincian</span>
+                            <span class="text-cyan-400 font-mono text-[9px] bg-cyan-950/80 px-1.5 py-0.5 rounded ">KODE TERKUNCI</span>
+                        </div>
+                        <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap table-sticky-col">
+                            <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase ">
                                 <tr>
                                     <th class="p-3">Saham</th>
                                     <th class="p-3">Harga</th>
@@ -859,20 +944,24 @@
                 </div>
 
                 <!-- 6. Jangka Panjang Table -->
-                <div class="bg-[#0b101a] rounded-2xl border border-[#1a2436] overflow-hidden shadow-lg">
-                    <div class="bg-[#0e1626] p-4 border-b border-[#1a2436] flex items-center justify-between">
+                <div class="bg-[#0b101a] rounded-2xl overflow-hidden shadow-xl">
+                    <div class="bg-[#0e1626] p-4 flex items-center justify-between">
                         <h3 class="font-bold text-white text-base flex items-center gap-2">
                             <span class="w-2.5 h-2.5 rounded-full bg-blue-400"></span>
                             <span>Investasi Jangka Panjang (Golden Alignment)</span>
                             <span
-                                class="bg-blue-950/80 border border-blue-800/60 text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">TOP
+                                class="bg-blue-950/80  text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">TOP
                                 3 PILIHAN</span>
                         </h3>
                         <span class="text-xs text-slate-400">Horizon 6 - 12 Bulan</span>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
-                            <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase border-b border-[#1a2436]">
+                        <div class="text-[10px] text-slate-400 sm:hidden px-3 py-1.5 bg-[#070b13]  flex items-center justify-between">
+                            <span class="flex items-center gap-1"><svg class="w-3 h-3 text-cyan-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg> Geser ke kanan untuk rincian</span>
+                            <span class="text-cyan-400 font-mono text-[9px] bg-cyan-950/80 px-1.5 py-0.5 rounded ">KODE TERKUNCI</span>
+                        </div>
+                        <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap table-sticky-col">
+                            <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase ">
                                 <tr>
                                     <th class="p-3">Saham</th>
                                     <th class="p-3">Harga</th>
@@ -899,8 +988,8 @@
         <section id="section-foreign" class="hidden space-y-6">
 
             <!-- Control & Header Card -->
-            <div class="bg-[#0b101a] border border-[#1a2436] p-6 rounded-2xl shadow-xl space-y-4">
-                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 border-b border-[#172233]">
+            <div class="bg-[#0b101a] p-6 rounded-2xl shadow-xl space-y-4">
+                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 ">
                     <div>
                         <div class="flex flex-wrap items-center gap-2.5">
                             <h2 class="text-xl md:text-2xl font-black text-white flex items-center gap-2">
@@ -910,7 +999,7 @@
                                 </svg>
                                 <span>PELACAKAN TOP FOREIGN BUY & SELL</span>
                             </h2>
-                            <span class="bg-cyan-950/80 border border-cyan-500/50 text-cyan-300 font-extrabold text-[11px] px-2.5 py-0.5 rounded-md tracking-wide">
+                            <span class="bg-cyan-950/80 text-cyan-300 font-extrabold text-[11px] px-2.5 py-0.5 rounded-md tracking-wide shadow-sm">
                                 INSTITUTIONAL QUANT FLOW 🌐
                             </span>
                         </div>
@@ -932,75 +1021,75 @@
                 </div>
 
                 <!-- Macro Market Foreign Summary Cards -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 pt-1">
-                    <div class="bg-[#070c14] border border-[#172233] p-4 rounded-xl flex items-center justify-between">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5 pt-1">
+                    <div class="bg-[#070c14] p-3 sm:p-4 rounded-xl shadow-md flex items-center justify-between">
                         <div>
-                            <span class="text-[11px] text-slate-400 block mb-0.5">Net Foreign Flow IHSG (1D)</span>
-                            <span id="foreign-macro-netval" class="text-lg font-black font-mono text-emerald-400">Memuat...</span>
+                            <span class="text-[10px] sm:text-[11px] text-slate-400 block mb-0.5">Net Foreign (1D)</span>
+                            <span id="foreign-macro-netval" class="text-base sm:text-lg font-black font-mono text-emerald-400">Memuat...</span>
                         </div>
-                        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-lg">
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-emerald-500/10  flex items-center justify-center text-emerald-400 text-base sm:text-lg">
                             🏦
                         </div>
                     </div>
-                    <div class="bg-[#070c14] border border-[#172233] p-4 rounded-xl flex items-center justify-between">
+                    <div class="bg-[#070c14] p-3 sm:p-4 rounded-xl shadow-md flex items-center justify-between">
                         <div>
-                            <span class="text-[11px] text-slate-400 block mb-0.5">Partisipasi Asing di Bursa</span>
-                            <span id="foreign-macro-participation" class="text-lg font-black font-mono text-cyan-300">Memuat...</span>
+                            <span class="text-[10px] sm:text-[11px] text-slate-400 block mb-0.5">Partisipasi Asing</span>
+                            <span id="foreign-macro-participation" class="text-base sm:text-lg font-black font-mono text-cyan-300">Memuat...</span>
                         </div>
-                        <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-lg">
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-cyan-500/10  flex items-center justify-center text-cyan-400 text-base sm:text-lg">
                             📊
                         </div>
                     </div>
-                    <div class="bg-[#070c14] border border-[#172233] p-4 rounded-xl flex items-center justify-between">
+                    <div class="bg-[#070c14] p-3 sm:p-4 rounded-xl shadow-md flex items-center justify-between">
                         <div>
-                            <span class="text-[11px] text-slate-400 block mb-0.5">Sentimen Pasar Asing</span>
-                            <span id="foreign-macro-sentiment" class="text-xs font-bold text-emerald-400">Memuat...</span>
+                            <span class="text-[10px] sm:text-[11px] text-slate-400 block mb-0.5">Sentimen Pasar</span>
+                            <span id="foreign-macro-sentiment" class="text-xs sm:text-xs font-bold text-emerald-400">Memuat...</span>
                         </div>
-                        <div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 text-lg">
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-purple-500/10  flex items-center justify-center text-purple-400 text-base sm:text-lg">
                             🌐
                         </div>
                     </div>
-                    <div class="bg-[#070c14] border border-[#172233] p-4 rounded-xl flex items-center justify-between">
+                    <div class="bg-[#070c14] p-3 sm:p-4 rounded-xl shadow-md flex items-center justify-between">
                         <div>
-                            <span class="text-[11px] text-slate-400 block mb-0.5">Emiten Likuid Terlacak</span>
-                            <span id="foreign-macro-tracked" class="text-lg font-black font-mono text-white">Memuat...</span>
+                            <span class="text-[10px] sm:text-[11px] text-slate-400 block mb-0.5">Emiten Terlacak</span>
+                            <span id="foreign-macro-tracked" class="text-base sm:text-lg font-black font-mono text-white">Memuat...</span>
                         </div>
-                        <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-lg">
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-500/10  flex items-center justify-center text-amber-400 text-base sm:text-lg">
                             🎯
                         </div>
                     </div>
                 </div>
 
                 <!-- Secondary Sub-Menu & Filter Bar -->
-                <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 pt-2 border-t border-[#172233] text-xs">
-                    <!-- Sub-menu Nav Pills -->
-                    <div class="flex flex-wrap items-center gap-2">
+                <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 pt-2 text-xs">
+                    <!-- Sub-menu Nav Pills (Horizontal scroll on mobile) -->
+                    <div class="flex items-center gap-2 overflow-x-auto no-scrollbar max-w-full py-1">
                         <button id="btn-foreign-daily"
-                            class="foreign-sub-btn active bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-xs font-bold px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 shadow-sm cursor-pointer">
+                            class="foreign-sub-btn active bg-cyan-500/20 text-cyan-300 shadow-sm text-xs font-bold px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 shadow-sm cursor-pointer whitespace-nowrap min-h-[36px]">
                             <span>🌅 Harian (Daily 1D)</span>
                         </button>
                         <button id="btn-foreign-weekly"
-                            class="foreign-sub-btn text-slate-400 hover:text-slate-200 border border-transparent text-xs font-bold px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer">
+                            class="foreign-sub-btn text-slate-400 hover:text-slate-200 text-xs font-bold px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap min-h-[36px]">
                             <span>📅 Mingguan (Weekly 5D)</span>
                         </button>
                         <button id="btn-foreign-monthly"
-                            class="foreign-sub-btn text-slate-400 hover:text-slate-200 border border-transparent text-xs font-bold px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer">
+                            class="foreign-sub-btn text-slate-400 hover:text-slate-200 text-xs font-bold px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap min-h-[36px]">
                             <span>🗓️ Bulanan (Monthly 20D)</span>
                         </button>
                         <button id="btn-foreign-streak"
-                            class="foreign-sub-btn text-amber-400 hover:text-amber-300 border border-amber-500/30 bg-amber-950/40 text-xs font-bold px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer">
-                            <span>🔥 Streak Pembelian Emiten</span>
+                            class="foreign-sub-btn text-amber-400 hover:text-amber-300  bg-amber-950/40 text-xs font-bold px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap min-h-[36px]">
+                            <span>🔥 Streak Pembelian</span>
                             <span class="bg-amber-500 text-black text-[10px] font-black px-1.5 rounded-full" id="badge-streak-count">0</span>
                         </button>
                     </div>
 
                     <!-- Search & Sector Filter -->
-                    <div class="flex flex-wrap items-center gap-2">
+                    <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full md:w-auto">
                         <input type="text" id="foreign-search-input"
                             placeholder="Cari kode saham..."
-                            class="bg-[#070b13] border border-[#1f2c42] rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 uppercase font-mono font-semibold w-36 sm:w-44">
+                            class="bg-[#070b13] shadow-sm rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/60 uppercase font-mono font-semibold flex-1 sm:w-44 min-h-[36px]">
                         <select id="foreign-sector-select"
-                            class="bg-[#070b13] border border-[#1f2c42] text-xs rounded-lg px-3 py-1.5 text-slate-300 focus:outline-none focus:border-cyan-500 font-medium">
+                            class="bg-[#070b13] shadow-sm text-xs rounded-lg px-3 py-1.5 text-slate-300 focus:outline-none focus:ring-2 focus:ring-cyan-500/60 font-medium flex-1 sm:w-auto min-h-[36px]">
                             <option value="all">Semua Sektor</option>
                             <option value="Finansial">Perbankan / Finansial</option>
                             <option value="Energi">Energi & Batubara</option>
@@ -1013,7 +1102,7 @@
             </div>
 
             <!-- Loading State for Foreign Flow -->
-            <div id="foreign-loading" class="hidden bg-[#0b101a] border border-[#1a2436] p-10 rounded-2xl text-center space-y-4 shadow-xl">
+            <div id="foreign-loading" class="hidden bg-[#0b101a] p-10 rounded-2xl text-center space-y-4 shadow-xl">
                 <div class="relative w-16 h-16 mx-auto">
                     <div class="absolute inset-0 border-4 border-cyan-500/10 rounded-full"></div>
                     <div class="absolute inset-0 border-4 border-transparent border-t-cyan-400 rounded-full animate-spin"></div>
@@ -1028,17 +1117,21 @@
             <div id="view-foreign-daily" class="space-y-6">
                 <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
                     <!-- Top Foreign Buy -->
-                    <div class="bg-[#0b101a] rounded-2xl border border-[#1a2436] overflow-hidden shadow-lg flex flex-col justify-between">
-                        <div class="bg-[#0e1626] p-4 border-b border-[#1a2436] flex items-center justify-between">
+                    <div class="bg-[#0b101a] rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between">
+                        <div class="bg-[#0e1626] p-4 flex items-center justify-between">
                             <h3 class="font-bold text-white text-base flex items-center gap-2">
                                 <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
                                 <span>Top Foreign Net Buy (Akumulasi Harian)</span>
                             </h3>
-                            <span class="text-xs text-emerald-400 font-mono font-bold bg-emerald-950/80 border border-emerald-800/60 px-2 py-0.5 rounded">NET INFLOW 🟢</span>
+                            <span class="text-xs text-emerald-400 font-mono font-bold bg-emerald-950/80  px-2 py-0.5 rounded">NET INFLOW 🟢</span>
                         </div>
                         <div class="overflow-x-auto flex-1">
-                            <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
-                                <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase border-b border-[#1a2436]">
+                            <div class="text-[10px] text-slate-400 sm:hidden px-3 py-1.5 bg-[#070b13]  flex items-center justify-between">
+                                <span class="flex items-center gap-1"><svg class="w-3 h-3 text-emerald-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg> Geser ke kanan untuk rincian</span>
+                                <span class="text-emerald-400 font-mono text-[9px] bg-emerald-950/80 px-1.5 py-0.5 rounded ">KODE TERKUNCI</span>
+                            </div>
+                            <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap table-sticky-col">
+                                <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase ">
                                     <tr>
                                         <th class="p-3">Rank / Saham</th>
                                         <th class="p-3">Harga</th>
@@ -1055,17 +1148,21 @@
                     </div>
 
                     <!-- Top Foreign Sell -->
-                    <div class="bg-[#0b101a] rounded-2xl border border-[#1a2436] overflow-hidden shadow-lg flex flex-col justify-between">
-                        <div class="bg-[#0e1626] p-4 border-b border-[#1a2436] flex items-center justify-between">
+                    <div class="bg-[#0b101a] rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between">
+                        <div class="bg-[#0e1626] p-4 flex items-center justify-between">
                             <h3 class="font-bold text-white text-base flex items-center gap-2">
                                 <span class="w-2.5 h-2.5 rounded-full bg-rose-400 animate-pulse"></span>
                                 <span>Top Foreign Net Sell (Distribusi Harian)</span>
                             </h3>
-                            <span class="text-xs text-rose-400 font-mono font-bold bg-rose-950/80 border border-rose-800/60 px-2 py-0.5 rounded">NET OUTFLOW 🔴</span>
+                            <span class="text-xs text-rose-400 font-mono font-bold bg-rose-950/80  px-2 py-0.5 rounded">NET OUTFLOW 🔴</span>
                         </div>
                         <div class="overflow-x-auto flex-1">
-                            <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
-                                <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase border-b border-[#1a2436]">
+                            <div class="text-[10px] text-slate-400 sm:hidden px-3 py-1.5 bg-[#070b13]  flex items-center justify-between">
+                                <span class="flex items-center gap-1"><svg class="w-3 h-3 text-rose-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg> Geser ke kanan untuk rincian</span>
+                                <span class="text-rose-400 font-mono text-[9px] bg-rose-950/80 px-1.5 py-0.5 rounded ">KODE TERKUNCI</span>
+                            </div>
+                            <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap table-sticky-col">
+                                <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase ">
                                     <tr>
                                         <th class="p-3">Rank / Saham</th>
                                         <th class="p-3">Harga</th>
@@ -1085,18 +1182,22 @@
 
             <!-- Content View 2: MINGGUAN (Weekly 5D) -->
             <div id="view-foreign-weekly" class="hidden space-y-6">
-                <div class="bg-[#0b101a] rounded-2xl border border-[#1a2436] overflow-hidden shadow-lg">
-                    <div class="bg-[#0e1626] p-4 border-b border-[#1a2436] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div class="bg-[#0b101a] rounded-2xl overflow-hidden shadow-xl">
+                    <div class="bg-[#0e1626] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <h3 class="font-bold text-white text-base flex items-center gap-2">
                             <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
                             <span>Akumulasi & Distribusi Asing Mingguan (5 Hari Bursa)</span>
-                            <span class="bg-cyan-950/80 border border-cyan-800/60 text-cyan-400 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">CUMULATIVE 5D</span>
+                            <span class="bg-cyan-950/80  text-cyan-400 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">CUMULATIVE 5D</span>
                         </h3>
                         <span class="text-xs text-slate-400">Konsistensi akumulasi modal besar selama 1 minggu perdagangan terakhir</span>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
-                            <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase border-b border-[#1a2436]">
+                        <div class="text-[10px] text-slate-400 sm:hidden px-3 py-1.5 bg-[#070b13]  flex items-center justify-between">
+                            <span class="flex items-center gap-1"><svg class="w-3 h-3 text-cyan-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg> Geser ke kanan untuk rincian</span>
+                            <span class="text-cyan-400 font-mono text-[9px] bg-cyan-950/80 px-1.5 py-0.5 rounded ">KODE TERKUNCI</span>
+                        </div>
+                        <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap table-sticky-col">
+                            <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase ">
                                 <tr>
                                     <th class="p-3">Rank / Saham</th>
                                     <th class="p-3">Harga</th>
@@ -1116,18 +1217,22 @@
 
             <!-- Content View 3: BULANAN (Monthly 20D) -->
             <div id="view-foreign-monthly" class="hidden space-y-6">
-                <div class="bg-[#0b101a] rounded-2xl border border-[#1a2436] overflow-hidden shadow-lg">
-                    <div class="bg-[#0e1626] p-4 border-b border-[#1a2436] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div class="bg-[#0b101a] rounded-2xl overflow-hidden shadow-xl">
+                    <div class="bg-[#0e1626] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <h3 class="font-bold text-white text-base flex items-center gap-2">
                             <span class="w-2.5 h-2.5 rounded-full bg-purple-400"></span>
                             <span>Akumulasi Bulanan & Foreign VWAP (20 Hari Bursa)</span>
-                            <span class="bg-purple-950/80 border border-purple-800/60 text-purple-400 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">INSTITUTIONAL BASE</span>
+                            <span class="bg-purple-950/80  text-purple-400 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">INSTITUTIONAL BASE</span>
                         </h3>
                         <span class="text-xs text-slate-400">Foreign VWAP menunjukkan modal rata-rata investor asing saat akumulasi</span>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
-                            <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase border-b border-[#1a2436]">
+                        <div class="text-[10px] text-slate-400 sm:hidden px-3 py-1.5 bg-[#070b13]  flex items-center justify-between">
+                            <span class="flex items-center gap-1"><svg class="w-3 h-3 text-purple-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg> Geser ke kanan untuk rincian</span>
+                            <span class="text-purple-400 font-mono text-[9px] bg-purple-950/80 px-1.5 py-0.5 rounded ">KODE TERKUNCI</span>
+                        </div>
+                        <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap table-sticky-col">
+                            <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase ">
                                 <tr>
                                     <th class="p-3">Rank / Saham</th>
                                     <th class="p-3">Harga Terkini</th>
@@ -1147,27 +1252,31 @@
 
             <!-- Content View 4: STREAK PEMBELIAN EMITEN -->
             <div id="view-foreign-streak" class="hidden space-y-6">
-                <div class="bg-[#0b101a] rounded-2xl border border-[#1a2436] overflow-hidden shadow-lg">
-                    <div class="bg-[#0e1626] p-4 border-b border-[#1a2436] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div class="bg-[#0b101a] rounded-2xl overflow-hidden shadow-xl">
+                    <div class="bg-[#0e1626] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div>
                             <h3 class="font-bold text-white text-base flex items-center gap-2">
                                 <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></span>
                                 <span>Streak Pembelian Emiten (Consecutive Foreign Inflow Days)</span>
-                                <span class="bg-amber-950/80 border border-amber-800/60 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">HIGH CONVICTION 🔥</span>
+                                <span class="bg-amber-950/80  text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">HIGH CONVICTION 🔥</span>
                             </h3>
                             <p class="text-xs text-slate-400 mt-1">
                                 Menyaring emiten yang diakumulasi asing berturut-turut tanpa jeda (Streak $\ge 2$ Hari). Model backtest membuktikan probabilitas kelanjutan reli mencapai 78%+.
                             </p>
                         </div>
                         <div class="text-right flex items-center gap-2 self-start sm:self-auto">
-                            <span class="bg-emerald-950/80 border border-emerald-500/50 text-emerald-400 font-mono font-bold text-xs px-3 py-1.5 rounded-xl shadow-sm">
+                            <span class="bg-emerald-950/80 text-emerald-400 font-mono font-bold text-xs px-3 py-1.5 rounded-xl shadow-sm">
                                 Win Rate Model: 78.4% 🎯
                             </span>
                         </div>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
-                            <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase border-b border-[#1a2436]">
+                        <div class="text-[10px] text-slate-400 sm:hidden px-3 py-1.5 bg-[#070b13]  flex items-center justify-between">
+                            <span class="flex items-center gap-1"><svg class="w-3 h-3 text-amber-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg> Geser ke kanan untuk rincian</span>
+                            <span class="text-amber-400 font-mono text-[9px] bg-amber-950/80 px-1.5 py-0.5 rounded ">KODE TERKUNCI</span>
+                        </div>
+                        <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap table-sticky-col">
+                            <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase ">
                                 <tr>
                                     <th class="p-3">Rank / Saham</th>
                                     <th class="p-3">Harga</th>
@@ -1193,12 +1302,12 @@
         <section id="section-backtest" class="hidden space-y-6">
 
             <!-- Hero Header Banner -->
-            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0d1424] via-[#11192e] to-[#0d1424] border border-[#223049] p-6 shadow-2xl">
+            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0d1424] via-[#11192e] to-[#0d1424] p-6 shadow-2xl">
                 <div class="absolute top-0 right-0 w-96 h-96 bg-violet-600/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
                 <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <div class="flex items-center gap-2 mb-2">
-                            <span class="inline-flex items-center gap-1.5 bg-violet-500/20 text-violet-300 border border-violet-500/40 text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                            <span class="inline-flex items-center gap-1.5 bg-violet-500/20 text-violet-300 text-[11px] shadow-sm font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                                 <span class="w-1.5 h-1.5 rounded-full bg-violet-400 animate-ping"></span>
                                 Institutional Quant Engine
                             </span>
@@ -1214,20 +1323,20 @@
                         </p>
                     </div>
 
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <button class="quick-pick-chip bg-[#172236] hover:bg-violet-600/30 text-slate-300 hover:text-white border border-slate-700 hover:border-violet-500 text-xs px-3 py-1.5 rounded-lg transition font-mono font-semibold cursor-pointer" data-ticker="BBCA">
+                    <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 max-w-full">
+                        <button class="quick-pick-chip bg-[#172236] hover:bg-violet-600/30 text-slate-300 hover:text-white shadow-sm text-xs px-3 py-1.5 rounded-lg transition font-mono font-semibold cursor-pointer whitespace-nowrap min-h-[36px]" data-ticker="BBCA">
                             $BBCA
                         </button>
-                        <button class="quick-pick-chip bg-[#172236] hover:bg-violet-600/30 text-slate-300 hover:text-white border border-slate-700 hover:border-violet-500 text-xs px-3 py-1.5 rounded-lg transition font-mono font-semibold cursor-pointer" data-ticker="BBRI">
+                        <button class="quick-pick-chip bg-[#172236] hover:bg-violet-600/30 text-slate-300 hover:text-white shadow-sm text-xs px-3 py-1.5 rounded-lg transition font-mono font-semibold cursor-pointer whitespace-nowrap min-h-[36px]" data-ticker="BBRI">
                             $BBRI
                         </button>
-                        <button class="quick-pick-chip bg-[#172236] hover:bg-violet-600/30 text-slate-300 hover:text-white border border-slate-700 hover:border-violet-500 text-xs px-3 py-1.5 rounded-lg transition font-mono font-semibold cursor-pointer" data-ticker="BMRI">
+                        <button class="quick-pick-chip bg-[#172236] hover:bg-violet-600/30 text-slate-300 hover:text-white shadow-sm text-xs px-3 py-1.5 rounded-lg transition font-mono font-semibold cursor-pointer whitespace-nowrap min-h-[36px]" data-ticker="BMRI">
                             $BMRI
                         </button>
-                        <button class="quick-pick-chip bg-[#172236] hover:bg-violet-600/30 text-slate-300 hover:text-white border border-slate-700 hover:border-violet-500 text-xs px-3 py-1.5 rounded-lg transition font-mono font-semibold cursor-pointer" data-ticker="TINS">
+                        <button class="quick-pick-chip bg-[#172236] hover:bg-violet-600/30 text-slate-300 hover:text-white shadow-sm text-xs px-3 py-1.5 rounded-lg transition font-mono font-semibold cursor-pointer whitespace-nowrap min-h-[36px]" data-ticker="TINS">
                             $TINS
                         </button>
-                        <button class="quick-pick-chip bg-[#172236] hover:bg-violet-600/30 text-slate-300 hover:text-white border border-slate-700 hover:border-violet-500 text-xs px-3 py-1.5 rounded-lg transition font-mono font-semibold cursor-pointer" data-ticker="PTRO">
+                        <button class="quick-pick-chip bg-[#172236] hover:bg-violet-600/30 text-slate-300 hover:text-white shadow-sm text-xs px-3 py-1.5 rounded-lg transition font-mono font-semibold cursor-pointer whitespace-nowrap min-h-[36px]" data-ticker="PTRO">
                             $PTRO
                         </button>
                     </div>
@@ -1235,12 +1344,12 @@
             </div>
 
             <!-- Configuration & Control Deck -->
-            <div class="bg-[#0b101c] border border-[#1d273b] rounded-2xl p-5 shadow-xl space-y-5">
+            <div class="bg-[#0b101c] rounded-2xl p-4 sm:p-5 shadow-xl space-y-5">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <!-- Strategy Selector -->
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1.5">PILIH STRATEGI KUANTITATIF</label>
-                        <select id="backtest-strategy-select" class="w-full bg-[#070b13] border border-[#223049] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:border-violet-500 focus:outline-none transition cursor-pointer font-medium">
+                        <select id="backtest-strategy-select" class="w-full bg-[#070b13] shadow-inner rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:ring-2 focus:ring-violet-500/60 focus:outline-none transition cursor-pointer font-medium min-h-[44px]">
                             <option value="COMPOSITE_QUANT">🎯 Radar-AI Multi-Factor Quant</option>
                             <option value="SUPERTREND_SWING">📈 Supertrend + EMA20 Breakout</option>
                             <option value="RSI_DIP_BUYER">📉 RSI Oversold Dip-Buyer (Reversal)</option>
@@ -1253,15 +1362,15 @@
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1.5">KODE SAHAM (IDX)</label>
                         <div class="relative">
-                            <input type="text" id="backtest-ticker-input" value="BBCA" placeholder="Contoh: BBCA, ASII, TINS" class="w-full bg-[#070b13] border border-[#223049] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white font-mono font-bold uppercase focus:border-violet-500 focus:outline-none transition pl-8" />
-                            <span class="absolute left-3 top-2.5 text-slate-500 font-mono text-xs">$</span>
+                            <input type="text" id="backtest-ticker-input" value="BBCA" placeholder="Contoh: BBCA, ASII, TINS" class="w-full bg-[#070b13] shadow-inner rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white font-mono font-bold uppercase focus:ring-2 focus:ring-violet-500/60 focus:outline-none transition pl-8 min-h-[44px]" />
+                            <span class="absolute left-3 top-3 text-slate-500 font-mono text-xs">$</span>
                         </div>
                     </div>
 
                     <!-- Timeframe / Period -->
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1.5">PERIODE RIWAYAT HISTORIS</label>
-                        <select id="backtest-period-select" class="w-full bg-[#070b13] border border-[#223049] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:border-violet-500 focus:outline-none transition cursor-pointer font-medium">
+                        <select id="backtest-period-select" class="w-full bg-[#070b13] shadow-inner rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:ring-2 focus:ring-violet-500/60 focus:outline-none transition cursor-pointer font-medium min-h-[44px]">
                             <option value="3m">3 Bulan Terakhir</option>
                             <option value="6m">6 Bulan Terakhir</option>
                             <option value="1y" selected>1 Tahun Terakhir (Standar)</option>
@@ -1272,32 +1381,32 @@
                     <!-- Initial Capital -->
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1.5">MODAL AWAL SIMULASI (IDR)</label>
-                        <input type="number" id="backtest-capital-input" value="100000000" step="10000000" class="w-full bg-[#070b13] border border-[#223049] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white font-mono font-semibold focus:border-violet-500 focus:outline-none transition" />
+                        <input type="number" id="backtest-capital-input" value="100000000" step="10000000" class="w-full bg-[#070b13] shadow-inner rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white font-mono font-semibold focus:ring-2 focus:ring-violet-500/60 focus:outline-none transition min-h-[44px]" />
                     </div>
                 </div>
 
                 <!-- Risk Management Tuning Sliders -->
-                <div class="bg-[#070b13] border border-[#162136] rounded-xl p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                        <div class="flex justify-between items-center mb-1">
+                <div class="bg-[#070b13] rounded-xl p-4 grid grid-cols-1 sm:grid-cols-3 gap-4 shadow-inner">
+                    <div class="py-1">
+                        <div class="flex justify-between items-center mb-2">
                             <span class="text-xs font-medium text-slate-400">Target Profit (TP):</span>
                             <span id="label-tp-val" class="text-xs font-mono font-bold text-emerald-400">+8.0%</span>
                         </div>
-                        <input type="range" id="backtest-tp-slider" min="2.0" max="25.0" step="0.5" value="8.0" class="w-full accent-emerald-500 cursor-pointer" />
+                        <input type="range" id="backtest-tp-slider" min="2.0" max="25.0" step="0.5" value="8.0" class="w-full accent-emerald-500 cursor-pointer h-2 bg-slate-800 rounded-lg" />
                     </div>
-                    <div>
-                        <div class="flex justify-between items-center mb-1">
+                    <div class="py-1">
+                        <div class="flex justify-between items-center mb-2">
                             <span class="text-xs font-medium text-slate-400">Stop Loss (SL):</span>
                             <span id="label-sl-val" class="text-xs font-mono font-bold text-rose-400">-3.5%</span>
                         </div>
-                        <input type="range" id="backtest-sl-slider" min="1.0" max="15.0" step="0.5" value="3.5" class="w-full accent-rose-500 cursor-pointer" />
+                        <input type="range" id="backtest-sl-slider" min="1.0" max="15.0" step="0.5" value="3.5" class="w-full accent-rose-500 cursor-pointer h-2 bg-slate-800 rounded-lg" />
                     </div>
-                    <div>
-                        <div class="flex justify-between items-center mb-1">
+                    <div class="py-1">
+                        <div class="flex justify-between items-center mb-2">
                             <span class="text-xs font-medium text-slate-400">Trailing Stop:</span>
                             <span id="label-trailing-val" class="text-xs font-mono font-bold text-cyan-300">3.0%</span>
                         </div>
-                        <input type="range" id="backtest-trailing-slider" min="1.0" max="10.0" step="0.5" value="3.0" class="w-full accent-cyan-400 cursor-pointer" />
+                        <input type="range" id="backtest-trailing-slider" min="1.0" max="10.0" step="0.5" value="3.0" class="w-full accent-cyan-400 cursor-pointer h-2 bg-slate-800 rounded-lg" />
                     </div>
                 </div>
 
@@ -1308,7 +1417,7 @@
                         <span>Sinergi konfluensi Supertrend Bullish, posisi di atas EMA20, RSI Sweet Zone, dan konfirmasi volume.</span>
                     </div>
 
-                    <button id="btn-run-backtest" class="w-full sm:w-auto bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-extrabold text-sm px-7 py-3 rounded-xl transition shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_25px_rgba(139,92,246,0.5)] flex items-center justify-center gap-2 cursor-pointer">
+                    <button id="btn-run-backtest" class="w-full sm:w-auto bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-extrabold text-sm px-7 py-3 rounded-xl transition shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_25px_rgba(139,92,246,0.5)] flex items-center justify-center gap-2 min-h-[48px] cursor-pointer">
                         <svg class="w-4 h-4 animate-spin hidden" id="backtest-spinner" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -1322,7 +1431,7 @@
             <div id="backtest-results-container" class="space-y-6">
                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
                     <!-- Card 1: Win Rate -->
-                    <div class="bg-[#0d1424] border border-[#1f2c42] rounded-xl p-4 shadow flex flex-col justify-between">
+                    <div class="bg-[#0d1424] rounded-xl p-4 shadow-lg flex flex-col justify-between">
                         <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Win Rate</div>
                         <div class="my-2">
                             <div id="metric-win-rate" class="text-2xl sm:text-3xl font-black font-mono text-emerald-400">0.0%</div>
@@ -1332,7 +1441,7 @@
                     </div>
 
                     <!-- Card 2: Profit Factor -->
-                    <div class="bg-[#0d1424] border border-[#1f2c42] rounded-xl p-4 shadow flex flex-col justify-between">
+                    <div class="bg-[#0d1424] rounded-xl p-4 shadow-lg flex flex-col justify-between">
                         <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Profit Factor</div>
                         <div class="my-2">
                             <div id="metric-profit-factor" class="text-2xl sm:text-3xl font-black font-mono text-cyan-300">0.00</div>
@@ -1342,7 +1451,7 @@
                     </div>
 
                     <!-- Card 3: Net Return -->
-                    <div class="bg-[#0d1424] border border-[#1f2c42] rounded-xl p-4 shadow flex flex-col justify-between">
+                    <div class="bg-[#0d1424] rounded-xl p-4 shadow-lg flex flex-col justify-between">
                         <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Net Return</div>
                         <div class="my-2">
                             <div id="metric-net-return" class="text-2xl sm:text-3xl font-black font-mono text-white">+0.0%</div>
@@ -1352,7 +1461,7 @@
                     </div>
 
                     <!-- Card 4: Max Drawdown -->
-                    <div class="bg-[#0d1424] border border-[#1f2c42] rounded-xl p-4 shadow flex flex-col justify-between">
+                    <div class="bg-[#0d1424] rounded-xl p-4 shadow-lg flex flex-col justify-between">
                         <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Max Drawdown</div>
                         <div class="my-2">
                             <div id="metric-mdd" class="text-2xl sm:text-3xl font-black font-mono text-rose-400">-0.0%</div>
@@ -1362,7 +1471,7 @@
                     </div>
 
                     <!-- Card 5: Risk / Reward -->
-                    <div class="bg-[#0d1424] border border-[#1f2c42] rounded-xl p-4 shadow flex flex-col justify-between">
+                    <div class="bg-[#0d1424] rounded-xl p-4 shadow-lg flex flex-col justify-between">
                         <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Risk / Reward</div>
                         <div class="my-2">
                             <div id="metric-risk-reward" class="text-2xl sm:text-3xl font-black font-mono text-amber-300">1:0.0</div>
@@ -1372,7 +1481,7 @@
                     </div>
 
                     <!-- Card 6: Total Trades & Hold -->
-                    <div class="bg-[#0d1424] border border-[#1f2c42] rounded-xl p-4 shadow flex flex-col justify-between">
+                    <div class="bg-[#0d1424] rounded-xl p-4 shadow-lg flex flex-col justify-between">
                         <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Eksekusi</div>
                         <div class="my-2">
                             <div id="metric-total-trades" class="text-2xl sm:text-3xl font-black font-mono text-violet-300">0</div>
@@ -1383,12 +1492,12 @@
                 </div>
 
                 <!-- Interactive Equity Curve Chart Card -->
-                <div class="bg-[#0d1424] border border-[#1f2c42] rounded-2xl p-5 shadow-xl space-y-3">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                <div class="bg-[#0d1424] rounded-2xl p-5 shadow-xl space-y-3">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3">
                         <div>
                             <h3 class="font-extrabold text-sm sm:text-base text-white tracking-wide flex items-center gap-2">
                                 <span>KURVA PERTUMBUHAN EKUITAS (EQUITY CURVE)</span>
-                                <span id="chart-ticker-badge" class="bg-violet-950 border border-violet-500/50 text-violet-300 text-[10px] font-mono px-2 py-0.5 rounded font-bold">BBCA</span>
+                                <span id="chart-ticker-badge" class="bg-violet-950 text-violet-300 shadow-sm text-[10px] font-mono px-2 py-0.5 rounded font-bold">BBCA</span>
                             </h3>
                             <p class="text-xs text-slate-400 mt-0.5">Perbandingan performa Strategi vs Buy & Hold saham dasar</p>
                         </div>
@@ -1405,7 +1514,7 @@
                     </div>
 
                     <!-- Canvas / SVG Container -->
-                    <div class="w-full h-64 sm:h-80 relative flex items-center justify-center bg-[#070b13] rounded-xl border border-[#141d2e] overflow-hidden p-2">
+                    <div class="w-full h-56 sm:h-72 lg:h-80 relative flex items-center justify-center bg-[#070b13] rounded-xl overflow-hidden p-2 shadow-inner">
                         <canvas id="backtest-equity-chart" class="w-full h-full"></canvas>
                         <div id="backtest-chart-empty" class="absolute inset-0 flex flex-col items-center justify-center text-slate-500 space-y-2 pointer-events-none">
                             <svg class="w-10 h-10 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1417,27 +1526,31 @@
                 </div>
 
                 <!-- Detailed Trade Log Table -->
-                <div class="bg-[#0d1424] border border-[#1f2c42] rounded-2xl shadow-xl overflow-hidden">
-                    <div class="p-4 sm:p-5 border-b border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div class="bg-[#0d1424] rounded-2xl shadow-xl overflow-hidden">
+                    <div class="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                         <div>
                             <h3 class="font-extrabold text-sm sm:text-base text-white tracking-wide">LOG EKSEKUSI TRANSAKSI LENGKAP</h3>
                             <p class="text-xs text-slate-400">Audit setiap entri, posisi, exit, dan alasan penutupan order</p>
                         </div>
                         <div class="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-end">
-                            <div class="flex rounded-lg bg-[#070b13] p-1 border border-[#1b263b] text-xs">
+                            <div class="flex rounded-lg bg-[#070b13] p-1 text-xs shadow-inner">
                                 <button id="filter-trade-all" class="px-2.5 py-1 rounded-md font-semibold text-white bg-slate-800 transition cursor-pointer">Semua</button>
                                 <button id="filter-trade-win" class="px-2.5 py-1 rounded-md font-medium text-slate-400 hover:text-emerald-300 transition cursor-pointer">Win</button>
                                 <button id="filter-trade-loss" class="px-2.5 py-1 rounded-md font-medium text-slate-400 hover:text-rose-300 transition cursor-pointer">Loss</button>
                             </div>
-                            <button id="btn-export-backtest-csv" class="bg-[#131c2e] hover:bg-[#1a273f] text-slate-300 hover:text-white border border-slate-700 text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 font-semibold cursor-pointer">
+                            <button id="btn-export-backtest-csv" class="bg-[#131c2e] hover:bg-[#1a273f] text-slate-300 hover:text-white text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 font-semibold cursor-pointer shadow-sm">
                                 <span>📥 Ekspor CSV</span>
                             </button>
                         </div>
                     </div>
 
                     <div class="overflow-x-auto max-h-96">
-                        <table class="w-full text-left text-xs text-slate-300">
-                            <thead class="bg-[#080d17] text-slate-400 border-b border-slate-800 sticky top-0 z-10 text-[11px] uppercase tracking-wider">
+                        <div class="text-[10px] text-slate-400 sm:hidden px-3 py-1.5 bg-[#070b13]  flex items-center justify-between">
+                            <span class="flex items-center gap-1"><svg class="w-3 h-3 text-violet-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg> Geser ke kanan untuk rincian</span>
+                            <span class="text-violet-400 font-mono text-[9px] bg-violet-950/80 px-1.5 py-0.5 rounded ">ID TRANSAKSI</span>
+                        </div>
+                        <table class="w-full text-left text-xs text-slate-300 table-sticky-col whitespace-nowrap">
+                            <thead class="bg-[#080d17] text-slate-400 sticky top-0 z-10 shadow-sm text-[11px] uppercase tracking-wider">
                                 <tr>
                                     <th class="p-3">#</th>
                                     <th class="p-3">Tanggal Beli</th>
@@ -1468,45 +1581,100 @@
 
     </main>
 
+    
+    <!-- ================= 8. MODAL: DEDICATED MOBILE SEARCH OVERLAY ================= -->
+    <div id="modal-mobile-search"
+        class="fixed inset-0 z-50 bg-[#07090e]/98 backdrop-blur-2xl hidden flex-col p-3 sm:p-4 overflow-y-auto">
+        <!-- Top Search Input Header -->
+        <div class="flex items-center gap-2 mb-3">
+            <button id="btn-close-mobile-search"
+                class="bg-[#0d1424] hover:bg-[#131d33] text-slate-300 hover:text-white p-2.5 rounded-xl transition cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0"
+                aria-label="Kembali">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+            </button>
+            <div class="relative flex-1 flex items-center bg-[#0d1424] rounded-xl px-3.5 py-2 focus-within:ring-2 focus-within:ring-cyan-500/60 shadow-lg min-h-[44px]">
+                <svg class="w-4 h-4 text-cyan-400 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <input type="text" id="input-mobile-search"
+                    placeholder="Cari kode (BBCA) atau nama emiten..."
+                    class="w-full bg-transparent text-white font-mono font-bold text-sm sm:text-base placeholder-slate-500 focus:outline-none uppercase"
+                    autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" />
+                <button id="btn-clear-mobile-search" class="text-slate-400 hover:text-white p-1 ml-1 cursor-pointer hidden">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Quick Pick Chips (Visible when input is empty) -->
+        <div id="mobile-search-quick-picks" class="space-y-2.5 mb-4">
+            <div class="flex items-center justify-between text-xs text-slate-400 font-semibold px-1">
+                <span>🔥 Saham Terpopuler IDX</span>
+                <span class="text-[10px] text-slate-500 font-normal">Klik untuk analisis cepat</span>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <button class="mobile-quick-chip bg-[#0d1424] hover:bg-cyan-500/20 text-cyan-300 font-mono font-bold text-xs px-3 py-2 rounded-xl transition cursor-pointer min-h-[38px]" data-ticker="BBCA">$BBCA</button>
+                <button class="mobile-quick-chip bg-[#0d1424] hover:bg-cyan-500/20 text-cyan-300 font-mono font-bold text-xs px-3 py-2 rounded-xl transition cursor-pointer min-h-[38px]" data-ticker="BBRI">$BBRI</button>
+                <button class="mobile-quick-chip bg-[#0d1424] hover:bg-cyan-500/20 text-cyan-300 font-mono font-bold text-xs px-3 py-2 rounded-xl transition cursor-pointer min-h-[38px]" data-ticker="BMRI">$BMRI</button>
+                <button class="mobile-quick-chip bg-[#0d1424] hover:bg-cyan-500/20 text-cyan-300 font-mono font-bold text-xs px-3 py-2 rounded-xl transition cursor-pointer min-h-[38px]" data-ticker="TLKM">$TLKM</button>
+                <button class="mobile-quick-chip bg-[#0d1424] hover:bg-cyan-500/20 text-cyan-300 font-mono font-bold text-xs px-3 py-2 rounded-xl transition cursor-pointer min-h-[38px]" data-ticker="ASII">$ASII</button>
+                <button class="mobile-quick-chip bg-[#0d1424] hover:bg-cyan-500/20 text-cyan-300 font-mono font-bold text-xs px-3 py-2 rounded-xl transition cursor-pointer min-h-[38px]" data-ticker="BREN">$BREN</button>
+                <button class="mobile-quick-chip bg-[#0d1424] hover:bg-cyan-500/20 text-cyan-300 font-mono font-bold text-xs px-3 py-2 rounded-xl transition cursor-pointer min-h-[38px]" data-ticker="AMMN">$AMMN</button>
+                <button class="mobile-quick-chip bg-[#0d1424] hover:bg-cyan-500/20 text-cyan-300 font-mono font-bold text-xs px-3 py-2 rounded-xl transition cursor-pointer min-h-[38px]" data-ticker="TINS">$TINS</button>
+                <button class="mobile-quick-chip bg-[#0d1424] hover:bg-cyan-500/20 text-cyan-300 font-mono font-bold text-xs px-3 py-2 rounded-xl transition cursor-pointer min-h-[38px]" data-ticker="PTRO">$PTRO</button>
+                <button class="mobile-quick-chip bg-[#0d1424] hover:bg-cyan-500/20 text-cyan-300 font-mono font-bold text-xs px-3 py-2 rounded-xl transition cursor-pointer min-h-[38px]" data-ticker="ADRO">$ADRO</button>
+            </div>
+        </div>
+
+        <!-- Dynamic Live Results List -->
+        <div id="mobile-search-results" class="flex-1 space-y-2 overflow-y-auto">
+            <!-- Dynamically populated or empty prompt -->
+        </div>
+    </div>
+
     <!-- ================= 4. MODAL: DEEP STOCK ANALYSIS ================= -->
     <div id="modal-analysis"
         class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-5 overflow-y-auto">
         <div
-            class="bg-[#0d1424] border border-[#223049] rounded-2xl w-full max-w-5xl my-auto p-6 sm:p-8 shadow-2xl space-y-6 animate__animated animate__fadeInUp max-h-[92vh] overflow-y-auto">
+            class="bg-[#0d1424] shadow-inner rounded-2xl w-full max-w-5xl my-auto p-4 sm:p-6 lg:p-8 shadow-2xl space-y-5 sm:space-y-6 animate__animated animate__fadeInUp max-h-[94vh] overflow-y-auto">
 
             <!-- Modal Header -->
-            <div class="flex items-start justify-between border-b border-slate-800 pb-5">
-                <div class="flex items-center gap-4">
+            <div class="flex items-start justify-between pb-4 sm:pb-5 gap-2">
+                <div class="flex items-center gap-3 sm:gap-4">
                     <div
-                        class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center font-mono font-black text-black text-xl shadow-lg">
+                        class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center font-mono font-black text-black text-lg sm:text-xl shadow-lg shrink-0">
                         <span id="modal-ticker-icon">$</span>
                     </div>
                     <div>
-                        <div class="flex items-center gap-3">
-                            <h2 id="modal-stock-ticker" class="text-3xl font-black text-white font-mono tracking-tight">
+                        <div class="flex items-center gap-2 sm:gap-3">
+                            <h2 id="modal-stock-ticker" class="text-2xl sm:text-3xl font-black text-white font-mono tracking-tight">
                                 BBRI</h2>
                             <span id="modal-market-status"
-                                class="px-2.5 py-0.5 rounded-full text-xs font-bold border">OPEN</span>
+                                class="px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-emerald-950/80 text-emerald-400 shadow-sm">OPEN</span>
                         </div>
-                        <p id="modal-stock-timestamp" class="text-xs text-slate-400 mt-1">Data realtime Bursa Efek
+                        <p id="modal-stock-timestamp" class="text-[11px] sm:text-xs text-slate-400 mt-0.5 sm:mt-1">Data realtime Bursa Efek
                             Indonesia</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 shrink-0">
                     <button id="btn-modal-toggle-watchlist"
-                        class="bg-[#121c2e] hover:bg-[#1a273f] border border-purple-500/40 text-purple-300 hover:text-white px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition"
+                        class="bg-[#121c2e] hover:bg-[#1a273f] bg-[#151f33] text-purple-300 hover:text-white px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition min-h-[36px] cursor-pointer shadow-sm"
                         title="Simpan ke Watchlist">
                         <svg id="icon-modal-watchlist" class="w-4 h-4" fill="none" stroke="currentColor"
                             viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
                         </svg>
-                        <span id="text-modal-watchlist">+ Watchlist</span>
+                        <span id="text-modal-watchlist" class="hidden sm:inline">+ Watchlist</span>
                     </button>
                     <button id="btn-close-modal"
-                        class="bg-[#121c2e] hover:bg-[#1a273f] text-slate-400 hover:text-white p-2 rounded-full transition"
+                        class="bg-[#121c2e] hover:bg-[#1a273f] text-slate-400 hover:text-white p-2 sm:p-2.5 rounded-full transition min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer"
                         title="Tutup Modal">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
@@ -1516,27 +1684,27 @@
 
             <!-- Price & Intraday Stats Ribbon -->
             <div
-                class="bg-[#070b13] border border-slate-800/90 rounded-xl p-4 flex flex-wrap items-end justify-between gap-4">
-                <div>
-                    <span class="text-xs text-slate-400 block mb-0.5">Harga Saat Ini</span>
-                    <span id="modal-price" class="text-3xl font-extrabold text-white font-mono">Rp 3.420</span>
+                class="bg-[#070b13] rounded-xl p-3 sm:p-4 shadow-inner grid grid-cols-2 sm:flex sm:flex-wrap items-end justify-between gap-3 sm:gap-4">
+                <div class="col-span-2 sm:col-span-1">
+                    <span class="text-[11px] sm:text-xs text-slate-400 block mb-0.5">Harga Saat Ini</span>
+                    <span id="modal-price" class="text-2xl sm:text-3xl font-extrabold text-white font-mono">Rp 3.420</span>
                 </div>
                 <div>
-                    <span class="text-xs text-slate-400 block mb-0.5">Perubahan Hari Ini</span>
-                    <span id="modal-change" class="text-2xl font-bold font-mono text-emerald-400">+0.88%</span>
+                    <span class="text-[11px] sm:text-xs text-slate-400 block mb-0.5">Perubahan Hari Ini</span>
+                    <span id="modal-change" class="text-xl sm:text-2xl font-bold font-mono text-emerald-400">+0.88%</span>
                 </div>
                 <div>
-                    <span class="text-xs text-slate-400 block mb-0.5">High / Low</span>
-                    <span id="modal-high-low" class="text-sm font-semibold text-slate-200 font-mono">Rp 3.430 / Rp
+                    <span class="text-[11px] sm:text-xs text-slate-400 block mb-0.5">High / Low</span>
+                    <span id="modal-high-low" class="text-xs sm:text-sm font-semibold text-slate-200 font-mono">Rp 3.430 / Rp
                         3.370</span>
                 </div>
                 <div>
-                    <span class="text-xs text-slate-400 block mb-0.5">Volume (Lot)</span>
-                    <span id="modal-volume" class="text-sm font-semibold text-slate-200 font-mono">1.011.936</span>
+                    <span class="text-[11px] sm:text-xs text-slate-400 block mb-0.5">Volume (Lot)</span>
+                    <span id="modal-volume" class="text-xs sm:text-sm font-semibold text-slate-200 font-mono">1.011.936</span>
                 </div>
                 <div>
-                    <span class="text-xs text-slate-400 block mb-0.5">Turnover Nilai</span>
-                    <span id="modal-turnover" class="text-sm font-semibold text-emerald-400 font-mono">Rp 346,08
+                    <span class="text-[11px] sm:text-xs text-slate-400 block mb-0.5">Turnover Nilai</span>
+                    <span id="modal-turnover" class="text-xs sm:text-sm font-semibold text-emerald-400 font-mono">Rp 346,08
                         M</span>
                 </div>
             </div>
@@ -1545,25 +1713,25 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 
                 <!-- Card 1: Valuasi & Harga Wajar -->
-                <div class="bg-[#090e1a] border border-[#1a2538] rounded-xl p-5 space-y-3">
-                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                <div class="bg-[#090e1a] rounded-xl p-5 space-y-3 shadow-lg">
+                    <div class="flex items-center justify-between  pb-2.5">
                         <h4 class="font-bold text-white text-sm">Valuasi & Harga Wajar</h4>
                         <span id="modal-val-status"
-                            class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">UNDERVALUED</span>
+                            class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-500/20 text-emerald-400 shadow-sm">UNDERVALUED</span>
                     </div>
                     <div class="space-y-2 text-xs">
-                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                        <div class="flex justify-between py-1 "><span
                                 class="text-slate-400">Harga Wajar (Graham)</span><span id="modal-val-fair"
                                 class="font-bold text-amber-400 font-mono">Rp 6.107</span></div>
-                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                        <div class="flex justify-between py-1 "><span
                                 class="text-slate-400">PER (Trailing)</span><span id="modal-val-per"
                                 class="font-mono text-white font-semibold">8.40x</span></div>
                         <div id="modal-val-per-footnote"
-                            class="text-[11px] text-amber-300 bg-amber-950/40 border border-amber-500/30 rounded p-2 leading-relaxed hidden"></div>
-                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                            class="text-[11px] text-amber-300 bg-amber-950/40  rounded p-2 leading-relaxed hidden"></div>
+                        <div class="flex justify-between py-1 "><span
                                 class="text-slate-400">PBV (Price to Book)</span><span id="modal-val-pbv"
                                 class="font-mono text-white font-semibold">1.61x</span></div>
-                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                        <div class="flex justify-between py-1 "><span
                                 class="text-slate-400">EPS (TTM)</span><span id="modal-val-eps"
                                 class="font-mono text-white font-semibold">Rp 407</span></div>
                         <div class="flex justify-between py-1"><span class="text-slate-400">BVPS</span><span
@@ -1572,23 +1740,23 @@
                 </div>
 
                 <!-- Card 2: Analisa Teknikal -->
-                <div class="bg-[#090e1a] border border-[#1a2538] rounded-xl p-5 space-y-3">
-                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                <div class="bg-[#090e1a] rounded-xl p-5 space-y-3 shadow-lg">
+                    <div class="flex items-center justify-between  pb-2.5">
                         <h4 class="font-bold text-white text-sm">Analisa Teknikal AI</h4>
                         <span id="modal-trend-status"
-                            class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">UPTREND</span>
+                            class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-500/20 text-emerald-400 shadow-sm">UPTREND</span>
                     </div>
                     <div class="space-y-2 text-xs">
-                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                        <div class="flex justify-between py-1 "><span
                                 class="text-slate-400">Supertrend (10, 3)</span><span id="modal-trend-supertrend"
                                 class="font-mono text-emerald-400 font-bold">BULLISH 🟢</span></div>
-                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                        <div class="flex justify-between py-1 "><span
                                 class="text-slate-400">MA 20 / MA 50</span><span id="modal-trend-ma20-50"
                                 class="font-mono text-cyan-300 font-semibold">Golden Cross 🟢</span></div>
-                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                        <div class="flex justify-between py-1 "><span
                                 class="text-slate-400">Volume Spike (RVol)</span><span id="modal-trend-rvol"
                                 class="font-mono text-amber-400 font-semibold">1.4x (Akumulasi)</span></div>
-                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                        <div class="flex justify-between py-1 "><span
                                 class="text-slate-400">RSI (14) Momentum</span><span id="modal-trend-rsi"
                                 class="font-mono text-amber-400 font-semibold">58.44</span></div>
                         <div class="flex justify-between py-1"><span class="text-slate-400">MACD / ADX</span><span
@@ -1598,32 +1766,32 @@
                 </div>
 
                 <!-- Card 3: Kesehatan Finansial -->
-                <div class="bg-[#090e1a] border border-[#1a2538] rounded-xl p-5 space-y-3">
-                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                <div class="bg-[#090e1a] rounded-xl p-5 space-y-3 shadow-lg">
+                    <div class="flex items-center justify-between  pb-2.5">
                         <h4 class="font-bold text-white text-sm">Kesehatan Finansial</h4>
                         <span id="modal-fin-badge"
-                            class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-slate-800 text-slate-300 border border-slate-700">Q-Report</span>
+                            class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-slate-800 text-slate-300 shadow-sm">Q-Report</span>
                     </div>
                     <div class="space-y-2 text-xs">
-                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                        <div class="flex justify-between py-1 "><span
                                 class="text-slate-400">ROE (Return on Equity)</span><span id="modal-fin-roe"
                                 class="font-mono text-emerald-400 font-bold">18.99%</span></div>
-                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                        <div class="flex justify-between py-1 "><span
                                 class="text-slate-400">Net Profit Margin</span><span id="modal-fin-npm"
                                 class="font-mono text-white font-semibold">41.71%</span></div>
-                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                        <div class="flex justify-between py-1 "><span
                                 class="text-slate-400">Pertumbuhan Laba Bersih</span><span id="modal-fin-net-growth"
                                 class="font-mono text-emerald-400 font-bold">-</span></div>
-                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                        <div class="flex justify-between py-1 "><span
                                 class="text-slate-400">Revenue Growth</span><span id="modal-fin-rev"
                                 class="font-mono text-white font-semibold">+4.00%</span></div>
-                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                        <div class="flex justify-between py-1 "><span
                                 class="text-slate-400">Beban Pokok (COGS) YoY</span><span id="modal-fin-cogs"
                                 class="font-mono text-cyan-300 font-semibold">-</span></div>
-                        <div id="row-fin-der" class="flex justify-between py-1 border-b border-slate-800/40"><span
+                        <div id="row-fin-der" class="flex justify-between py-1 "><span
                                 class="text-slate-400">DER (Debt to Equity)</span><span id="modal-fin-der"
                                 class="font-mono text-white font-semibold">-</span></div>
-                        <div id="row-fin-banking" class="flex justify-between py-1 border-b border-slate-800/40 hidden"><span
+                        <div id="row-fin-banking" class="flex justify-between py-1  hidden"><span
                                 class="text-slate-400">Bank (NPL / CAR / LDR)</span><span id="modal-fin-banking-ratios"
                                 class="font-mono text-cyan-300 font-semibold">-</span></div>
                         <div class="flex justify-between py-1"><span class="text-slate-400">Mata Uang Lapkeu</span><span
@@ -1632,23 +1800,23 @@
                 </div>
 
                 <!-- Card 4: Aliran Asing & Bandarmology -->
-                <div class="bg-[#090e1a] border border-[#1a2538] rounded-xl p-5 space-y-3">
-                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                <div class="bg-[#090e1a] rounded-xl p-5 space-y-3 shadow-lg">
+                    <div class="flex items-center justify-between  pb-2.5">
                         <h4 class="font-bold text-white text-sm">Aliran Asing & Flow</h4>
                         <span id="modal-foreign-status"
-                            class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">NETRAL</span>
+                            class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-cyan-500/20 text-cyan-300 shadow-sm">NETRAL</span>
                     </div>
                     <div class="space-y-2 text-xs">
-                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                        <div class="flex justify-between py-1 "><span
                                 class="text-slate-400">Net Asing (1D)</span><span id="modal-foreign-net1d"
                                 class="font-mono text-emerald-400 font-bold">+Rp 0 M</span></div>
-                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                        <div class="flex justify-between py-1 "><span
                                 class="text-slate-400">Net Asing (5D)</span><span id="modal-foreign-net5d"
                                 class="font-mono text-white font-semibold">+Rp 0 M</span></div>
-                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                        <div class="flex justify-between py-1 "><span
                                 class="text-slate-400">Foreign VWAP</span><span id="modal-foreign-vwap"
                                 class="font-mono text-amber-300 font-semibold">Rp -</span></div>
-                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                        <div class="flex justify-between py-1 "><span
                                 class="text-slate-400">Pressure (FFPI)</span><span id="modal-foreign-ffpi"
                                 class="font-mono text-cyan-300 font-semibold">0 / 100</span></div>
                         <div class="flex justify-between py-1"><span class="text-slate-400">Streak Asing</span><span
@@ -1661,7 +1829,7 @@
             <!-- AI Summary & Konsensus Analis Row -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <!-- AI Fundamental Summary -->
-                <div class="bg-[#071321] border border-cyan-500/30 rounded-xl p-5 shadow-lg space-y-2">
+                <div class="bg-[#071321]  rounded-xl p-5 shadow-lg space-y-2">
                     <div class="flex items-center justify-between">
                         <h4 class="text-cyan-400 font-bold text-sm flex items-center gap-2">
                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -1680,7 +1848,7 @@
                 </div>
 
                 <!-- Konsensus Analis -->
-                <div class="bg-[#0f1422] border border-amber-500/30 rounded-xl p-5 shadow-lg space-y-3">
+                <div class="bg-[#0f1422]  rounded-xl p-5 shadow-lg space-y-3">
                     <h4 class="text-amber-400 font-bold text-sm flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -1693,7 +1861,7 @@
                         <div>
                             <span class="text-xs text-slate-400 block mb-1">Rekomendasi Rata-Rata</span>
                             <span id="modal-analyst-rec"
-                                class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 px-3 py-1 rounded-full text-xs font-black uppercase">BUY</span>
+                                class="bg-emerald-500/20 text-emerald-400 shadow-sm px-3 py-1 rounded-full text-xs font-black uppercase">BUY</span>
                         </div>
                         <div class="text-right">
                             <span class="text-xs text-slate-400 block mb-1">Target Konsensus</span>
@@ -1707,10 +1875,10 @@
             </div>
 
             <!-- ================= CARD 5: AKSI KORPORASI: RIGHTS ISSUE (HMETD) & KALKULATOR TEBUS ================= -->
-            <div id="modal-rights-issue-container" class="bg-[#080d18] border border-amber-500/40 rounded-xl p-5 shadow-2xl space-y-4">
-                <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+            <div id="modal-rights-issue-container" class="bg-[#080d18] shadow-sm rounded-xl p-5 shadow-2xl space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-2  pb-3">
                     <div class="flex items-center gap-2.5">
-                        <div class="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-extrabold text-base">
+                        <div class="w-8 h-8 rounded-lg bg-amber-500/20 shadow-sm flex items-center justify-center text-amber-400 font-extrabold text-base">
                             ⚖️
                         </div>
                         <div>
@@ -1721,41 +1889,41 @@
                         </div>
                     </div>
                     <span id="modal-rights-status-badge"
-                        class="px-2.5 py-1 rounded-full text-xs font-black bg-amber-500/20 text-amber-300 border border-amber-500/50">
+                        class="px-2.5 py-1 rounded-full text-xs font-black bg-amber-500/20 text-amber-300 shadow-sm">
                         SIMULASI HMETD
                     </span>
                 </div>
 
                 <!-- Quantitative Metrics Grid -->
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
-                    <div class="bg-[#0c1322] border border-slate-800/80 p-2.5 rounded-lg space-y-1">
+                    <div class="bg-[#0c1322] shadow-sm p-2.5 rounded-lg space-y-1">
                         <span class="text-slate-400 text-[11px] block">Rasio (Lama : Baru)</span>
                         <span id="modal-rights-ratio" class="font-mono font-bold text-white text-sm">100 : 25</span>
                     </div>
-                    <div class="bg-[#0c1322] border border-slate-800/80 p-2.5 rounded-lg space-y-1">
+                    <div class="bg-[#0c1322] shadow-sm p-2.5 rounded-lg space-y-1">
                         <span class="text-slate-400 text-[11px] block">Harga Tebus (Pe)</span>
                         <span id="modal-rights-exercise-price" class="font-mono font-bold text-amber-400 text-sm">Rp 1.000</span>
                     </div>
-                    <div class="bg-[#0c1322] border border-slate-800/80 p-2.5 rounded-lg space-y-1">
+                    <div class="bg-[#0c1322] shadow-sm p-2.5 rounded-lg space-y-1">
                         <span class="text-slate-400 text-[11px] block">Harga Teoretis</span>
                         <span id="modal-rights-theoretical-price" class="font-mono font-bold text-cyan-300 text-sm">Rp 1.150</span>
                     </div>
-                    <div class="bg-[#0c1322] border border-slate-800/80 p-2.5 rounded-lg space-y-1">
+                    <div class="bg-[#0c1322] shadow-sm p-2.5 rounded-lg space-y-1">
                         <span class="text-slate-400 text-[11px] block">Efek Dilusi</span>
                         <span id="modal-rights-dilution" class="font-mono font-bold text-rose-400 text-sm">20.00%</span>
                     </div>
-                    <div class="bg-[#0c1322] border border-slate-800/80 p-2.5 rounded-lg space-y-1 col-span-2 sm:col-span-1">
+                    <div class="bg-[#0c1322] shadow-sm p-2.5 rounded-lg space-y-1 col-span-2 sm:col-span-1">
                         <span class="text-slate-400 text-[11px] block">Diskon / Premium</span>
                         <span id="modal-rights-discount" class="font-mono font-bold text-emerald-400 text-sm">+15.0%</span>
                     </div>
-                    <div class="bg-[#0c1322] border border-slate-800/80 p-2.5 rounded-lg space-y-1 col-span-2 sm:col-span-1">
+                    <div class="bg-[#0c1322] shadow-sm p-2.5 rounded-lg space-y-1 col-span-2 sm:col-span-1">
                         <span class="text-slate-400 text-[11px] block">Target Dana</span>
                         <span id="modal-rights-proceeds" class="font-mono font-semibold text-slate-200 text-xs truncate block">Rp -</span>
                     </div>
                 </div>
 
                 <!-- Standby Buyer & Schedule Info -->
-                <div class="bg-[#070c16] border border-slate-800 p-3 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs gap-2">
+                <div class="bg-[#070c16] shadow-sm p-3 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs gap-2">
                     <div>
                         <span class="text-slate-400">Pembeli Siaga (Standby Buyer): </span>
                         <span id="modal-rights-standby-buyer" class="font-semibold text-slate-200">-</span>
@@ -1767,7 +1935,7 @@
                 </div>
 
                 <!-- AI Strategic Conclusion -->
-                <div class="bg-[#0d1627] border-l-4 border-amber-500 p-3.5 rounded-r-lg space-y-1">
+                <div class="bg-[#0d1627] border-l-2 border-amber-500 shadow-sm p-3.5 rounded-r-lg space-y-1">
                     <h5 class="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
                         <span>💡 Rekomendasi Strategis HMETD (AI Quant Analyst)</span>
                     </h5>
@@ -1777,8 +1945,8 @@
                 </div>
 
                 <!-- Interactive Tebus Calculator -->
-                <div class="bg-[#060a12] border border-cyan-500/30 rounded-xl p-4 space-y-3">
-                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+                <div class="bg-[#060a12]  rounded-xl p-4 space-y-3">
+                    <div class="flex items-center justify-between  pb-2">
                         <h5 class="font-bold text-cyan-300 text-xs sm:text-sm flex items-center gap-2">
                             <span>🧮</span> Kalkulator Tebus HMETD Interaktif
                         </h5>
@@ -1788,36 +1956,36 @@
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
                             <label class="block text-[11px] text-slate-400 mb-1">Jumlah Lot Dimiliki (L)</label>
-                            <input id="input-rights-lots" type="number" min="1" value="100" class="w-full bg-[#0b101c] border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white font-mono focus:border-cyan-400 focus:outline-none" />
+                            <input id="input-rights-lots" type="number" min="1" value="100" class="w-full bg-[#0b101c] shadow-sm rounded-lg px-3 py-1.5 text-xs text-white font-mono focus:border-cyan-400 focus:outline-none" />
                         </div>
                         <div>
                             <label class="block text-[11px] text-slate-400 mb-1">Harga Tebus / Pe (Rp)</label>
-                            <input id="input-rights-pe" type="number" min="1" value="1000" class="w-full bg-[#0b101c] border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-amber-300 font-mono focus:border-amber-400 focus:outline-none" />
+                            <input id="input-rights-pe" type="number" min="1" value="1000" class="w-full bg-[#0b101c] shadow-sm rounded-lg px-3 py-1.5 text-xs text-amber-300 font-mono focus:border-amber-400 focus:outline-none" />
                         </div>
                         <div>
                             <label class="block text-[11px] text-slate-400 mb-1">Rasio Tebus (Baru per 100 Lama)</label>
-                            <input id="input-rights-ratio-r" type="number" min="1" value="25" class="w-full bg-[#0b101c] border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white font-mono focus:border-cyan-400 focus:outline-none" />
+                            <input id="input-rights-ratio-r" type="number" min="1" value="25" class="w-full bg-[#0b101c] shadow-sm rounded-lg px-3 py-1.5 text-xs text-white font-mono focus:border-cyan-400 focus:outline-none" />
                         </div>
                     </div>
 
                     <!-- Calculator Results Output Cards -->
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1 text-xs">
-                        <div class="bg-[#0b1220] border border-cyan-500/20 p-2.5 rounded-lg text-center">
+                        <div class="bg-[#0b1220] shadow-sm p-2.5 rounded-lg text-center">
                             <span class="text-slate-400 text-[10px] block">Hak HMETD Diperoleh</span>
                             <span id="calc-rights-lots" class="font-mono font-bold text-cyan-300 text-sm">25 Lot</span>
                             <span id="calc-rights-shares" class="text-[10px] text-slate-500 block">(2.500 lbr)</span>
                         </div>
-                        <div class="bg-[#0b1220] border border-amber-500/20 p-2.5 rounded-lg text-center">
+                        <div class="bg-[#0b1220] shadow-sm p-2.5 rounded-lg text-center">
                             <span class="text-slate-400 text-[10px] block">Total Biaya Tebus</span>
                             <span id="calc-rights-cost" class="font-mono font-bold text-amber-400 text-sm">Rp 2.500.000</span>
                             <span class="text-[10px] text-slate-500 block">Dana disiapkan</span>
                         </div>
-                        <div class="bg-[#0b1220] border border-emerald-500/20 p-2.5 rounded-lg text-center">
+                        <div class="bg-[#0b1220] shadow-sm p-2.5 rounded-lg text-center">
                             <span class="text-slate-400 text-[10px] block">Harga Rata-Rata Baru</span>
                             <span id="calc-rights-avg-price" class="font-mono font-bold text-emerald-400 text-sm">Rp 1.160</span>
                             <span class="text-[10px] text-slate-500 block">Modal per lembar</span>
                         </div>
-                        <div class="bg-[#0b1220] border border-rose-500/20 p-2.5 rounded-lg text-center">
+                        <div class="bg-[#0b1220] shadow-sm p-2.5 rounded-lg text-center">
                             <span class="text-slate-400 text-[10px] block">Dilusi Jika Tak Tebus</span>
                             <span id="calc-rights-dilution-status" class="font-mono font-bold text-rose-400 text-sm">20.00%</span>
                             <span class="text-[10px] text-slate-500 block">Porsi kepemilikan</span>
@@ -1827,7 +1995,7 @@
             </div>
 
             <!-- Corporate Actions / News Associated with Stock -->
-            <div class="bg-[#090e1a] border border-[#1a2538] rounded-xl p-5 space-y-3">
+            <div class="bg-[#090e1a] rounded-xl p-5 space-y-3 shadow-lg">
                 <h4 class="font-bold text-white text-sm flex items-center gap-2">
                     <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -1848,8 +2016,8 @@
     <div id="drawer-watchlist"
         class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden justify-end transition-opacity">
         <div
-            class="bg-[#0b101a] border-l border-[#1a2538] w-full max-w-md h-full p-6 shadow-2xl space-y-5 overflow-y-auto">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+            class="bg-[#0b101a] w-full max-w-md h-full p-6 shadow-2xl space-y-5 overflow-y-auto">
+            <div class="flex items-center justify-between pb-4">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -1874,43 +2042,43 @@
     <div id="modal-backtest"
         class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden items-center justify-center p-3 sm:p-5 overflow-y-auto">
         <div
-            class="bg-[#0b101a] border border-[#223049] rounded-2xl w-full max-w-4xl my-auto p-6 sm:p-8 shadow-2xl space-y-6 animate__animated animate__fadeInUp max-h-[92vh] overflow-y-auto">
+            class="bg-[#0b101a] shadow-inner rounded-2xl w-full max-w-4xl my-auto p-4 sm:p-6 lg:p-8 shadow-2xl space-y-5 sm:space-y-6 animate__animated animate__fadeInUp max-h-[92vh] overflow-y-auto">
 
             <!-- Header -->
-            <div class="flex items-start justify-between border-b border-slate-800 pb-4">
-                <div class="flex items-center gap-3.5">
-                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-black font-extrabold text-xl shadow-lg">
+            <div class="flex items-start justify-between  pb-4 gap-2">
+                <div class="flex items-center gap-3 sm:gap-3.5">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-black font-extrabold text-lg sm:text-xl shadow-lg shrink-0">
                         📊
                     </div>
                     <div>
-                        <h2 class="text-xl sm:text-2xl font-black text-white tracking-tight">AUDIT & METODOLOGI BACKTEST KUANTITATIF (IDX)</h2>
+                        <h2 class="text-lg sm:text-2xl font-black text-white tracking-tight">AUDIT & METODOLOGI BACKTEST KUANTITATIF (IDX)</h2>
                         <p class="text-xs text-slate-400 mt-0.5">Pengujian historis multi-tahun sistem algoritma analisa saham & foreign flow</p>
                     </div>
                 </div>
-                <button id="btn-close-backtest-modal" class="bg-[#121c2e] hover:bg-[#1a273f] text-slate-400 hover:text-white p-2 rounded-full transition cursor-pointer">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                <button id="btn-close-backtest-modal" class="bg-[#121c2e] hover:bg-[#1a273f] text-slate-400 hover:text-white p-2 rounded-full transition cursor-pointer shrink-0">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
 
             <!-- Content -->
             <div class="space-y-5 text-xs sm:text-sm text-slate-300">
-                <div class="bg-[#070c14] border border-[#172233] p-4 rounded-xl space-y-2">
+                <div class="bg-[#070c14] p-4 rounded-xl shadow-md space-y-2">
                     <h4 class="font-bold text-white text-sm text-cyan-400">1. Algoritma Pelacakan Aliran Asing (Foreign Flow Engine)</h4>
                     <p class="text-slate-300 leading-relaxed">
                         Sistem menggunakan perpaduan Close Location Value (CLV), Volume-Price Spread Analysis (VPA), dan Foreign Flow Pressure Index (FFPI). Setiap fraksi pergerakan harga diuji terhadap rasio partisipasi modal asing (35% - 46% untuk saham tier perbankan LQ45).
                     </p>
-                    <div class="bg-[#0b101a] p-3 rounded-lg font-mono text-[11px] text-cyan-300 border border-slate-800">
+                    <div class="bg-[#0b101a] p-3 rounded-lg font-mono text-[11px] text-cyan-300 shadow-sm">
                         CLV = ((Close - Low) - (High - Close)) / (High - Low)<br>
                         FFPI = TotalTurnover * ForeignWeight * (0.65 * CLV + 0.35 * tanh(Chg% / 2.5))<br>
                         Foreign VWAP = Sum(Close * NetForeignVal) / Sum(NetForeignVol * 100)
                     </div>
                 </div>
 
-                <div class="bg-[#070c14] border border-[#172233] p-4 rounded-xl space-y-3">
+                <div class="bg-[#070c14] p-4 rounded-xl shadow-md space-y-3">
                     <h4 class="font-bold text-white text-sm text-amber-400">2. Hasil Backtest Strategi & Probabilitas Kuantitatif</h4>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-xs whitespace-nowrap">
-                            <thead class="bg-[#090e1a] text-slate-400 text-[11px] uppercase border-b border-slate-800">
+                            <thead class="bg-[#090e1a] text-slate-400 text-[11px] uppercase ">
                                 <tr>
                                     <th class="p-2.5">Strategi</th>
                                     <th class="p-2.5">Win Rate</th>
@@ -1974,7 +2142,7 @@
                     </div>
                 </div>
 
-                <div class="bg-[#070c14] border border-[#172233] p-4 rounded-xl space-y-2">
+                <div class="bg-[#070c14] p-4 rounded-xl shadow-md space-y-2">
                     <h4 class="font-bold text-white text-sm text-emerald-400">3. Ketentuan Eksekusi & Manajemen Risiko</h4>
                     <p class="text-slate-300 leading-relaxed">
                         Semua sinyal sistem telah memperhitungkan likuiditas minimal Rp 1 Miliar per hari, pembatasan risiko per trade maksimal 1.5% dari portofolio, dan batasan fraksi bid/offer BEI.
@@ -1983,7 +2151,7 @@
             </div>
 
             <!-- Footer -->
-            <div class="border-t border-slate-800 pt-4 flex justify-end">
+            <div class="pt-4 flex justify-end">
                 <button id="btn-close-backtest-modal-bottom" class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-black font-extrabold text-xs py-2 px-5 rounded-xl transition cursor-pointer">
                     Saya Mengerti
                 </button>
@@ -1996,13 +2164,50 @@
         src="data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU"></audio>
 
     <!-- Footer -->
-    <footer class="bg-[#06080d] border-t border-[#121a28] py-4 px-6 text-center text-xs text-slate-500">
+    <footer class="bg-[#06080d] py-4 px-6 text-center text-xs text-slate-500 pb-20 lg:pb-4 shadow-inner">
         <p>© 2026 STOCKRADAR AI • Radar Berita Realtime, Sentimen NLP & Screener Saham Bursa Efek Indonesia. All data
             sourced from realtime feeds.</p>
     </footer>
 
+    <!-- ================= 7. MOBILE BOTTOM NAVIGATION BAR (FIXED) ================= -->
+    <nav id="mobile-bottom-nav" aria-label="Navigasi Utama Mobile"
+        class="fixed bottom-0 inset-x-0 z-50 flex lg:hidden items-center justify-around bg-[#070b13]/95 backdrop-blur-md py-1 pb-[calc(0.4rem+env(safe-area-inset-bottom,0px))] px-2 shadow-[0_-8px_25px_rgba(0,0,0,0.6)]">
+        
+        <!-- Tab 1: Feed M&A -->
+        <button class="mobile-nav-btn active flex-1 flex flex-col items-center justify-center py-1.5 px-1 text-[10px] font-bold rounded-xl transition min-h-[48px] text-cyan-400 bg-cyan-500/15 cursor-pointer" data-tab="deals">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
+            </svg>
+            <span>Feed M&A</span>
+        </button>
+
+        <!-- Tab 2: Screener -->
+        <button class="mobile-nav-btn flex-1 flex flex-col items-center justify-center py-1.5 px-1 text-[10px] font-bold rounded-xl transition min-h-[48px] text-slate-400 hover:text-slate-200 cursor-pointer" data-tab="screener">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            <span>Screener</span>
+        </button>
+
+        <!-- Tab 3: Asing (Foreign Flow) -->
+        <button class="mobile-nav-btn flex-1 flex flex-col items-center justify-center py-1.5 px-1 text-[10px] font-bold rounded-xl transition min-h-[48px] text-slate-400 hover:text-slate-200 cursor-pointer" data-tab="foreign">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span>Asing</span>
+        </button>
+
+        <!-- Tab 4: Backtest -->
+        <button class="mobile-nav-btn flex-1 flex flex-col items-center justify-center py-1.5 px-1 text-[10px] font-bold rounded-xl transition min-h-[48px] text-slate-400 hover:text-slate-200 cursor-pointer" data-tab="backtest">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+            <span>Backtest</span>
+        </button>
+    </nav>
+
     <!-- App Logic -->
-    <script src="/app.js"></script>
+    <script src="/app.js?v=2.0"></script>
 </body>
 
 </html>
