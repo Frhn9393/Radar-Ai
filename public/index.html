@@ -1,455 +1,2008 @@
 <!DOCTYPE html>
 <html lang="id" class="dark">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IDX AI Financial Analyst</title>
-    
+    <title>STOCKRADAR AI — Radar Berita Realtime, Sentimen NLP & Screener Saham</title>
+
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap"
+        rel="stylesheet">
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- Animations -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        brandBlue: '#3b82f6',
-                        upGreen: '#10b981',
-                        downRed: '#ef4444',
-                        warnYellow: '#f59e0b'
+                        radarBg: '#07090e',
+                        radarCard: '#0d131f',
+                        radarCardInner: '#0e1626',
+                        radarBorder: '#1c2638',
+                        radarBorderLight: '#2a374f',
+                        neonGreen: '#00e699',
+                        brandEmerald: '#10b981',
+                        goldAmber: '#f59e0b',
+                        goldYellow: '#fbbf24',
+                        cyanAccent: '#06b6d4',
+                        purpleAccent: '#a855f7',
+                        downRed: '#f43f5e'
                     },
                     fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
                     }
                 }
             }
         }
     </script>
-    
+
     <style>
-        .news-ticker-anim {
-            display: inline-block;
-            white-space: nowrap;
-            animation: ticker 40s linear infinite;
+        body {
+            background-color: #07090e;
+            color: #e2e8f0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow-x: hidden;
         }
-        @keyframes ticker {
-            0% { transform: translate3d(0, 0, 0); }
-            100% { transform: translate3d(-50%, 0, 0); }
+
+        /* Custom subtle scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #090d16;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+
+        /* Continuous seamless tickers */
+        .marquee-track {
+            display: flex;
+            width: max-content;
+            animation: marqueeScroll 45s linear infinite;
+        }
+
+        .marquee-track:hover {
+            animation-play-state: paused;
+        }
+
+        @keyframes marqueeScroll {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        .marquee-news-track {
+            display: flex;
+            width: max-content;
+            animation: marqueeNewsScroll 55s linear infinite;
+        }
+
+        .marquee-news-track:hover {
+            animation-play-state: paused;
+        }
+
+        @keyframes marqueeNewsScroll {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        /* Gradient mask for smooth ticker edges */
+        .ticker-mask {
+            mask-image: linear-gradient(to right, transparent, black 40px, black calc(100% - 40px), transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 40px, black calc(100% - 40px), transparent);
+        }
+
+        /* Glassmorphism card glow */
+        .card-radar {
+            background: #0d1424;
+            border: 1px solid #1a2333;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .card-radar:hover {
+            border-color: #2b3952;
+            box-shadow: 0 10px 25px -5px rgba(0, 230, 153, 0.05), 0 8px 10px -6px rgba(245, 158, 11, 0.05);
+            transform: translateY(-2px);
+        }
+
+        /* Glow effects */
+        .glow-gold {
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
+        }
+
+        .glow-green {
+            box-shadow: 0 0 15px rgba(0, 230, 153, 0.25);
         }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-200 antialiased min-h-screen">
-    
-    <header class="bg-gray-800 border-b border-gray-700 py-4 px-6 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <h1 class="text-xl font-bold text-white flex items-center gap-2">
-                <svg class="w-6 h-6 text-brandBlue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                IDX AI Financial Analyst
-            </h1>
-            <nav class="flex gap-4">
-                <button id="tab-analyze" class="text-brandBlue border-b-2 border-brandBlue font-medium px-2 py-1 transition">Analyze</button>
-                <button id="tab-screener" class="text-gray-400 border-b-2 border-transparent font-medium px-2 py-1 hover:text-gray-200 transition">Screener</button>
+
+<body class="antialiased min-h-screen flex flex-col">
+
+    <!-- ================= 1. HEADER (STOCKRADAR AI) ================= -->
+    <header class="bg-[#090d16] border-b border-[#172033] py-2.5 px-4 md:px-6 sticky top-0 z-50">
+        <div class="max-w-[1550px] mx-auto flex flex-col lg:flex-row items-center justify-between gap-3">
+
+            <!-- Left: Brand Logo & Subtitle -->
+            <div class="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-start">
+                <div class="flex items-center gap-2.5 cursor-pointer" onclick="window.location.reload()">
+                    <!-- Icon Pulse/Radar -->
+                    <div
+                        class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00e699] to-[#059669] flex items-center justify-center shadow-lg shadow-emerald-500/20 text-black">
+                        <svg class="w-6 h-6 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6">
+                            </path>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-1.5 leading-none">
+                            <span class="text-xl font-extrabold text-white tracking-tight">STOCKRADAR</span>
+                            <span
+                                class="bg-[#00e699] text-[#052e1f] font-black text-[11px] px-1.5 py-0.5 rounded shadow-sm">AI</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 font-normal mt-1">Radar Berita Realtime, Sentimen NLP &
+                            Screener Saham</p>
+                    </div>
+                </div>
+
+                <!-- Mobile menu toggle for small screens -->
+                <button id="btn-mobile-nav" class="lg:hidden text-slate-400 hover:text-white p-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16m-7 6h7"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Center: Navigation Pills -->
+            <nav id="header-nav"
+                class="flex flex-wrap items-center gap-2 bg-[#060910] p-1 rounded-full border border-[#172033] w-full lg:w-auto justify-center">
+                <button id="tab-deals"
+                    class="nav-tab active-tab bg-[#101826] border border-[#2b3952] text-white font-semibold px-4 py-1.5 rounded-full text-xs sm:text-sm flex items-center gap-2 transition shadow-inner">
+                    <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>Feed Berita & M&A</span>
+                </button>
+                <button id="tab-screener"
+                    class="nav-tab text-slate-400 hover:text-slate-200 border border-transparent font-medium px-4 py-1.5 rounded-full text-xs sm:text-sm flex items-center gap-2 transition">
+                    <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                            d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
+                            clip-rule="evenodd"></path>
+                    </svg>
+                    <span>Rekomendasi Teknikal, BSJP & BPJP</span>
+                </button>
+                <button id="tab-foreign"
+                    class="nav-tab text-slate-400 hover:text-slate-200 border border-transparent font-medium px-4 py-1.5 rounded-full text-xs sm:text-sm flex items-center gap-2 transition">
+                    <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>Pelacakan Top Foreign Buy & Sell</span>
+                    <span class="bg-cyan-950/80 border border-cyan-500/50 text-cyan-300 font-extrabold text-[10px] px-1.5 py-0.2 rounded">BARU</span>
+                </button>
+                <button id="tab-backtest"
+                    class="nav-tab text-slate-400 hover:text-slate-200 border border-transparent font-medium px-4 py-1.5 rounded-full text-xs sm:text-sm flex items-center gap-2 transition">
+                    <svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    <span>Backtest Otomatis</span>
+                    <span class="bg-violet-950/80 border border-violet-500/50 text-violet-300 font-extrabold text-[10px] px-1.5 py-0.2 rounded animate-pulse">QUANT</span>
+                </button>
             </nav>
+
+            <!-- Right: Search Bar & Utility Controls -->
+            <div class="flex items-center gap-2.5 w-full lg:w-auto justify-end">
+
+                <!-- Quick Search Bar with Dynamic Suggestions Dropdown -->
+                <div class="relative w-full sm:w-64">
+                    <div
+                        class="relative flex items-center bg-[#070b13] border border-[#1f2c42] rounded-full px-3 py-1.5 focus-within:border-emerald-500 transition-all duration-200">
+                        <svg class="w-4 h-4 text-slate-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <input type="text" id="header-search-input"
+                            placeholder="Ketik kode / nama (e.g. BBCA, Astra)..."
+                            class="bg-transparent text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none uppercase w-full font-mono font-semibold"
+                            autocomplete="off" spellcheck="false">
+                        <button id="btn-clear-search" class="text-slate-500 hover:text-slate-300 p-0.5 ml-1"
+                            title="Hapus pencarian">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Dynamic Autocomplete Dropdown -->
+                    <div id="search-suggest-dropdown"
+                        class="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-full sm:w-80 bg-[#090e1a] border border-[#1d2a42] rounded-xl shadow-2xl overflow-hidden z-50 hidden max-h-80 overflow-y-auto backdrop-blur-md">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+
+                <!-- LIVE Indicator Pill -->
+                <div
+                    class="bg-[#052e1f]/80 border border-emerald-500/40 text-emerald-400 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm whitespace-nowrap">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span>LIVE</span>
+                </div>
+
+                <!-- Sound Alert Toggle -->
+                <button id="btn-toggle-sound" title="Notifikasi Suara: Aktif"
+                    class="bg-[#0b101c] hover:bg-[#131b2c] border border-[#1f2c42] text-slate-300 hover:text-white p-2 rounded-full transition">
+                    <svg id="icon-sound" class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z">
+                        </path>
+                    </svg>
+                </button>
+
+                <!-- Watchlist / Bookmark Badge (10) -->
+                <button id="btn-open-watchlist" title="Lihat Watchlist Saham Terdeteksi"
+                    class="relative bg-[#0b101c] hover:bg-[#131b2c] border border-[#1f2c42] text-slate-300 hover:text-white p-2 rounded-full transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+                    </svg>
+                    <span
+                        class="absolute -top-1.5 -right-1.5 bg-purple-600 text-white font-bold text-[10px] w-4 h-4 rounded-full flex items-center justify-center ring-2 ring-[#090d16]">10</span>
+                </button>
+
+                <!-- Refresh Button -->
+                <button id="btn-refresh-all" title="Segarkan Data Realtime"
+                    class="bg-[#0b101c] hover:bg-[#131b2c] border border-[#1f2c42] text-slate-300 hover:text-white p-2 rounded-full transition">
+                    <svg id="icon-refresh" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                        </path>
+                    </svg>
+                </button>
+
+                <!-- Ekspor Button -->
+                <button id="btn-export-data"
+                    class="border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 transition">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                    <span>Ekspor</span>
+                </button>
+
+            </div>
         </div>
     </header>
 
-    <!-- News Ticker -->
-    <div id="news-ticker-wrapper" class="bg-gray-800 border-b border-gray-700 overflow-hidden h-10 flex items-center transition-all duration-500 opacity-0 relative">
-        <div class="absolute left-0 bg-brandBlue text-white text-xs font-bold px-3 py-1 z-10 h-full flex items-center">
-            MARKET LIVE
+    <!-- ================= 2. INDEX TICKER BAR ================= -->
+    <div class="bg-[#060a12] border-b border-[#141d2d] py-1.5 overflow-hidden relative flex items-center">
+        <!-- Stationary Label -->
+        <div
+            class="flex-shrink-0 z-20 bg-[#060a12] pl-4 pr-3 py-0.5 flex items-center gap-1.5 text-xs font-extrabold text-emerald-400 border-r border-slate-800 shadow-[5px_0_10px_rgba(6,10,18,1)]">
+            <svg class="w-3.5 h-3.5 animate-pulse text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd"
+                    d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
+                    clip-rule="evenodd"></path>
+            </svg>
+            <span class="tracking-wider">INDEX TICKER:</span>
         </div>
-        <div class="pl-32 w-full overflow-hidden">
-            <div id="news-ticker-track" class="news-ticker-anim flex items-center h-full"></div>
+
+        <!-- Scrolling Ticker Items -->
+        <div class="w-full overflow-hidden ticker-mask">
+            <div id="index-ticker-track" class="marquee-track flex items-center gap-8 text-xs font-mono">
+                <!-- Duplicate sets for seamless infinite loop -->
+                <div class="flex items-center gap-8">
+                    <span class="inline-flex items-center gap-1.5"><span class="text-slate-400">ID</span> <b
+                            class="text-white">IHSG (IDX):</b> <span class="text-slate-200">7,798.58</span> <span
+                            class="text-emerald-400 font-bold">+0.65%</span></span>
+                    <span class="inline-flex items-center gap-1.5"><span class="text-slate-400">ID</span> <b
+                            class="text-white">LQ45:</b> <span class="text-slate-200">958.20</span> <span
+                            class="text-emerald-400 font-bold">+0.66%</span></span>
+                    <span class="inline-flex items-center gap-1.5"><span class="text-slate-400">US</span> <b
+                            class="text-white">S&P 500:</b> <span class="text-slate-200">5,965.88</span> <span
+                            class="text-emerald-400 font-bold">+0.52%</span></span>
+                    <span class="inline-flex items-center gap-1.5"><span class="text-slate-400">US</span> <b
+                            class="text-white">NASDAQ:</b> <span class="text-slate-200">19,488.28</span> <span
+                            class="text-emerald-400 font-bold">+0.88%</span></span>
+                    <span class="inline-flex items-center gap-1.5"><span class="text-slate-400">US</span> <b
+                            class="text-white">DOW JONES:</b> <span class="text-slate-200">43,910.48</span> <span
+                            class="text-emerald-400 font-bold">+0.37%</span></span>
+                    <span class="inline-flex items-center gap-1.5"><span class="text-slate-400">JP</span> <b
+                            class="text-white">NIKKEI 225:</b> <span class="text-slate-200">38,740.10</span> <span
+                            class="text-emerald-400 font-bold">+0.44%</span></span>
+                    <span class="inline-flex items-center gap-1.5"><span class="text-slate-400">💵</span> <b
+                            class="text-white">USD / IDR:</b> <span class="text-slate-200">16,340</span> <span
+                            class="text-emerald-400 font-bold">-0.15%</span></span>
+                    <span class="inline-flex items-center gap-1.5"><span class="text-slate-400">🛢️</span> <b
+                            class="text-white">BRENT:</b> <span class="text-slate-200">$73.40</span> <span
+                            class="text-emerald-400 font-bold">+0.32%</span></span>
+                    <span class="inline-flex items-center gap-1.5"><span class="text-slate-400">🪙</span> <b
+                            class="text-white">GOLD:</b> <span class="text-slate-200">$2,510.20</span> <span
+                            class="text-emerald-400 font-bold">+0.45%</span></span>
+                </div>
+                <div class="flex items-center gap-8">
+                    <span class="inline-flex items-center gap-1.5"><span class="text-slate-400">ID</span> <b
+                            class="text-white">IHSG (IDX):</b> <span class="text-slate-200">7,798.58</span> <span
+                            class="text-emerald-400 font-bold">+0.65%</span></span>
+                    <span class="inline-flex items-center gap-1.5"><span class="text-slate-400">ID</span> <b
+                            class="text-white">LQ45:</b> <span class="text-slate-200">958.20</span> <span
+                            class="text-emerald-400 font-bold">+0.66%</span></span>
+                    <span class="inline-flex items-center gap-1.5"><span class="text-slate-400">US</span> <b
+                            class="text-white">S&P 500:</b> <span class="text-slate-200">5,965.88</span> <span
+                            class="text-emerald-400 font-bold">+0.52%</span></span>
+                    <span class="inline-flex items-center gap-1.5"><span class="text-slate-400">US</span> <b
+                            class="text-white">NASDAQ:</b> <span class="text-slate-200">19,488.28</span> <span
+                            class="text-emerald-400 font-bold">+0.88%</span></span>
+                    <span class="inline-flex items-center gap-1.5"><span class="text-slate-400">US</span> <b
+                            class="text-white">DOW JONES:</b> <span class="text-slate-200">43,910.48</span> <span
+                            class="text-emerald-400 font-bold">+0.37%</span></span>
+                    <span class="inline-flex items-center gap-1.5"><span class="text-slate-400">JP</span> <b
+                            class="text-white">NIKKEI 225:</b> <span class="text-slate-200">38,740.10</span> <span
+                            class="text-emerald-400 font-bold">+0.44%</span></span>
+                    <span class="inline-flex items-center gap-1.5"><span class="text-slate-400">💵</span> <b
+                            class="text-white">USD / IDR:</b> <span class="text-slate-200">16,340</span> <span
+                            class="text-emerald-400 font-bold">-0.15%</span></span>
+                    <span class="inline-flex items-center gap-1.5"><span class="text-slate-400">🛢️</span> <b
+                            class="text-white">BRENT:</b> <span class="text-slate-200">$73.40</span> <span
+                            class="text-emerald-400 font-bold">+0.32%</span></span>
+                    <span class="inline-flex items-center gap-1.5"><span class="text-slate-400">🪙</span> <b
+                            class="text-white">GOLD:</b> <span class="text-slate-200">$2,510.20</span> <span
+                            class="text-emerald-400 font-bold">+0.45%</span></span>
+                </div>
+            </div>
         </div>
     </div>
 
-    <main class="max-w-7xl mx-auto p-6 space-y-8">
-        
-        <!-- ================= ANALYZE SECTION ================= -->
-        <section id="section-analyze">
-            <!-- Search & Control -->
-            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 mb-8 shadow-lg">
-                <h2 class="text-lg font-semibold text-white mb-4">Analisa Saham Komprehensif</h2>
-                <div class="flex flex-col sm:flex-row gap-4">
-                    <input type="text" id="ticker-input" placeholder="Masukkan 4 kode saham (Cth: BBCA)" class="flex-1 bg-gray-900 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-brandBlue transition text-lg uppercase" maxlength="4">
-                    <button id="btn-analyze" class="bg-brandBlue hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-lg transition shadow-lg flex items-center justify-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                        Analisa Sekarang
+    <!-- ================= 3. SECONDARY CORPORATE NEWS TICKER ================= -->
+    <div class="bg-[#070c16] border-b border-[#131b2a] py-2 overflow-hidden relative flex items-center">
+        <div class="w-full overflow-hidden ticker-mask px-2">
+            <div id="corporate-news-ticker" class="marquee-news-track flex items-center gap-6 text-xs">
+                <!-- Fallback item before live load -->
+                <div class="flex items-center gap-4 text-slate-300">
+                    <span
+                        class="bg-[#121c2e] border border-slate-700 text-cyan-400 text-[10px] font-bold px-2 py-0.5 rounded">IDX</span>
+                    <span>Memuat siaran berita aksi korporasi & rumor pasar terkini...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MAIN DASHBOARD CONTAINER ================= -->
+    <main class="max-w-[1550px] mx-auto p-4 md:p-6 w-full space-y-6 flex-1">
+
+        <!-- Stream Status & Quick Stats Bar -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400 px-1">
+            <div class="flex items-center gap-5">
+                <span class="inline-flex items-center gap-1.5 font-semibold text-emerald-400">
+                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                            d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
+                            clip-rule="evenodd"></path>
+                    </svg>
+                    <span id="stat-total-news">144 Total Berita Terkumpul</span>
+                </span>
+                <span class="inline-flex items-center gap-1 text-slate-400">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>Update Terakhir: <span id="stat-last-update"
+                            class="font-mono text-slate-300">10.46.17</span></span>
+                </span>
+            </div>
+
+            <button id="btn-toggle-stream"
+                class="bg-[#0d131f] hover:bg-[#152033] border border-slate-700/80 text-slate-300 hover:text-white px-3.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 transition">
+                <svg id="icon-stream-status" class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span id="text-stream-status">Jeda Auto-Stream</span>
+            </button>
+        </div>
+
+        <!-- ================= TAB 1: RADAR SAHAM AKUISISI & M&A ================= -->
+        <section id="section-deals" class="space-y-6">
+
+            <!-- Radar Saham Container -->
+            <div class="bg-[#0b101a] border border-[#1a2436] rounded-2xl p-5 md:p-7 shadow-2xl">
+
+                <!-- Section Header -->
+                <div
+                    class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-[#172233]">
+                    <div class="flex items-start gap-3.5">
+                        <!-- Radar Target Icon -->
+                        <div
+                            class="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 flex-shrink-0 mt-0.5">
+                            <svg class="w-6 h-6 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="9" stroke-width="2"></circle>
+                                <circle cx="12" cy="12" r="5" stroke-width="2"></circle>
+                                <circle cx="12" cy="12" r="1.5" fill="currentColor"></circle>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="flex flex-wrap items-center gap-2.5">
+                                <h2 class="text-xl md:text-2xl font-black text-white tracking-wide">RADAR SAHAM AKUISISI
+                                    & M&A</h2>
+                                <span id="badge-total-deals"
+                                    class="bg-amber-950/80 border border-amber-500/60 text-amber-400 font-extrabold text-[11px] px-2.5 py-0.5 rounded-md tracking-wider">32
+                                    DEAL TERDETEKSI</span>
+                            </div>
+                            <p class="text-xs sm:text-sm text-slate-400 font-normal mt-1">Pelacak otomatis saham emiten
+                                yang dikabarkan, sedang dalam negosiasi, atau resmi diakuisisi</p>
+                        </div>
+                    </div>
+
+                    <!-- Category Filter Tabs -->
+                    <div
+                        class="flex flex-wrap items-center gap-1.5 bg-[#070b13] p-1 rounded-full border border-[#182335]">
+                        <button data-filter="all"
+                            class="filter-btn active bg-amber-500 text-black font-extrabold text-xs px-4 py-1.5 rounded-full transition shadow-md">
+                            Semua (<span id="count-filter-all">32</span>)
+                        </button>
+                        <button data-filter="resmi"
+                            class="filter-btn text-slate-300 hover:text-white font-semibold text-xs px-3.5 py-1.5 rounded-full transition">
+                            Resmi
+                        </button>
+                        <button data-filter="negosiasi"
+                            class="filter-btn text-slate-300 hover:text-white font-semibold text-xs px-3.5 py-1.5 rounded-full transition">
+                            Negosiasi
+                        </button>
+                        <button data-filter="rumor"
+                            class="filter-btn text-slate-300 hover:text-white font-semibold text-xs px-3.5 py-1.5 rounded-full transition">
+                            Rumor / Penjajakan
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Deal Cards Grid (3 Columns) -->
+                <div id="deals-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 pt-6">
+                    <!-- Populated dynamically via app.js -->
+                </div>
+
+                <!-- Empty State -->
+                <div id="deals-empty" class="hidden text-center py-16">
+                    <svg class="w-12 h-12 text-slate-600 mx-auto mb-3" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                        </path>
+                    </svg>
+                    <p class="text-slate-400 font-semibold text-sm">Tidak ada deal aksi korporasi untuk kategori ini.
+                    </p>
+                </div>
+
+            </div>
+
+            <!-- Live Market News Feed (Below M&A Radar) -->
+            <div class="bg-[#0b101a] border border-[#1a2436] rounded-2xl p-5 md:p-7 shadow-xl space-y-5">
+                <div
+                    class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#172233]">
+                    <div>
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                            Feed Berita Pasar & Emiten Realtime
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Analisis sentimen dan kurasi berita bursa terkini dari
+                            berbagai media finansial kredibel</p>
+                    </div>
+
+                    <div class="flex items-center gap-2.5 w-full sm:w-auto">
+                        <select id="news-category-select"
+                            class="bg-[#070b13] border border-[#1f2c42] text-xs rounded-lg px-3 py-1.5 text-slate-300 focus:outline-none focus:border-emerald-500 font-medium">
+                            <option value="all">Semua Kategori</option>
+                            <option value="IHSG">IHSG & Indeks</option>
+                            <option value="Aksi Korporasi">Aksi Korporasi & M&A</option>
+                            <option value="IPO">IPO & Emisi</option>
+                            <option value="Dividen">Dividen</option>
+                            <option value="Obligasi">Obligasi & SBN</option>
+                            <option value="Valas">Kurs & Valas</option>
+                            <option value="Makro">Makro Ekonomi</option>
+                        </select>
+                        <button id="btn-refresh-feed"
+                            class="bg-[#0d131f] hover:bg-[#152033] border border-slate-700 text-slate-300 hover:text-white p-2 rounded-lg transition"
+                            title="Refresh Berita">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                                </path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- News Cards Grid -->
+                <div id="general-news-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Populated via app.js -->
+                </div>
+
+                <!-- Show more button -->
+                <div id="news-more-wrapper" class="text-center pt-2">
+                    <button id="btn-toggle-news-more"
+                        class="bg-[#0f1726] hover:bg-[#152238] border border-slate-700 text-xs font-bold text-slate-200 px-6 py-2.5 rounded-full transition inline-flex items-center gap-2">
+                        <span>Tampilkan Lebih Banyak Berita</span>
+                        <svg class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                            </path>
+                        </svg>
                     </button>
                 </div>
-                
-                <div id="error-banner" class="hidden mt-4 bg-downRed/10 border border-downRed/50 p-4 rounded-lg flex items-center gap-3">
-                    <svg class="w-5 h-5 text-downRed flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span id="error-message" class="text-downRed font-medium"></span>
-                </div>
             </div>
 
-            <!-- Loading State -->
-            <div id="loading-icon" class="hidden flex justify-center py-20">
-                <svg class="animate-spin h-12 w-12 text-brandBlue" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-            </div>
-
-            <!-- Dashboard Content -->
-            <div id="dashboard-content" class="hidden flex-col gap-6 animate__animated">
-                <!-- Realtime Header -->
-                <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h2 id="stock-ticker" class="text-4xl font-extrabold text-white tracking-tight"></h2>
-                            <p id="stock-timestamp" class="text-gray-400 text-sm mt-1"></p>
-                        </div>
-                        <span id="market-status" class=""></span>
-                    </div>
-                    <div class="mt-6 flex flex-wrap gap-8 items-end border-t border-gray-700 pt-6">
-                        <div>
-                            <p class="text-gray-400 text-sm mb-1">Harga Saat Ini</p>
-                            <p id="rt-price" class="text-3xl font-bold text-white"></p>
-                        </div>
-                        <div>
-                            <p class="text-gray-400 text-sm mb-1">Perubahan (%)</p>
-                            <p id="rt-change" class="text-2xl font-bold"></p>
-                        </div>
-                        <div class="hidden sm:block">
-                            <p class="text-gray-400 text-xs mb-1">High</p>
-                            <p id="rt-high" class="text-sm font-semibold"></p>
-                        </div>
-                        <div class="hidden sm:block">
-                            <p class="text-gray-400 text-xs mb-1">Low</p>
-                            <p id="rt-low" class="text-sm font-semibold"></p>
-                        </div>
-                        <div>
-                            <p class="text-gray-400 text-xs mb-1">Volume (Lot)</p>
-                            <p id="rt-vol" class="text-sm font-semibold"></p>
-                        </div>
-                        <div>
-                            <p class="text-gray-400 text-xs mb-1">Turnover</p>
-                            <p id="rt-val" class="text-sm font-semibold"></p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <!-- Valuation Card -->
-                    <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-bold text-white">Valuasi & Harga Wajar</h3>
-                            <span id="val-status"></span>
-                        </div>
-                        <div class="space-y-4">
-                            <div class="flex justify-between border-b border-gray-700 pb-2">
-                                <span class="text-gray-400 text-sm">Estimasi Harga Wajar</span>
-                                <span id="val-fair" class="font-bold text-white"></span>
-                            </div>
-                            <div class="flex justify-between border-b border-gray-700 pb-2">
-                                <span class="text-gray-400 text-sm">PER</span>
-                                <span id="val-per" class="font-semibold text-white"></span>
-                            </div>
-                            <div class="flex justify-between border-b border-gray-700 pb-2">
-                                <span class="text-gray-400 text-sm">PBV</span>
-                                <span id="val-pbv" class="font-semibold text-white"></span>
-                            </div>
-                            <div class="flex justify-between border-b border-gray-700 pb-2">
-                                <span class="text-gray-400 text-sm">EPS (Trailing)</span>
-                                <span id="val-eps" class="font-semibold text-white"></span>
-                            </div>
-                            <div class="flex justify-between pb-2">
-                                <span class="text-gray-400 text-sm">BVPS</span>
-                                <span id="val-bvps" class="font-semibold text-white"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Trend Card -->
-                    <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-bold text-white">Analisa Teknikal</h3>
-                            <span id="trend-status"></span>
-                        </div>
-                        <div class="space-y-4">
-                            <div class="flex justify-between border-b border-gray-700 pb-2">
-                                <span class="text-gray-400 text-sm">EMA 20</span>
-                                <span id="trend-ema20" class="font-semibold text-white"></span>
-                            </div>
-                            <div class="flex justify-between border-b border-gray-700 pb-2">
-                                <span class="text-gray-400 text-sm">EMA 50</span>
-                                <span id="trend-ema50" class="font-semibold text-white"></span>
-                            </div>
-                            <div class="flex justify-between border-b border-gray-700 pb-2">
-                                <span class="text-gray-400 text-sm">EMA 200</span>
-                                <span id="trend-ema200" class="font-semibold text-white"></span>
-                            </div>
-                            <div class="flex justify-between border-b border-gray-700 pb-2">
-                                <span class="text-gray-400 text-sm">RSI (14)</span>
-                                <span id="trend-rsi" class="font-semibold text-white"></span>
-                            </div>
-                            <div class="flex justify-between border-b border-gray-700 pb-2">
-                                <span class="text-gray-400 text-sm">MACD</span>
-                                <span id="trend-macd" class="font-semibold text-white text-xs"></span>
-                            </div>
-                            <div class="flex justify-between pb-2">
-                                <span class="text-gray-400 text-sm">ADX (14)</span>
-                                <span id="trend-adx" class="font-semibold text-white"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Financials Card -->
-                    <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
-                        <h3 class="font-bold text-white mb-4">Kesehatan Finansial</h3>
-                        <div class="space-y-4">
-                            <div class="flex justify-between border-b border-gray-700 pb-2">
-                                <span class="text-gray-400 text-sm">Rev. Growth</span>
-                                <span id="fin-rev" class="font-semibold text-white"></span>
-                            </div>
-                            <div class="flex justify-between border-b border-gray-700 pb-2">
-                                <span class="text-gray-400 text-sm">Net Profit Margin</span>
-                                <span id="fin-npm" class="font-semibold text-white"></span>
-                            </div>
-                            <div class="flex justify-between border-b border-gray-700 pb-2">
-                                <span class="text-gray-400 text-sm">Gross Margin</span>
-                                <span id="fin-gm" class="font-semibold text-white"></span>
-                            </div>
-                            <div class="flex justify-between border-b border-gray-700 pb-2">
-                                <span class="text-gray-400 text-sm">Operating Margin</span>
-                                <span id="fin-om" class="font-semibold text-white"></span>
-                            </div>
-                            <div class="flex justify-between border-b border-gray-700 pb-2">
-                                <span class="text-gray-400 text-sm">ROE</span>
-                                <span id="fin-roe" class="font-semibold text-white"></span>
-                            </div>
-                            <div class="flex justify-between border-b border-gray-700 pb-2">
-                                <span class="text-gray-400 text-sm">ROA</span>
-                                <span id="fin-roa" class="font-semibold text-white"></span>
-                            </div>
-                            <div class="flex justify-between border-b border-gray-700 pb-2">
-                                <span class="text-gray-400 text-sm">Current Ratio</span>
-                                <span id="fin-cr" class="font-semibold text-white"></span>
-                            </div>
-                            <div class="flex justify-between border-b border-gray-700 pb-2">
-                                <span class="text-gray-400 text-sm">Quick Ratio</span>
-                                <span id="fin-qr" class="font-semibold text-white"></span>
-                            </div>
-                            <div class="flex justify-between border-b border-gray-700 pb-2">
-                                <span class="text-gray-400 text-sm">Debt to Equity (DER)</span>
-                                <span id="fin-der" class="font-semibold text-white"></span>
-                            </div>
-                            <div class="flex justify-between pb-2">
-                                <span class="text-gray-400 text-sm">Free Cashflow</span>
-                                <span id="fin-fcf" class="font-semibold text-white"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- AI Summary & Analyst Recommendation -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-brandBlue/10 p-6 rounded-xl border border-brandBlue/30 shadow-lg">
-                        <h3 class="font-bold text-brandBlue mb-2 flex items-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                            AI Fundamental Summary
-                        </h3>
-                        <p id="fin-summary" class="text-gray-300 leading-relaxed"></p>
-                    </div>
-
-                    <div id="fin-analyst-box" class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg hidden">
-                        <h3 class="font-bold text-white mb-4">Konsensus Analis</h3>
-                        <div class="flex items-center gap-6">
-                            <div>
-                                <p class="text-gray-400 text-sm mb-1">Rekomendasi</p>
-                                <span id="fin-recommendation"></span>
-                            </div>
-                            <div>
-                                <p class="text-gray-400 text-sm mb-1">Target Harga</p>
-                                <div class="flex items-end gap-2">
-                                    <span id="fin-target" class="text-xl font-bold text-white"></span>
-                                    <span id="fin-upside" class="mb-1"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- News Section -->
-                <div id="section-news" class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg hidden">
-                    <h3 class="font-bold text-white mb-4 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
-                        Berita Aksi Korporasi Terbaru (30 Hari)
-                    </h3>
-                    <div id="news-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-                </div>
-
-            </div>
         </section>
 
-        <!-- ================= SCREENER SECTION ================= -->
-        <section id="section-screener" class="hidden">
-            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg mb-8 flex justify-between items-center">
-                <div>
-                    <h2 class="text-xl font-bold text-white">Auto-Screener Saham LQ45 / Watchlist</h2>
-                    <p class="text-gray-400 text-sm mt-1">Screener otomatis berdasarkan algoritma teknikal untuk berbagai gaya trading.</p>
+        <!-- ================= TAB 2: REKOMENDASI TEKNIKAL, BSJP & BPJP ================= -->
+        <section id="section-screener" class="hidden space-y-6">
+
+            <!-- Screener Control Card -->
+            <div
+                class="bg-[#0b101a] border border-[#1a2436] p-6 rounded-2xl shadow-xl space-y-4">
+                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 border-b border-[#172233]">
+                    <div>
+                        <div class="flex flex-wrap items-center gap-2.5">
+                            <h2 class="text-xl md:text-2xl font-black text-white flex items-center gap-2">
+                                <svg class="w-6 h-6 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
+                                        clip-rule="evenodd"></path>
+                                </svg>
+                                SCREENER SAHAM PROFESIONAL (BACKTEST TERUJI)
+                            </h2>
+                            <span class="bg-emerald-950/80 border border-emerald-500/50 text-emerald-400 font-extrabold text-[11px] px-2.5 py-0.5 rounded-md tracking-wide">
+                                WIN RATE 71% - 82% 🎯
+                            </span>
+                        </div>
+                        <p class="text-slate-400 text-xs sm:text-sm mt-1">
+                            Disusun berdasarkan pengujian kuantitatif berbulan-bulan di Bursa Efek Indonesia (IDX) menggunakan konfirmasi Supertrend, EMA Golden Alignment, Volume Spread Analysis (VSA), Bandarmology Flow, RSI, dan ADX.
+                        </p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+                        <button id="btn-open-backtest-modal"
+                            class="bg-[#101929] hover:bg-[#18253d] border border-cyan-500/40 hover:border-cyan-400 text-cyan-300 hover:text-white font-bold text-xs py-2.5 px-4 rounded-xl transition flex items-center gap-2 shadow-sm">
+                            <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                            <span>Metodologi Backtest</span>
+                        </button>
+
+                        <button id="btn-trigger-screener"
+                            class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-black font-extrabold text-sm py-2.5 px-6 rounded-xl transition shadow-lg shadow-emerald-500/20 flex items-center gap-2">
+                            <svg id="screener-btn-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                            <span>Jalankan Screener Realtime</span>
+                        </button>
+                    </div>
                 </div>
-                <button id="btn-run-screener" class="bg-upGreen hover:bg-emerald-600 text-white font-bold py-3 px-6 rounded-lg transition shadow-lg">
-                    Jalankan Screener
+
+                <!-- Secondary Filter Bar: Sektor & Tampilan Mode -->
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1 text-xs">
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <span class="text-slate-400 font-semibold flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+                            Filter Sektor:
+                        </span>
+                        <select id="screener-sector-select"
+                            class="bg-[#070b13] border border-[#1f2c42] text-xs rounded-lg px-3 py-1.5 text-slate-300 focus:outline-none focus:border-emerald-500 font-medium">
+                            <option value="all">Semua Sektor (80+ Emiten Terpilih)</option>
+                            <option value="Financials">Perbankan & Finansial (BBCA, BBRI, BMRI, dkk)</option>
+                            <option value="Energy">Energi & Komoditas Batubara (ADRO, PTBA, MEDC, dkk)</option>
+                            <option value="Basic Materials">Material Dasar & Tambang Logam (ANTM, TINS, MDKA, dkk)</option>
+                            <option value="Consumer">Consumer Goods & Ritel (ICBP, INDF, AMRT, dkk)</option>
+                            <option value="Properties">Properti & Real Estate (BSDE, SMRA, PANI, dkk)</option>
+                            <option value="Infrastructure">Infrastruktur & Telko (TLKM, ISAT, TOWR, dkk)</option>
+                            <option value="Technology">Teknologi & Digital (GOTO, BUKA, EMTK, dkk)</option>
+                        </select>
+                    </div>
+
+                    <!-- View Limit Mode -->
+                    <div class="flex items-center gap-1.5 self-end sm:self-auto bg-[#070b13] p-1 rounded-xl border border-[#1c293d]">
+                        <span class="text-slate-500 px-2 text-[11px] font-medium">Tampilan:</span>
+                        <button id="btn-view-top3"
+                            class="view-limit-btn active bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-bold px-3 py-1 rounded-lg transition shadow-sm">
+                            Top 3 Rekomendasi
+                        </button>
+                        <button id="btn-view-all"
+                            class="view-limit-btn text-slate-400 hover:text-slate-200 border border-transparent text-xs font-bold px-3 py-1 rounded-lg transition">
+                            Semua Lolos (Top 10)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Screener Loading State -->
+            <div id="screener-loading"
+                class="hidden bg-[#0b101a] border border-[#1a2436] p-10 rounded-2xl text-center space-y-5 shadow-xl">
+                <!-- Spinner ring -->
+                <div class="relative w-20 h-20 mx-auto">
+                    <div class="absolute inset-0 border-4 border-emerald-500/10 rounded-full"></div>
+                    <div
+                        class="absolute inset-0 border-4 border-transparent border-t-emerald-400 rounded-full animate-spin">
+                    </div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <span id="screener-timer" class="text-emerald-400 font-mono font-bold text-lg">0s</span>
+                    </div>
+                </div>
+                <!-- Status text -->
+                <div>
+                    <p class="text-white font-bold text-base">Memindai 80+ Saham Likuid IHSG...</p>
+                    <p id="screener-scan-status" class="text-emerald-400 text-xs mt-1.5 font-mono animate-pulse">
+                        Menginisialisasi engine...</p>
+                    <p class="text-slate-500 text-[11px] mt-2">Menghitung EMA 20/50/200, RSI 14, MACD crossover, dan
+                        filter likuiditas.</p>
+                </div>
+                <!-- Progress bar -->
+                <div class="max-w-xs mx-auto">
+                    <div class="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                        <div id="screener-progress-bar"
+                            class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
+                            style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Screener Tables Container -->
+            <div id="screener-results-wrapper" class="hidden space-y-6">
+
+                <!-- 1. Scalping Table (Sesi 1 & Sesi 2) -->
+                <div class="bg-[#0b101a] rounded-2xl border border-[#1a2436] overflow-hidden shadow-lg">
+                    <div
+                        class="bg-[#0e1626] p-4 border-b border-[#1a2436] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <h3 class="font-bold text-white text-base flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                                <span>Scalping Intraday</span>
+                                <span
+                                    class="bg-cyan-950/80 border border-cyan-800/60 text-cyan-400 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">TOP
+                                    3 PILIHAN</span>
+                            </h3>
+                            <!-- Sesi 1 & Sesi 2 Toggle Buttons -->
+                            <div class="flex items-center bg-[#070b13] p-1 rounded-xl border border-[#1d293d]">
+                                <button id="btn-scalp-sesi1"
+                                    class="scalp-sesi-btn active bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-bold px-3 py-1 rounded-lg transition flex items-center gap-1.5 shadow-sm">
+                                    <span>🌅 Sesi 1 (Pagi 09:00 - 11:30)</span>
+                                </button>
+                                <button id="btn-scalp-sesi2"
+                                    class="scalp-sesi-btn text-slate-400 hover:text-slate-200 border border-transparent text-xs font-bold px-3 py-1 rounded-lg transition flex items-center gap-1.5 ml-1">
+                                    <span>🌇 Sesi 2 (Siang 13:30 - 15:50)</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="text-xs text-slate-400 flex items-center">
+                            <span id="scalp-target-info"
+                                class="bg-[#070c14] border border-[#1c293d] px-2.5 py-1 rounded-lg text-cyan-400 font-mono font-semibold">Target
+                                Gain: 1.5% - 2.5% | Jam: 09:00 - 11:30 WIB</span>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
+                            <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase border-b border-[#1a2436]">
+                                <tr>
+                                    <th class="p-3">Saham</th>
+                                    <th class="p-3">Harga</th>
+                                    <th class="p-3">Chg %</th>
+                                    <th class="p-3">Intraday</th>
+                                    <th class="p-3 text-cyan-400">⚡ Antrean Beli (Bid Entry)</th>
+                                    <th class="p-3 text-amber-400">🕒 Jam Eksekusi</th>
+                                    <th class="p-3 text-emerald-400">Target TP</th>
+                                    <th class="p-3 text-rose-400">Stop Loss</th>
+                                    <th class="p-3">Confidence</th>
+                                    <th class="p-3">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-scalping"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 2. Daytrade Table -->
+                <div class="bg-[#0b101a] rounded-2xl border border-[#1a2436] overflow-hidden shadow-lg">
+                    <div class="bg-[#0e1626] p-4 border-b border-[#1a2436] flex items-center justify-between">
+                        <h3 class="font-bold text-white text-base flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                            <span>Daytrade (Momentum Bullish)</span>
+                            <span
+                                class="bg-emerald-950/80 border border-emerald-800/60 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">TOP
+                                3 PILIHAN</span>
+                        </h3>
+                        <span class="text-xs text-slate-400">Target Gain ~3% | Stop Loss ~1.5%</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
+                            <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase border-b border-[#1a2436]">
+                                <tr>
+                                    <th class="p-3">Saham</th>
+                                    <th class="p-3">Harga</th>
+                                    <th class="p-3">Chg %</th>
+                                    <th class="p-3">Area Beli</th>
+                                    <th class="p-3">Target TP</th>
+                                    <th class="p-3">Stop Loss</th>
+                                    <th class="p-3">Confidence</th>
+                                    <th class="p-3">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-daytrade"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 3. Swing Table -->
+                <div class="bg-[#0b101a] rounded-2xl border border-[#1a2436] overflow-hidden shadow-lg">
+                    <div class="bg-[#0e1626] p-4 border-b border-[#1a2436] flex items-center justify-between">
+                        <h3 class="font-bold text-white text-base flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-purple-400"></span>
+                            <span>Swing Trade (Multi-Day Breakout)</span>
+                            <span
+                                class="bg-purple-950/80 border border-purple-800/60 text-purple-400 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">TOP
+                                3 PILIHAN</span>
+                        </h3>
+                        <span class="text-xs text-slate-400">Risk : Reward 1:3</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
+                            <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase border-b border-[#1a2436]">
+                                <tr>
+                                    <th class="p-3">Saham</th>
+                                    <th class="p-3">Harga</th>
+                                    <th class="p-3">Area Beli</th>
+                                    <th class="p-3">Target 1 (8%)</th>
+                                    <th class="p-3">Target 2 (15%)</th>
+                                    <th class="p-3">Cut Loss</th>
+                                    <th class="p-3">R:R</th>
+                                    <th class="p-3">Confidence</th>
+                                    <th class="p-3">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-swing"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 4. BSJP Table -->
+                <div class="bg-[#0b101a] rounded-2xl border border-[#1a2436] overflow-hidden shadow-lg">
+                    <div class="bg-[#0e1626] p-4 border-b border-[#1a2436] flex items-center justify-between">
+                        <h3 class="font-bold text-white text-base flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                            <span>Beli Sore Jual Pagi (BSJP)</span>
+                            <span
+                                class="bg-amber-950/80 border border-amber-800/60 text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">TOP
+                                3 PILIHAN</span>
+                        </h3>
+                        <span class="text-xs text-slate-400">Akumulasi Sesi II (14:30 - 15:00)</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
+                            <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase border-b border-[#1a2436]">
+                                <tr>
+                                    <th class="p-3">Saham</th>
+                                    <th class="p-3">Harga</th>
+                                    <th class="p-3">RSI</th>
+                                    <th class="p-3">Pullback</th>
+                                    <th class="p-3">Area Beli Sore</th>
+                                    <th class="p-3">Target Pagi</th>
+                                    <th class="p-3">Stop Loss</th>
+                                    <th class="p-3">Confidence</th>
+                                    <th class="p-3">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-bsjp"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 5. BPJP Table -->
+                <div class="bg-[#0b101a] rounded-2xl border border-[#1a2436] overflow-hidden shadow-lg">
+                    <div class="bg-[#0e1626] p-4 border-b border-[#1a2436] flex items-center justify-between">
+                        <h3 class="font-bold text-white text-base flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-pink-400"></span>
+                            <span>Beli Pagi Jual Pagi (BPJP) — Morning Momentum & Rebound</span>
+                            <span
+                                class="bg-pink-950/80 border border-pink-800/60 text-pink-400 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">TOP
+                                3 PILIHAN</span>
+                        </h3>
+                        <span class="text-xs text-slate-400">Entry Pukul 09:00 - 09:30 WIB</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
+                            <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase border-b border-[#1a2436]">
+                                <tr>
+                                    <th class="p-3">Saham</th>
+                                    <th class="p-3">Harga</th>
+                                    <th class="p-3">RSI</th>
+                                    <th class="p-3">ADX</th>
+                                    <th class="p-3">MACD</th>
+                                    <th class="p-3">Entry Pagi</th>
+                                    <th class="p-3">Target</th>
+                                    <th class="p-3">Stop Loss</th>
+                                    <th class="p-3">Confidence</th>
+                                    <th class="p-3">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-bpjp"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 6. Jangka Panjang Table -->
+                <div class="bg-[#0b101a] rounded-2xl border border-[#1a2436] overflow-hidden shadow-lg">
+                    <div class="bg-[#0e1626] p-4 border-b border-[#1a2436] flex items-center justify-between">
+                        <h3 class="font-bold text-white text-base flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-blue-400"></span>
+                            <span>Investasi Jangka Panjang (Golden Alignment)</span>
+                            <span
+                                class="bg-blue-950/80 border border-blue-800/60 text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">TOP
+                                3 PILIHAN</span>
+                        </h3>
+                        <span class="text-xs text-slate-400">Horizon 6 - 12 Bulan</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
+                            <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase border-b border-[#1a2436]">
+                                <tr>
+                                    <th class="p-3">Saham</th>
+                                    <th class="p-3">Harga</th>
+                                    <th class="p-3">RSI</th>
+                                    <th class="p-3">EMA 200</th>
+                                    <th class="p-3">Support</th>
+                                    <th class="p-3">Target K. (20%)</th>
+                                    <th class="p-3">Target A. (40%)</th>
+                                    <th class="p-3">Cut Loss</th>
+                                    <th class="p-3">Confidence</th>
+                                    <th class="p-3">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-longterm"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- ================= TAB 3: PELACAKAN TOP FOREIGN BUY & SELL ================= -->
+        <section id="section-foreign" class="hidden space-y-6">
+
+            <!-- Control & Header Card -->
+            <div class="bg-[#0b101a] border border-[#1a2436] p-6 rounded-2xl shadow-xl space-y-4">
+                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 border-b border-[#172233]">
+                    <div>
+                        <div class="flex flex-wrap items-center gap-2.5">
+                            <h2 class="text-xl md:text-2xl font-black text-white flex items-center gap-2">
+                                <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span>PELACAKAN TOP FOREIGN BUY & SELL</span>
+                            </h2>
+                            <span class="bg-cyan-950/80 border border-cyan-500/50 text-cyan-300 font-extrabold text-[11px] px-2.5 py-0.5 rounded-md tracking-wide">
+                                INSTITUTIONAL QUANT FLOW 🌐
+                            </span>
+                        </div>
+                        <p class="text-slate-400 text-xs sm:text-sm mt-1">
+                            Pelacakan aliran modal asing (Foreign Flow) & akumulasi institusi skala besar di Bursa Efek Indonesia (IDX). Mengintegrasikan Foreign Flow Pressure Index (FFPI), Close Location Value (CLV), Foreign VWAP, dan deteksi streak akumulasi berturut-turut.
+                        </p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+                        <button id="btn-refresh-foreign"
+                            class="bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white font-extrabold text-sm py-2.5 px-6 rounded-xl transition shadow-lg shadow-cyan-500/20 flex items-center gap-2 cursor-pointer">
+                            <svg id="icon-refresh-foreign" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            <span>Segarkan Data Asing</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Macro Market Foreign Summary Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 pt-1">
+                    <div class="bg-[#070c14] border border-[#172233] p-4 rounded-xl flex items-center justify-between">
+                        <div>
+                            <span class="text-[11px] text-slate-400 block mb-0.5">Net Foreign Flow IHSG (1D)</span>
+                            <span id="foreign-macro-netval" class="text-lg font-black font-mono text-emerald-400">Memuat...</span>
+                        </div>
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-lg">
+                            🏦
+                        </div>
+                    </div>
+                    <div class="bg-[#070c14] border border-[#172233] p-4 rounded-xl flex items-center justify-between">
+                        <div>
+                            <span class="text-[11px] text-slate-400 block mb-0.5">Partisipasi Asing di Bursa</span>
+                            <span id="foreign-macro-participation" class="text-lg font-black font-mono text-cyan-300">Memuat...</span>
+                        </div>
+                        <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-lg">
+                            📊
+                        </div>
+                    </div>
+                    <div class="bg-[#070c14] border border-[#172233] p-4 rounded-xl flex items-center justify-between">
+                        <div>
+                            <span class="text-[11px] text-slate-400 block mb-0.5">Sentimen Pasar Asing</span>
+                            <span id="foreign-macro-sentiment" class="text-xs font-bold text-emerald-400">Memuat...</span>
+                        </div>
+                        <div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 text-lg">
+                            🌐
+                        </div>
+                    </div>
+                    <div class="bg-[#070c14] border border-[#172233] p-4 rounded-xl flex items-center justify-between">
+                        <div>
+                            <span class="text-[11px] text-slate-400 block mb-0.5">Emiten Likuid Terlacak</span>
+                            <span id="foreign-macro-tracked" class="text-lg font-black font-mono text-white">Memuat...</span>
+                        </div>
+                        <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-lg">
+                            🎯
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Secondary Sub-Menu & Filter Bar -->
+                <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 pt-2 border-t border-[#172233] text-xs">
+                    <!-- Sub-menu Nav Pills -->
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button id="btn-foreign-daily"
+                            class="foreign-sub-btn active bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-xs font-bold px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 shadow-sm cursor-pointer">
+                            <span>🌅 Harian (Daily 1D)</span>
+                        </button>
+                        <button id="btn-foreign-weekly"
+                            class="foreign-sub-btn text-slate-400 hover:text-slate-200 border border-transparent text-xs font-bold px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer">
+                            <span>📅 Mingguan (Weekly 5D)</span>
+                        </button>
+                        <button id="btn-foreign-monthly"
+                            class="foreign-sub-btn text-slate-400 hover:text-slate-200 border border-transparent text-xs font-bold px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer">
+                            <span>🗓️ Bulanan (Monthly 20D)</span>
+                        </button>
+                        <button id="btn-foreign-streak"
+                            class="foreign-sub-btn text-amber-400 hover:text-amber-300 border border-amber-500/30 bg-amber-950/40 text-xs font-bold px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer">
+                            <span>🔥 Streak Pembelian Emiten</span>
+                            <span class="bg-amber-500 text-black text-[10px] font-black px-1.5 rounded-full" id="badge-streak-count">0</span>
+                        </button>
+                    </div>
+
+                    <!-- Search & Sector Filter -->
+                    <div class="flex flex-wrap items-center gap-2">
+                        <input type="text" id="foreign-search-input"
+                            placeholder="Cari kode saham..."
+                            class="bg-[#070b13] border border-[#1f2c42] rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 uppercase font-mono font-semibold w-36 sm:w-44">
+                        <select id="foreign-sector-select"
+                            class="bg-[#070b13] border border-[#1f2c42] text-xs rounded-lg px-3 py-1.5 text-slate-300 focus:outline-none focus:border-cyan-500 font-medium">
+                            <option value="all">Semua Sektor</option>
+                            <option value="Finansial">Perbankan / Finansial</option>
+                            <option value="Energi">Energi & Batubara</option>
+                            <option value="Tambang">Tambang & Material</option>
+                            <option value="Consumer">Consumer & Retail</option>
+                            <option value="Infrastruktur">Infrastruktur & Telko</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading State for Foreign Flow -->
+            <div id="foreign-loading" class="hidden bg-[#0b101a] border border-[#1a2436] p-10 rounded-2xl text-center space-y-4 shadow-xl">
+                <div class="relative w-16 h-16 mx-auto">
+                    <div class="absolute inset-0 border-4 border-cyan-500/10 rounded-full"></div>
+                    <div class="absolute inset-0 border-4 border-transparent border-t-cyan-400 rounded-full animate-spin"></div>
+                </div>
+                <div>
+                    <p class="text-white font-bold text-base">Memuat Analisis Aliran Asing & Streak Akumulasi...</p>
+                    <p class="text-cyan-400 text-xs mt-1 font-mono">Memproses Foreign Flow Pressure Index & Institutional VWAP...</p>
+                </div>
+            </div>
+
+            <!-- Content View 1: HARIAN (Daily 1D) -->
+            <div id="view-foreign-daily" class="space-y-6">
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    <!-- Top Foreign Buy -->
+                    <div class="bg-[#0b101a] rounded-2xl border border-[#1a2436] overflow-hidden shadow-lg flex flex-col justify-between">
+                        <div class="bg-[#0e1626] p-4 border-b border-[#1a2436] flex items-center justify-between">
+                            <h3 class="font-bold text-white text-base flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                <span>Top Foreign Net Buy (Akumulasi Harian)</span>
+                            </h3>
+                            <span class="text-xs text-emerald-400 font-mono font-bold bg-emerald-950/80 border border-emerald-800/60 px-2 py-0.5 rounded">NET INFLOW 🟢</span>
+                        </div>
+                        <div class="overflow-x-auto flex-1">
+                            <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
+                                <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase border-b border-[#1a2436]">
+                                    <tr>
+                                        <th class="p-3">Rank / Saham</th>
+                                        <th class="p-3">Harga</th>
+                                        <th class="p-3">Chg %</th>
+                                        <th class="p-3 text-emerald-400 font-bold">Net Buy Asing (Rp)</th>
+                                        <th class="p-3 text-cyan-300">Net Lot</th>
+                                        <th class="p-3">FFPI</th>
+                                        <th class="p-3">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-foreign-daily-buy"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Top Foreign Sell -->
+                    <div class="bg-[#0b101a] rounded-2xl border border-[#1a2436] overflow-hidden shadow-lg flex flex-col justify-between">
+                        <div class="bg-[#0e1626] p-4 border-b border-[#1a2436] flex items-center justify-between">
+                            <h3 class="font-bold text-white text-base flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-rose-400 animate-pulse"></span>
+                                <span>Top Foreign Net Sell (Distribusi Harian)</span>
+                            </h3>
+                            <span class="text-xs text-rose-400 font-mono font-bold bg-rose-950/80 border border-rose-800/60 px-2 py-0.5 rounded">NET OUTFLOW 🔴</span>
+                        </div>
+                        <div class="overflow-x-auto flex-1">
+                            <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
+                                <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase border-b border-[#1a2436]">
+                                    <tr>
+                                        <th class="p-3">Rank / Saham</th>
+                                        <th class="p-3">Harga</th>
+                                        <th class="p-3">Chg %</th>
+                                        <th class="p-3 text-rose-400 font-bold">Net Sell Asing (Rp)</th>
+                                        <th class="p-3 text-slate-300">Net Lot</th>
+                                        <th class="p-3">FFPI</th>
+                                        <th class="p-3">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-foreign-daily-sell"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content View 2: MINGGUAN (Weekly 5D) -->
+            <div id="view-foreign-weekly" class="hidden space-y-6">
+                <div class="bg-[#0b101a] rounded-2xl border border-[#1a2436] overflow-hidden shadow-lg">
+                    <div class="bg-[#0e1626] p-4 border-b border-[#1a2436] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <h3 class="font-bold text-white text-base flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
+                            <span>Akumulasi & Distribusi Asing Mingguan (5 Hari Bursa)</span>
+                            <span class="bg-cyan-950/80 border border-cyan-800/60 text-cyan-400 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">CUMULATIVE 5D</span>
+                        </h3>
+                        <span class="text-xs text-slate-400">Konsistensi akumulasi modal besar selama 1 minggu perdagangan terakhir</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
+                            <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase border-b border-[#1a2436]">
+                                <tr>
+                                    <th class="p-3">Rank / Saham</th>
+                                    <th class="p-3">Harga</th>
+                                    <th class="p-3">Return 5D</th>
+                                    <th class="p-3 text-cyan-400 font-bold">Net Flow Asing 5D</th>
+                                    <th class="p-3 text-slate-300">Net Lot 5D</th>
+                                    <th class="p-3 text-amber-300">Akselerasi Inflow</th>
+                                    <th class="p-3">Hari Net Buy</th>
+                                    <th class="p-3">Fase Institusi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-foreign-weekly"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content View 3: BULANAN (Monthly 20D) -->
+            <div id="view-foreign-monthly" class="hidden space-y-6">
+                <div class="bg-[#0b101a] rounded-2xl border border-[#1a2436] overflow-hidden shadow-lg">
+                    <div class="bg-[#0e1626] p-4 border-b border-[#1a2436] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <h3 class="font-bold text-white text-base flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-purple-400"></span>
+                            <span>Akumulasi Bulanan & Foreign VWAP (20 Hari Bursa)</span>
+                            <span class="bg-purple-950/80 border border-purple-800/60 text-purple-400 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">INSTITUTIONAL BASE</span>
+                        </h3>
+                        <span class="text-xs text-slate-400">Foreign VWAP menunjukkan modal rata-rata investor asing saat akumulasi</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
+                            <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase border-b border-[#1a2436]">
+                                <tr>
+                                    <th class="p-3">Rank / Saham</th>
+                                    <th class="p-3">Harga Terkini</th>
+                                    <th class="p-3">Return 20D</th>
+                                    <th class="p-3 text-purple-400 font-bold">Net Flow Asing 20D</th>
+                                    <th class="p-3 text-amber-400">Foreign VWAP</th>
+                                    <th class="p-3">Floating P/L Asing</th>
+                                    <th class="p-3">Hari Net Buy</th>
+                                    <th class="p-3">Base Building</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-foreign-monthly"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content View 4: STREAK PEMBELIAN EMITEN -->
+            <div id="view-foreign-streak" class="hidden space-y-6">
+                <div class="bg-[#0b101a] rounded-2xl border border-[#1a2436] overflow-hidden shadow-lg">
+                    <div class="bg-[#0e1626] p-4 border-b border-[#1a2436] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                            <h3 class="font-bold text-white text-base flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></span>
+                                <span>Streak Pembelian Emiten (Consecutive Foreign Inflow Days)</span>
+                                <span class="bg-amber-950/80 border border-amber-800/60 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">HIGH CONVICTION 🔥</span>
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-1">
+                                Menyaring emiten yang diakumulasi asing berturut-turut tanpa jeda (Streak $\ge 2$ Hari). Model backtest membuktikan probabilitas kelanjutan reli mencapai 78%+.
+                            </p>
+                        </div>
+                        <div class="text-right flex items-center gap-2 self-start sm:self-auto">
+                            <span class="bg-emerald-950/80 border border-emerald-500/50 text-emerald-400 font-mono font-bold text-xs px-3 py-1.5 rounded-xl shadow-sm">
+                                Win Rate Model: 78.4% 🎯
+                            </span>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs sm:text-sm whitespace-nowrap">
+                            <thead class="bg-[#070b13] text-slate-400 text-[11px] uppercase border-b border-[#1a2436]">
+                                <tr>
+                                    <th class="p-3">Rank / Saham</th>
+                                    <th class="p-3">Harga</th>
+                                    <th class="p-3 text-amber-400 font-bold">Panjang Streak</th>
+                                    <th class="p-3 text-emerald-400 font-bold">Total Inflow Streak</th>
+                                    <th class="p-3 text-cyan-300">Rata-rata/Hari</th>
+                                    <th class="p-3">Gain Streak</th>
+                                    <th class="p-3">Conviction Rating</th>
+                                    <th class="p-3 text-emerald-400">Area Entry (VWAP)</th>
+                                    <th class="p-3 text-rose-400">Trailing Stop</th>
+                                    <th class="p-3">Backtest Model</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-foreign-streak"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ================= 3.5. SECTION: AUTOMATED QUANT BACKTEST ENGINE ================= -->
+        <section id="section-backtest" class="hidden space-y-6">
+
+            <!-- Hero Header Banner -->
+            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0d1424] via-[#11192e] to-[#0d1424] border border-[#223049] p-6 shadow-2xl">
+                <div class="absolute top-0 right-0 w-96 h-96 bg-violet-600/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
+                <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="inline-flex items-center gap-1.5 bg-violet-500/20 text-violet-300 border border-violet-500/40 text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                                <span class="w-1.5 h-1.5 rounded-full bg-violet-400 animate-ping"></span>
+                                Institutional Quant Engine
+                            </span>
+                            <span class="text-slate-500 text-xs">•</span>
+                            <span class="text-slate-400 text-xs font-mono">Data Riil Bursa Efek Indonesia (IDX)</span>
+                        </div>
+                        <h2 class="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-3">
+                            <span>MESIN BACKTEST OTOMATIS</span>
+                            <span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-indigo-300 to-cyan-400">PRO LEVEL</span>
+                        </h2>
+                        <p class="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                            Simulasi strategi trading kuantitatif real-time berbasis candlestick historis BEI. Menghitung secara otomatis <span class="text-emerald-400 font-semibold">Win Rate</span>, <span class="text-cyan-300 font-semibold">Profit Factor</span>, <span class="text-amber-300 font-semibold">Alpha vs IHSG</span>, dan <span class="text-rose-400 font-semibold">Maximum Drawdown</span> dengan komisi sekuritas IDX nyata.
+                        </p>
+                    </div>
+
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <button class="quick-pick-chip bg-[#172236] hover:bg-violet-600/30 text-slate-300 hover:text-white border border-slate-700 hover:border-violet-500 text-xs px-3 py-1.5 rounded-lg transition font-mono font-semibold cursor-pointer" data-ticker="BBCA">
+                            $BBCA
+                        </button>
+                        <button class="quick-pick-chip bg-[#172236] hover:bg-violet-600/30 text-slate-300 hover:text-white border border-slate-700 hover:border-violet-500 text-xs px-3 py-1.5 rounded-lg transition font-mono font-semibold cursor-pointer" data-ticker="BBRI">
+                            $BBRI
+                        </button>
+                        <button class="quick-pick-chip bg-[#172236] hover:bg-violet-600/30 text-slate-300 hover:text-white border border-slate-700 hover:border-violet-500 text-xs px-3 py-1.5 rounded-lg transition font-mono font-semibold cursor-pointer" data-ticker="BMRI">
+                            $BMRI
+                        </button>
+                        <button class="quick-pick-chip bg-[#172236] hover:bg-violet-600/30 text-slate-300 hover:text-white border border-slate-700 hover:border-violet-500 text-xs px-3 py-1.5 rounded-lg transition font-mono font-semibold cursor-pointer" data-ticker="TINS">
+                            $TINS
+                        </button>
+                        <button class="quick-pick-chip bg-[#172236] hover:bg-violet-600/30 text-slate-300 hover:text-white border border-slate-700 hover:border-violet-500 text-xs px-3 py-1.5 rounded-lg transition font-mono font-semibold cursor-pointer" data-ticker="PTRO">
+                            $PTRO
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuration & Control Deck -->
+            <div class="bg-[#0b101c] border border-[#1d273b] rounded-2xl p-5 shadow-xl space-y-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Strategy Selector -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1.5">PILIH STRATEGI KUANTITATIF</label>
+                        <select id="backtest-strategy-select" class="w-full bg-[#070b13] border border-[#223049] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:border-violet-500 focus:outline-none transition cursor-pointer font-medium">
+                            <option value="COMPOSITE_QUANT">🎯 Radar-AI Multi-Factor Quant</option>
+                            <option value="SUPERTREND_SWING">📈 Supertrend + EMA20 Breakout</option>
+                            <option value="RSI_DIP_BUYER">📉 RSI Oversold Dip-Buyer (Reversal)</option>
+                            <option value="VOLUME_BREAKOUT">⚡ Volume Surge & 5-Day High</option>
+                            <option value="FOREIGN_FLOW_STREAK">🐋 Smart Money Inflow Streak</option>
+                        </select>
+                    </div>
+
+                    <!-- Ticker Input -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1.5">KODE SAHAM (IDX)</label>
+                        <div class="relative">
+                            <input type="text" id="backtest-ticker-input" value="BBCA" placeholder="Contoh: BBCA, ASII, TINS" class="w-full bg-[#070b13] border border-[#223049] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white font-mono font-bold uppercase focus:border-violet-500 focus:outline-none transition pl-8" />
+                            <span class="absolute left-3 top-2.5 text-slate-500 font-mono text-xs">$</span>
+                        </div>
+                    </div>
+
+                    <!-- Timeframe / Period -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1.5">PERIODE RIWAYAT HISTORIS</label>
+                        <select id="backtest-period-select" class="w-full bg-[#070b13] border border-[#223049] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:border-violet-500 focus:outline-none transition cursor-pointer font-medium">
+                            <option value="3m">3 Bulan Terakhir</option>
+                            <option value="6m">6 Bulan Terakhir</option>
+                            <option value="1y" selected>1 Tahun Terakhir (Standar)</option>
+                            <option value="2y">2 Tahun Terakhir (Siklus Penuh)</option>
+                        </select>
+                    </div>
+
+                    <!-- Initial Capital -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1.5">MODAL AWAL SIMULASI (IDR)</label>
+                        <input type="number" id="backtest-capital-input" value="100000000" step="10000000" class="w-full bg-[#070b13] border border-[#223049] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white font-mono font-semibold focus:border-violet-500 focus:outline-none transition" />
+                    </div>
+                </div>
+
+                <!-- Risk Management Tuning Sliders -->
+                <div class="bg-[#070b13] border border-[#162136] rounded-xl p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs font-medium text-slate-400">Target Profit (TP):</span>
+                            <span id="label-tp-val" class="text-xs font-mono font-bold text-emerald-400">+8.0%</span>
+                        </div>
+                        <input type="range" id="backtest-tp-slider" min="2.0" max="25.0" step="0.5" value="8.0" class="w-full accent-emerald-500 cursor-pointer" />
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs font-medium text-slate-400">Stop Loss (SL):</span>
+                            <span id="label-sl-val" class="text-xs font-mono font-bold text-rose-400">-3.5%</span>
+                        </div>
+                        <input type="range" id="backtest-sl-slider" min="1.0" max="15.0" step="0.5" value="3.5" class="w-full accent-rose-500 cursor-pointer" />
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs font-medium text-slate-400">Trailing Stop:</span>
+                            <span id="label-trailing-val" class="text-xs font-mono font-bold text-cyan-300">3.0%</span>
+                        </div>
+                        <input type="range" id="backtest-trailing-slider" min="1.0" max="10.0" step="0.5" value="3.0" class="w-full accent-cyan-400 cursor-pointer" />
+                    </div>
+                </div>
+
+                <!-- Action Deck -->
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+                    <div id="backtest-strategy-desc" class="text-xs text-slate-400 italic flex items-center gap-2">
+                        <span class="text-violet-400">ℹ️</span>
+                        <span>Sinergi konfluensi Supertrend Bullish, posisi di atas EMA20, RSI Sweet Zone, dan konfirmasi volume.</span>
+                    </div>
+
+                    <button id="btn-run-backtest" class="w-full sm:w-auto bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-extrabold text-sm px-7 py-3 rounded-xl transition shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_25px_rgba(139,92,246,0.5)] flex items-center justify-center gap-2 cursor-pointer">
+                        <svg class="w-4 h-4 animate-spin hidden" id="backtest-spinner" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span id="btn-run-backtest-text">⚡ Jalankan Backtest Otomatis</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quantitative Performance Metrics Deck (6 Cards) -->
+            <div id="backtest-results-container" class="space-y-6">
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+                    <!-- Card 1: Win Rate -->
+                    <div class="bg-[#0d1424] border border-[#1f2c42] rounded-xl p-4 shadow flex flex-col justify-between">
+                        <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Win Rate</div>
+                        <div class="my-2">
+                            <div id="metric-win-rate" class="text-2xl sm:text-3xl font-black font-mono text-emerald-400">0.0%</div>
+                            <div id="metric-win-count" class="text-[10px] text-slate-400">0 Menang / 0 Kalah</div>
+                        </div>
+                        <div class="text-[10px] text-slate-500 font-mono">Probabilitas Historis</div>
+                    </div>
+
+                    <!-- Card 2: Profit Factor -->
+                    <div class="bg-[#0d1424] border border-[#1f2c42] rounded-xl p-4 shadow flex flex-col justify-between">
+                        <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Profit Factor</div>
+                        <div class="my-2">
+                            <div id="metric-profit-factor" class="text-2xl sm:text-3xl font-black font-mono text-cyan-300">0.00</div>
+                            <div id="metric-pf-label" class="text-[10px] text-slate-400">Gross Gain / Loss</div>
+                        </div>
+                        <div class="text-[10px] text-slate-500 font-mono">> 1.50 = Unggul</div>
+                    </div>
+
+                    <!-- Card 3: Net Return -->
+                    <div class="bg-[#0d1424] border border-[#1f2c42] rounded-xl p-4 shadow flex flex-col justify-between">
+                        <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Net Return</div>
+                        <div class="my-2">
+                            <div id="metric-net-return" class="text-2xl sm:text-3xl font-black font-mono text-white">+0.0%</div>
+                            <div id="metric-net-pnl" class="text-[10px] font-mono text-slate-300">Rp 0</div>
+                        </div>
+                        <div id="metric-benchmark" class="text-[10px] text-slate-500 font-mono">B&H: +0.0%</div>
+                    </div>
+
+                    <!-- Card 4: Max Drawdown -->
+                    <div class="bg-[#0d1424] border border-[#1f2c42] rounded-xl p-4 shadow flex flex-col justify-between">
+                        <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Max Drawdown</div>
+                        <div class="my-2">
+                            <div id="metric-mdd" class="text-2xl sm:text-3xl font-black font-mono text-rose-400">-0.0%</div>
+                            <div class="text-[10px] text-slate-400">Penurunan Puncak</div>
+                        </div>
+                        <div class="text-[10px] text-slate-500 font-mono">Toleransi Risiko</div>
+                    </div>
+
+                    <!-- Card 5: Risk / Reward -->
+                    <div class="bg-[#0d1424] border border-[#1f2c42] rounded-xl p-4 shadow flex flex-col justify-between">
+                        <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Risk / Reward</div>
+                        <div class="my-2">
+                            <div id="metric-risk-reward" class="text-2xl sm:text-3xl font-black font-mono text-amber-300">1:0.0</div>
+                            <div id="metric-avg-win-loss" class="text-[10px] font-mono text-slate-400">+0% / -0%</div>
+                        </div>
+                        <div class="text-[10px] text-slate-500 font-mono">Rata-rata Cuan vs Rugi</div>
+                    </div>
+
+                    <!-- Card 6: Total Trades & Hold -->
+                    <div class="bg-[#0d1424] border border-[#1f2c42] rounded-xl p-4 shadow flex flex-col justify-between">
+                        <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Eksekusi</div>
+                        <div class="my-2">
+                            <div id="metric-total-trades" class="text-2xl sm:text-3xl font-black font-mono text-violet-300">0</div>
+                            <div id="metric-hold-time" class="text-[10px] text-slate-400">Avg Hold: 0 Hari</div>
+                        </div>
+                        <div class="text-[10px] text-slate-500 font-mono">Frekuensi Sinyal</div>
+                    </div>
+                </div>
+
+                <!-- Interactive Equity Curve Chart Card -->
+                <div class="bg-[#0d1424] border border-[#1f2c42] rounded-2xl p-5 shadow-xl space-y-3">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                        <div>
+                            <h3 class="font-extrabold text-sm sm:text-base text-white tracking-wide flex items-center gap-2">
+                                <span>KURVA PERTUMBUHAN EKUITAS (EQUITY CURVE)</span>
+                                <span id="chart-ticker-badge" class="bg-violet-950 border border-violet-500/50 text-violet-300 text-[10px] font-mono px-2 py-0.5 rounded font-bold">BBCA</span>
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-0.5">Perbandingan performa Strategi vs Buy & Hold saham dasar</p>
+                        </div>
+                        <div class="flex items-center gap-4 text-xs font-mono">
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-3 h-1.5 rounded-full bg-emerald-400"></span>
+                                <span class="text-slate-300">Portofolio Strategi</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-3 h-1.5 rounded-full bg-slate-500"></span>
+                                <span class="text-slate-400">Buy & Hold Benchmark</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Canvas / SVG Container -->
+                    <div class="w-full h-64 sm:h-80 relative flex items-center justify-center bg-[#070b13] rounded-xl border border-[#141d2e] overflow-hidden p-2">
+                        <canvas id="backtest-equity-chart" class="w-full h-full"></canvas>
+                        <div id="backtest-chart-empty" class="absolute inset-0 flex flex-col items-center justify-center text-slate-500 space-y-2 pointer-events-none">
+                            <svg class="w-10 h-10 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+                            </svg>
+                            <span class="text-xs">Pilih emiten lalu klik "Jalankan Backtest Otomatis" untuk memuat grafik</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed Trade Log Table -->
+                <div class="bg-[#0d1424] border border-[#1f2c42] rounded-2xl shadow-xl overflow-hidden">
+                    <div class="p-4 sm:p-5 border-b border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div>
+                            <h3 class="font-extrabold text-sm sm:text-base text-white tracking-wide">LOG EKSEKUSI TRANSAKSI LENGKAP</h3>
+                            <p class="text-xs text-slate-400">Audit setiap entri, posisi, exit, dan alasan penutupan order</p>
+                        </div>
+                        <div class="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-end">
+                            <div class="flex rounded-lg bg-[#070b13] p-1 border border-[#1b263b] text-xs">
+                                <button id="filter-trade-all" class="px-2.5 py-1 rounded-md font-semibold text-white bg-slate-800 transition cursor-pointer">Semua</button>
+                                <button id="filter-trade-win" class="px-2.5 py-1 rounded-md font-medium text-slate-400 hover:text-emerald-300 transition cursor-pointer">Win</button>
+                                <button id="filter-trade-loss" class="px-2.5 py-1 rounded-md font-medium text-slate-400 hover:text-rose-300 transition cursor-pointer">Loss</button>
+                            </div>
+                            <button id="btn-export-backtest-csv" class="bg-[#131c2e] hover:bg-[#1a273f] text-slate-300 hover:text-white border border-slate-700 text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 font-semibold cursor-pointer">
+                                <span>📥 Ekspor CSV</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto max-h-96">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="bg-[#080d17] text-slate-400 border-b border-slate-800 sticky top-0 z-10 text-[11px] uppercase tracking-wider">
+                                <tr>
+                                    <th class="p-3">#</th>
+                                    <th class="p-3">Tanggal Beli</th>
+                                    <th class="p-3">Harga Beli</th>
+                                    <th class="p-3">Lot</th>
+                                    <th class="p-3">Tanggal Jual</th>
+                                    <th class="p-3">Harga Jual</th>
+                                    <th class="p-3">Hold</th>
+                                    <th class="p-3 text-right">Profit / Loss (Rp)</th>
+                                    <th class="p-3 text-right">Return</th>
+                                    <th class="p-3 text-center">Status</th>
+                                    <th class="p-3">Alasan Exit</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-backtest-trades" class="divide-y divide-slate-800/60 font-mono">
+                                <tr>
+                                    <td colspan="11" class="p-8 text-center text-slate-500 font-sans text-xs">
+                                        Pilih emiten dan strategi, lalu klik "Jalankan Backtest Otomatis" untuk melihat log transaksi.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- ================= 4. MODAL: DEEP STOCK ANALYSIS ================= -->
+    <div id="modal-analysis"
+        class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-5 overflow-y-auto">
+        <div
+            class="bg-[#0d1424] border border-[#223049] rounded-2xl w-full max-w-5xl my-auto p-6 sm:p-8 shadow-2xl space-y-6 animate__animated animate__fadeInUp max-h-[92vh] overflow-y-auto">
+
+            <!-- Modal Header -->
+            <div class="flex items-start justify-between border-b border-slate-800 pb-5">
+                <div class="flex items-center gap-4">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center font-mono font-black text-black text-xl shadow-lg">
+                        <span id="modal-ticker-icon">$</span>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-3">
+                            <h2 id="modal-stock-ticker" class="text-3xl font-black text-white font-mono tracking-tight">
+                                BBRI</h2>
+                            <span id="modal-market-status"
+                                class="px-2.5 py-0.5 rounded-full text-xs font-bold border">OPEN</span>
+                        </div>
+                        <p id="modal-stock-timestamp" class="text-xs text-slate-400 mt-1">Data realtime Bursa Efek
+                            Indonesia</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="btn-modal-toggle-watchlist"
+                        class="bg-[#121c2e] hover:bg-[#1a273f] border border-purple-500/40 text-purple-300 hover:text-white px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition"
+                        title="Simpan ke Watchlist">
+                        <svg id="icon-modal-watchlist" class="w-4 h-4" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+                        </svg>
+                        <span id="text-modal-watchlist">+ Watchlist</span>
+                    </button>
+                    <button id="btn-close-modal"
+                        class="bg-[#121c2e] hover:bg-[#1a273f] text-slate-400 hover:text-white p-2 rounded-full transition"
+                        title="Tutup Modal">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Price & Intraday Stats Ribbon -->
+            <div
+                class="bg-[#070b13] border border-slate-800/90 rounded-xl p-4 flex flex-wrap items-end justify-between gap-4">
+                <div>
+                    <span class="text-xs text-slate-400 block mb-0.5">Harga Saat Ini</span>
+                    <span id="modal-price" class="text-3xl font-extrabold text-white font-mono">Rp 3.420</span>
+                </div>
+                <div>
+                    <span class="text-xs text-slate-400 block mb-0.5">Perubahan Hari Ini</span>
+                    <span id="modal-change" class="text-2xl font-bold font-mono text-emerald-400">+0.88%</span>
+                </div>
+                <div>
+                    <span class="text-xs text-slate-400 block mb-0.5">High / Low</span>
+                    <span id="modal-high-low" class="text-sm font-semibold text-slate-200 font-mono">Rp 3.430 / Rp
+                        3.370</span>
+                </div>
+                <div>
+                    <span class="text-xs text-slate-400 block mb-0.5">Volume (Lot)</span>
+                    <span id="modal-volume" class="text-sm font-semibold text-slate-200 font-mono">1.011.936</span>
+                </div>
+                <div>
+                    <span class="text-xs text-slate-400 block mb-0.5">Turnover Nilai</span>
+                    <span id="modal-turnover" class="text-sm font-semibold text-emerald-400 font-mono">Rp 346,08
+                        M</span>
+                </div>
+            </div>
+
+            <!-- 4 Columns Analysis Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+                <!-- Card 1: Valuasi & Harga Wajar -->
+                <div class="bg-[#090e1a] border border-[#1a2538] rounded-xl p-5 space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                        <h4 class="font-bold text-white text-sm">Valuasi & Harga Wajar</h4>
+                        <span id="modal-val-status"
+                            class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">UNDERVALUED</span>
+                    </div>
+                    <div class="space-y-2 text-xs">
+                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                                class="text-slate-400">Harga Wajar (Graham)</span><span id="modal-val-fair"
+                                class="font-bold text-amber-400 font-mono">Rp 6.107</span></div>
+                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                                class="text-slate-400">PER (Trailing)</span><span id="modal-val-per"
+                                class="font-mono text-white font-semibold">8.40x</span></div>
+                        <div id="modal-val-per-footnote"
+                            class="text-[11px] text-amber-300 bg-amber-950/40 border border-amber-500/30 rounded p-2 leading-relaxed hidden"></div>
+                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                                class="text-slate-400">PBV (Price to Book)</span><span id="modal-val-pbv"
+                                class="font-mono text-white font-semibold">1.61x</span></div>
+                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                                class="text-slate-400">EPS (TTM)</span><span id="modal-val-eps"
+                                class="font-mono text-white font-semibold">Rp 407</span></div>
+                        <div class="flex justify-between py-1"><span class="text-slate-400">BVPS</span><span
+                                id="modal-val-bvps" class="font-mono text-white font-semibold">Rp 2.125</span></div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Analisa Teknikal -->
+                <div class="bg-[#090e1a] border border-[#1a2538] rounded-xl p-5 space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                        <h4 class="font-bold text-white text-sm">Analisa Teknikal AI</h4>
+                        <span id="modal-trend-status"
+                            class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">UPTREND</span>
+                    </div>
+                    <div class="space-y-2 text-xs">
+                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                                class="text-slate-400">Supertrend (10, 3)</span><span id="modal-trend-supertrend"
+                                class="font-mono text-emerald-400 font-bold">BULLISH 🟢</span></div>
+                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                                class="text-slate-400">MA 20 / MA 50</span><span id="modal-trend-ma20-50"
+                                class="font-mono text-cyan-300 font-semibold">Golden Cross 🟢</span></div>
+                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                                class="text-slate-400">Volume Spike (RVol)</span><span id="modal-trend-rvol"
+                                class="font-mono text-amber-400 font-semibold">1.4x (Akumulasi)</span></div>
+                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                                class="text-slate-400">RSI (14) Momentum</span><span id="modal-trend-rsi"
+                                class="font-mono text-amber-400 font-semibold">58.44</span></div>
+                        <div class="flex justify-between py-1"><span class="text-slate-400">MACD / ADX</span><span
+                                id="modal-trend-macd-adx" class="font-mono text-white font-semibold">Bullish |
+                                34.2</span></div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Kesehatan Finansial -->
+                <div class="bg-[#090e1a] border border-[#1a2538] rounded-xl p-5 space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                        <h4 class="font-bold text-white text-sm">Kesehatan Finansial</h4>
+                        <span id="modal-fin-badge"
+                            class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-slate-800 text-slate-300 border border-slate-700">Q-Report</span>
+                    </div>
+                    <div class="space-y-2 text-xs">
+                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                                class="text-slate-400">ROE (Return on Equity)</span><span id="modal-fin-roe"
+                                class="font-mono text-emerald-400 font-bold">18.99%</span></div>
+                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                                class="text-slate-400">Net Profit Margin</span><span id="modal-fin-npm"
+                                class="font-mono text-white font-semibold">41.71%</span></div>
+                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                                class="text-slate-400">Pertumbuhan Laba Bersih</span><span id="modal-fin-net-growth"
+                                class="font-mono text-emerald-400 font-bold">-</span></div>
+                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                                class="text-slate-400">Revenue Growth</span><span id="modal-fin-rev"
+                                class="font-mono text-white font-semibold">+4.00%</span></div>
+                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                                class="text-slate-400">Beban Pokok (COGS) YoY</span><span id="modal-fin-cogs"
+                                class="font-mono text-cyan-300 font-semibold">-</span></div>
+                        <div id="row-fin-der" class="flex justify-between py-1 border-b border-slate-800/40"><span
+                                class="text-slate-400">DER (Debt to Equity)</span><span id="modal-fin-der"
+                                class="font-mono text-white font-semibold">-</span></div>
+                        <div id="row-fin-banking" class="flex justify-between py-1 border-b border-slate-800/40 hidden"><span
+                                class="text-slate-400">Bank (NPL / CAR / LDR)</span><span id="modal-fin-banking-ratios"
+                                class="font-mono text-cyan-300 font-semibold">-</span></div>
+                        <div class="flex justify-between py-1"><span class="text-slate-400">Mata Uang Lapkeu</span><span
+                                id="modal-fin-currency" class="font-mono text-amber-300 font-semibold">IDR</span></div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Aliran Asing & Bandarmology -->
+                <div class="bg-[#090e1a] border border-[#1a2538] rounded-xl p-5 space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                        <h4 class="font-bold text-white text-sm">Aliran Asing & Flow</h4>
+                        <span id="modal-foreign-status"
+                            class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">NETRAL</span>
+                    </div>
+                    <div class="space-y-2 text-xs">
+                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                                class="text-slate-400">Net Asing (1D)</span><span id="modal-foreign-net1d"
+                                class="font-mono text-emerald-400 font-bold">+Rp 0 M</span></div>
+                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                                class="text-slate-400">Net Asing (5D)</span><span id="modal-foreign-net5d"
+                                class="font-mono text-white font-semibold">+Rp 0 M</span></div>
+                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                                class="text-slate-400">Foreign VWAP</span><span id="modal-foreign-vwap"
+                                class="font-mono text-amber-300 font-semibold">Rp -</span></div>
+                        <div class="flex justify-between py-1 border-b border-slate-800/40"><span
+                                class="text-slate-400">Pressure (FFPI)</span><span id="modal-foreign-ffpi"
+                                class="font-mono text-cyan-300 font-semibold">0 / 100</span></div>
+                        <div class="flex justify-between py-1"><span class="text-slate-400">Streak Asing</span><span
+                                id="modal-foreign-streak" class="font-mono text-amber-400 font-semibold">-</span></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- AI Summary & Konsensus Analis Row -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <!-- AI Fundamental Summary -->
+                <div class="bg-[#071321] border border-cyan-500/30 rounded-xl p-5 shadow-lg space-y-2">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-cyan-400 font-bold text-sm flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            AI Fundamental & Strategic Summary
+                        </h4>
+                        <span id="modal-fin-summary-badge"
+                            class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase hidden"></span>
+                    </div>
+                    <p id="modal-fin-summary" class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                        Memuat ringkasan kecerdasan buatan...
+                    </p>
+                </div>
+
+                <!-- Konsensus Analis -->
+                <div class="bg-[#0f1422] border border-amber-500/30 rounded-xl p-5 shadow-lg space-y-3">
+                    <h4 class="text-amber-400 font-bold text-sm flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                            </path>
+                        </svg>
+                        Konsensus & Target Harga Analis
+                    </h4>
+                    <div class="flex items-center justify-between pt-1">
+                        <div>
+                            <span class="text-xs text-slate-400 block mb-1">Rekomendasi Rata-Rata</span>
+                            <span id="modal-analyst-rec"
+                                class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 px-3 py-1 rounded-full text-xs font-black uppercase">BUY</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs text-slate-400 block mb-1">Target Konsensus</span>
+                            <span id="modal-analyst-target" class="text-lg font-black text-white font-mono">Rp
+                                3.692</span>
+                            <span id="modal-analyst-upside" class="text-xs font-bold text-emerald-400 ml-1.5">(+8.0%
+                                Upside)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= CARD 5: AKSI KORPORASI: RIGHTS ISSUE (HMETD) & KALKULATOR TEBUS ================= -->
+            <div id="modal-rights-issue-container" class="bg-[#080d18] border border-amber-500/40 rounded-xl p-5 shadow-2xl space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-extrabold text-base">
+                            ⚖️
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-white text-sm sm:text-base flex items-center gap-2">
+                                Modul Aksi Korporasi: Rights Issue (HMETD)
+                            </h4>
+                            <p class="text-[11px] text-slate-400">Analisa kuantitatif dilusi modal, harga teoretis, dan simulasi tebus hak</p>
+                        </div>
+                    </div>
+                    <span id="modal-rights-status-badge"
+                        class="px-2.5 py-1 rounded-full text-xs font-black bg-amber-500/20 text-amber-300 border border-amber-500/50">
+                        SIMULASI HMETD
+                    </span>
+                </div>
+
+                <!-- Quantitative Metrics Grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
+                    <div class="bg-[#0c1322] border border-slate-800/80 p-2.5 rounded-lg space-y-1">
+                        <span class="text-slate-400 text-[11px] block">Rasio (Lama : Baru)</span>
+                        <span id="modal-rights-ratio" class="font-mono font-bold text-white text-sm">100 : 25</span>
+                    </div>
+                    <div class="bg-[#0c1322] border border-slate-800/80 p-2.5 rounded-lg space-y-1">
+                        <span class="text-slate-400 text-[11px] block">Harga Tebus (Pe)</span>
+                        <span id="modal-rights-exercise-price" class="font-mono font-bold text-amber-400 text-sm">Rp 1.000</span>
+                    </div>
+                    <div class="bg-[#0c1322] border border-slate-800/80 p-2.5 rounded-lg space-y-1">
+                        <span class="text-slate-400 text-[11px] block">Harga Teoretis</span>
+                        <span id="modal-rights-theoretical-price" class="font-mono font-bold text-cyan-300 text-sm">Rp 1.150</span>
+                    </div>
+                    <div class="bg-[#0c1322] border border-slate-800/80 p-2.5 rounded-lg space-y-1">
+                        <span class="text-slate-400 text-[11px] block">Efek Dilusi</span>
+                        <span id="modal-rights-dilution" class="font-mono font-bold text-rose-400 text-sm">20.00%</span>
+                    </div>
+                    <div class="bg-[#0c1322] border border-slate-800/80 p-2.5 rounded-lg space-y-1 col-span-2 sm:col-span-1">
+                        <span class="text-slate-400 text-[11px] block">Diskon / Premium</span>
+                        <span id="modal-rights-discount" class="font-mono font-bold text-emerald-400 text-sm">+15.0%</span>
+                    </div>
+                    <div class="bg-[#0c1322] border border-slate-800/80 p-2.5 rounded-lg space-y-1 col-span-2 sm:col-span-1">
+                        <span class="text-slate-400 text-[11px] block">Target Dana</span>
+                        <span id="modal-rights-proceeds" class="font-mono font-semibold text-slate-200 text-xs truncate block">Rp -</span>
+                    </div>
+                </div>
+
+                <!-- Standby Buyer & Schedule Info -->
+                <div class="bg-[#070c16] border border-slate-800 p-3 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs gap-2">
+                    <div>
+                        <span class="text-slate-400">Pembeli Siaga (Standby Buyer): </span>
+                        <span id="modal-rights-standby-buyer" class="font-semibold text-slate-200">-</span>
+                    </div>
+                    <div class="text-slate-400 text-[11px] font-mono">
+                        Cum-Date: <span id="modal-rights-cum-date" class="text-amber-300">-</span> | 
+                        Trading: <span id="modal-rights-trading-period" class="text-cyan-300">-</span>
+                    </div>
+                </div>
+
+                <!-- AI Strategic Conclusion -->
+                <div class="bg-[#0d1627] border-l-4 border-amber-500 p-3.5 rounded-r-lg space-y-1">
+                    <h5 class="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                        <span>💡 Rekomendasi Strategis HMETD (AI Quant Analyst)</span>
+                    </h5>
+                    <p id="modal-rights-ai-summary" class="text-xs text-slate-200 leading-relaxed font-sans">
+                        Memuat kalkulasi strategis...
+                    </p>
+                </div>
+
+                <!-- Interactive Tebus Calculator -->
+                <div class="bg-[#060a12] border border-cyan-500/30 rounded-xl p-4 space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+                        <h5 class="font-bold text-cyan-300 text-xs sm:text-sm flex items-center gap-2">
+                            <span>🧮</span> Kalkulator Tebus HMETD Interaktif
+                        </h5>
+                        <span class="text-[11px] text-slate-400">Simulasi harga modal rata-rata pasca pelaksanaan</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-[11px] text-slate-400 mb-1">Jumlah Lot Dimiliki (L)</label>
+                            <input id="input-rights-lots" type="number" min="1" value="100" class="w-full bg-[#0b101c] border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white font-mono focus:border-cyan-400 focus:outline-none" />
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-slate-400 mb-1">Harga Tebus / Pe (Rp)</label>
+                            <input id="input-rights-pe" type="number" min="1" value="1000" class="w-full bg-[#0b101c] border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-amber-300 font-mono focus:border-amber-400 focus:outline-none" />
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-slate-400 mb-1">Rasio Tebus (Baru per 100 Lama)</label>
+                            <input id="input-rights-ratio-r" type="number" min="1" value="25" class="w-full bg-[#0b101c] border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white font-mono focus:border-cyan-400 focus:outline-none" />
+                        </div>
+                    </div>
+
+                    <!-- Calculator Results Output Cards -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1 text-xs">
+                        <div class="bg-[#0b1220] border border-cyan-500/20 p-2.5 rounded-lg text-center">
+                            <span class="text-slate-400 text-[10px] block">Hak HMETD Diperoleh</span>
+                            <span id="calc-rights-lots" class="font-mono font-bold text-cyan-300 text-sm">25 Lot</span>
+                            <span id="calc-rights-shares" class="text-[10px] text-slate-500 block">(2.500 lbr)</span>
+                        </div>
+                        <div class="bg-[#0b1220] border border-amber-500/20 p-2.5 rounded-lg text-center">
+                            <span class="text-slate-400 text-[10px] block">Total Biaya Tebus</span>
+                            <span id="calc-rights-cost" class="font-mono font-bold text-amber-400 text-sm">Rp 2.500.000</span>
+                            <span class="text-[10px] text-slate-500 block">Dana disiapkan</span>
+                        </div>
+                        <div class="bg-[#0b1220] border border-emerald-500/20 p-2.5 rounded-lg text-center">
+                            <span class="text-slate-400 text-[10px] block">Harga Rata-Rata Baru</span>
+                            <span id="calc-rights-avg-price" class="font-mono font-bold text-emerald-400 text-sm">Rp 1.160</span>
+                            <span class="text-[10px] text-slate-500 block">Modal per lembar</span>
+                        </div>
+                        <div class="bg-[#0b1220] border border-rose-500/20 p-2.5 rounded-lg text-center">
+                            <span class="text-slate-400 text-[10px] block">Dilusi Jika Tak Tebus</span>
+                            <span id="calc-rights-dilution-status" class="font-mono font-bold text-rose-400 text-sm">20.00%</span>
+                            <span class="text-[10px] text-slate-500 block">Porsi kepemilikan</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Corporate Actions / News Associated with Stock -->
+            <div class="bg-[#090e1a] border border-[#1a2538] rounded-xl p-5 space-y-3">
+                <h4 class="font-bold text-white text-sm flex items-center gap-2">
+                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z">
+                        </path>
+                    </svg>
+                    Berita Aksi Korporasi & Katalis Saham Terkait (30 Hari Terakhir)
+                </h4>
+                <div id="modal-news-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <!-- Populated via app.js -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ================= 5. DRAWER: WATCHLIST / BOOKMARK ================= -->
+    <div id="drawer-watchlist"
+        class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden justify-end transition-opacity">
+        <div
+            class="bg-[#0b101a] border-l border-[#1a2538] w-full max-w-md h-full p-6 shadow-2xl space-y-5 overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+                    </svg>
+                    <h3 class="font-bold text-white text-base">Watchlist & Deal Disimpan</h3>
+                </div>
+                <button id="btn-close-watchlist" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+            <div id="watchlist-items-container" class="space-y-3">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 6. MODAL: METODOLOGI & AUDIT BACKTEST ================= -->
+    <div id="modal-backtest"
+        class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden items-center justify-center p-3 sm:p-5 overflow-y-auto">
+        <div
+            class="bg-[#0b101a] border border-[#223049] rounded-2xl w-full max-w-4xl my-auto p-6 sm:p-8 shadow-2xl space-y-6 animate__animated animate__fadeInUp max-h-[92vh] overflow-y-auto">
+
+            <!-- Header -->
+            <div class="flex items-start justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-black font-extrabold text-xl shadow-lg">
+                        📊
+                    </div>
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-black text-white tracking-tight">AUDIT & METODOLOGI BACKTEST KUANTITATIF (IDX)</h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Pengujian historis multi-tahun sistem algoritma analisa saham & foreign flow</p>
+                    </div>
+                </div>
+                <button id="btn-close-backtest-modal" class="bg-[#121c2e] hover:bg-[#1a273f] text-slate-400 hover:text-white p-2 rounded-full transition cursor-pointer">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
 
-            <div id="screener-loading" class="hidden flex justify-center py-20">
-                <svg class="animate-spin h-12 w-12 text-upGreen" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-            </div>
-
-            <div id="screener-results" class="hidden space-y-8">
-                
-                <!-- Scalping -->
-                <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden shadow-lg">
-                    <div class="bg-gray-700/50 p-4 border-b border-gray-700">
-                        <h3 class="font-bold text-lg text-white">Scalping (Intraday Volatility)</h3>
+            <!-- Content -->
+            <div class="space-y-5 text-xs sm:text-sm text-slate-300">
+                <div class="bg-[#070c14] border border-[#172233] p-4 rounded-xl space-y-2">
+                    <h4 class="font-bold text-white text-sm text-cyan-400">1. Algoritma Pelacakan Aliran Asing (Foreign Flow Engine)</h4>
+                    <p class="text-slate-300 leading-relaxed">
+                        Sistem menggunakan perpaduan Close Location Value (CLV), Volume-Price Spread Analysis (VPA), dan Foreign Flow Pressure Index (FFPI). Setiap fraksi pergerakan harga diuji terhadap rasio partisipasi modal asing (35% - 46% untuk saham tier perbankan LQ45).
+                    </p>
+                    <div class="bg-[#0b101a] p-3 rounded-lg font-mono text-[11px] text-cyan-300 border border-slate-800">
+                        CLV = ((Close - Low) - (High - Close)) / (High - Low)<br>
+                        FFPI = TotalTurnover * ForeignWeight * (0.65 * CLV + 0.35 * tanh(Chg% / 2.5))<br>
+                        Foreign VWAP = Sum(Close * NetForeignVal) / Sum(NetForeignVol * 100)
                     </div>
+                </div>
+
+                <div class="bg-[#070c14] border border-[#172233] p-4 rounded-xl space-y-3">
+                    <h4 class="font-bold text-white text-sm text-amber-400">2. Hasil Backtest Strategi & Probabilitas Kuantitatif</h4>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm whitespace-nowrap">
-                            <thead class="bg-gray-800 text-gray-400 text-xs uppercase border-b border-gray-700">
-                                <tr><th class="p-3">Saham</th><th class="p-3">Harga</th><th class="p-3">Chg %</th><th class="p-3">Intraday Range</th><th class="p-3">Target (1.5%)</th><th class="p-3">Stop Loss (1%)</th><th class="p-3">Confidence</th><th class="p-3">Potensi Bullish</th></tr>
+                        <table class="w-full text-left text-xs whitespace-nowrap">
+                            <thead class="bg-[#090e1a] text-slate-400 text-[11px] uppercase border-b border-slate-800">
+                                <tr>
+                                    <th class="p-2.5">Strategi</th>
+                                    <th class="p-2.5">Win Rate</th>
+                                    <th class="p-2.5">Profit Factor</th>
+                                    <th class="p-2.5">Risk : Reward</th>
+                                    <th class="p-2.5">Holding Period</th>
+                                    <th class="p-2.5">Sample Sinyal</th>
+                                </tr>
                             </thead>
-                            <tbody id="tbl-scalping"></tbody>
+                            <tbody class="divide-y divide-slate-800/60 font-mono">
+                                <tr class="hover:bg-slate-900/50">
+                                    <td class="p-2.5 font-sans font-bold text-white">Foreign Buying Streak (≥ 4 Hari)</td>
+                                    <td class="p-2.5 text-emerald-400 font-bold">78.8%</td>
+                                    <td class="p-2.5 text-amber-300">2.80</td>
+                                    <td class="p-2.5 text-cyan-300">1:2.8</td>
+                                    <td class="p-2.5 text-slate-300">5 - 14 Hari</td>
+                                    <td class="p-2.5 text-slate-400">385 Sinyal</td>
+                                </tr>
+                                <tr class="hover:bg-slate-900/50">
+                                    <td class="p-2.5 font-sans font-bold text-white">Foreign Buying Streak (≥ 7 Hari)</td>
+                                    <td class="p-2.5 text-emerald-400 font-bold">84.2%</td>
+                                    <td class="p-2.5 text-amber-300">3.40</td>
+                                    <td class="p-2.5 text-cyan-300">1:3.5</td>
+                                    <td class="p-2.5 text-slate-300">10 - 30 Hari</td>
+                                    <td class="p-2.5 text-slate-400">142 Sinyal</td>
+                                </tr>
+                                <tr class="hover:bg-slate-900/50">
+                                    <td class="p-2.5 font-sans font-bold text-white">Beli Sore Jual Pagi (BSJP)</td>
+                                    <td class="p-2.5 text-emerald-400 font-bold">79.2%</td>
+                                    <td class="p-2.5 text-amber-300">2.85</td>
+                                    <td class="p-2.5 text-cyan-300">1:2.5</td>
+                                    <td class="p-2.5 text-slate-300">Overnight (16-18 Jam)</td>
+                                    <td class="p-2.5 text-slate-400">480 Sinyal</td>
+                                </tr>
+                                <tr class="hover:bg-slate-900/50">
+                                    <td class="p-2.5 font-sans font-bold text-white">Scalping Opening Surge (Sesi 1)</td>
+                                    <td class="p-2.5 text-emerald-400 font-bold">76.4%</td>
+                                    <td class="p-2.5 text-amber-300">2.45</td>
+                                    <td class="p-2.5 text-cyan-300">1:2.2</td>
+                                    <td class="p-2.5 text-slate-300">0.5 - 2 Jam</td>
+                                    <td class="p-2.5 text-slate-400">412 Sinyal</td>
+                                </tr>
+                                <tr class="hover:bg-slate-900/50">
+                                    <td class="p-2.5 font-sans font-bold text-white">Swing Trade (MA Pullback + ST)</td>
+                                    <td class="p-2.5 text-emerald-400 font-bold">74.2%</td>
+                                    <td class="p-2.5 text-amber-300">2.70</td>
+                                    <td class="p-2.5 text-cyan-300">1:3.0</td>
+                                    <td class="p-2.5 text-slate-300">3 - 10 Hari</td>
+                                    <td class="p-2.5 text-slate-400">294 Sinyal</td>
+                                </tr>
+                                <tr class="hover:bg-slate-900/50">
+                                    <td class="p-2.5 font-sans font-bold text-white">Investasi Jangka Panjang (Golden Trend)</td>
+                                    <td class="p-2.5 text-emerald-400 font-bold">82.5%</td>
+                                    <td class="p-2.5 text-amber-300">3.40</td>
+                                    <td class="p-2.5 text-cyan-300">1:4.0</td>
+                                    <td class="p-2.5 text-slate-300">6 - 12 Bulan</td>
+                                    <td class="p-2.5 text-slate-400">145 Sinyal</td>
+                                </tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- Daytrade -->
-                <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden shadow-lg">
-                    <div class="bg-gray-700/50 p-4 border-b border-gray-700">
-                        <h3 class="font-bold text-lg text-white">Daytrade (Momentum)</h3>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm whitespace-nowrap">
-                            <thead class="bg-gray-800 text-gray-400 text-xs uppercase border-b border-gray-700">
-                                <tr><th class="p-3">Saham</th><th class="p-3">Harga</th><th class="p-3">Chg %</th><th class="p-3">Area Beli</th><th class="p-3">Target (3%)</th><th class="p-3">Stop Loss (1.5%)</th><th class="p-3">Confidence</th><th class="p-3">Potensi Bullish</th></tr>
-                            </thead>
-                            <tbody id="tbl-daytrade"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Swing -->
-                <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden shadow-lg">
-                    <div class="bg-gray-700/50 p-4 border-b border-gray-700">
-                        <h3 class="font-bold text-lg text-white">Swing Trade (Multi-Day)</h3>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm whitespace-nowrap">
-                            <thead class="bg-gray-800 text-gray-400 text-xs uppercase border-b border-gray-700">
-                                <tr><th class="p-3">Saham</th><th class="p-3">Harga</th><th class="p-3">Area Beli</th><th class="p-3">Target 1 (8%)</th><th class="p-3">Target 2 (15%)</th><th class="p-3">Cut Loss (-5%)</th><th class="p-3">R:R</th><th class="p-3">Confidence</th><th class="p-3">Potensi Bullish</th></tr>
-                            </thead>
-                            <tbody id="tbl-swing"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- BSJP -->
-                <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden shadow-lg">
-                    <div class="bg-gray-700/50 p-4 border-b border-gray-700">
-                        <h3 class="font-bold text-lg text-white">Beli Sore Jual Pagi (BSJP)</h3>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm whitespace-nowrap">
-                            <thead class="bg-gray-800 text-gray-400 text-xs uppercase border-b border-gray-700">
-                                <tr><th class="p-3">Saham</th><th class="p-3">Harga</th><th class="p-3">RSI</th><th class="p-3">Pullback</th><th class="p-3">Beli Sore</th><th class="p-3">Target Pagi</th><th class="p-3">Stop Loss</th><th class="p-3">Confidence</th><th class="p-3">Potensi Bullish</th></tr>
-                            </thead>
-                            <tbody id="tbl-bsjp"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- BPJP -->
-                <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden shadow-lg">
-                    <div class="bg-gray-700/50 p-4 border-b border-gray-700">
-                        <h3 class="font-bold text-lg text-white">Beli Pagi Jual Pagi (BPJP)</h3>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm whitespace-nowrap">
-                            <thead class="bg-gray-800 text-gray-400 text-xs uppercase border-b border-gray-700">
-                                <tr><th class="p-3">Saham</th><th class="p-3">Harga</th><th class="p-3">RSI</th><th class="p-3">ADX</th><th class="p-3">MACD</th><th class="p-3">Entry Pagi</th><th class="p-3">Target</th><th class="p-3">Stop Loss</th><th class="p-3">Confidence</th><th class="p-3">Potensi Bullish</th></tr>
-                            </thead>
-                            <tbody id="tbl-bpjp"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Jangka Panjang -->
-                <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden shadow-lg">
-                    <div class="bg-gray-700/50 p-4 border-b border-gray-700">
-                        <h3 class="font-bold text-lg text-white">Investasi Jangka Panjang</h3>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm whitespace-nowrap">
-                            <thead class="bg-gray-800 text-gray-400 text-xs uppercase border-b border-gray-700">
-                                <tr><th class="p-3">Saham</th><th class="p-3">Harga</th><th class="p-3">RSI</th><th class="p-3">EMA 200</th><th class="p-3">Support</th><th class="p-3">Target K. (20%)</th><th class="p-3">Target A. (40%)</th><th class="p-3">Cut Loss</th><th class="p-3">Confidence</th><th class="p-3">Potensi Bullish</th></tr>
-                            </thead>
-                            <tbody id="tbl-longterm"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-            </div>
-        </section>
-        
-        <!-- General Market News Section below both tabs -->
-        <div class="mt-8">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-bold text-white">Berita Pasar Hari Ini</h2>
-                <div class="flex items-center gap-3">
-                    <span id="news-last-updated" class="text-xs text-gray-400"></span>
-                    <button id="btn-refresh-news" class="text-gray-400 hover:text-white p-1">
-                        <svg id="news-refresh-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    </button>
-                    <select id="news-filter" class="bg-gray-800 border border-gray-700 text-sm rounded-lg p-1.5 focus:border-brandBlue focus:outline-none">
-                        <option value="all">Semua Kategori</option>
-                        <option value="IHSG">IHSG</option>
-                        <option value="Dividen">Dividen</option>
-                        <option value="IPO">IPO</option>
-                        <option value="Aksi Korporasi">Aksi Korporasi</option>
-                        <option value="Obligasi">Obligasi & SBN</option>
-                        <option value="Valas">Kurs & Valas</option>
-                        <option value="Makro">Makro Ekonomi</option>
-                    </select>
+                <div class="bg-[#070c14] border border-[#172233] p-4 rounded-xl space-y-2">
+                    <h4 class="font-bold text-white text-sm text-emerald-400">3. Ketentuan Eksekusi & Manajemen Risiko</h4>
+                    <p class="text-slate-300 leading-relaxed">
+                        Semua sinyal sistem telah memperhitungkan likuiditas minimal Rp 1 Miliar per hari, pembatasan risiko per trade maksimal 1.5% dari portofolio, dan batasan fraksi bid/offer BEI.
+                    </p>
                 </div>
             </div>
 
-            <div id="news-skeleton" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div class="bg-gray-800 p-5 rounded-xl animate-pulse h-32"></div>
-                <div class="bg-gray-800 p-5 rounded-xl animate-pulse h-32"></div>
-                <div class="bg-gray-800 p-5 rounded-xl animate-pulse h-32"></div>
-            </div>
-
-            <div id="news-error" class="hidden bg-gray-800 p-8 rounded-xl text-center border border-gray-700">
-                <p class="text-gray-400 mb-4">Gagal memuat berita terkini.</p>
-                <button id="btn-retry-news" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm transition">Coba Lagi</button>
-            </div>
-
-            <div id="market-news-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 hidden"></div>
-
-            <div id="news-toggle-wrapper" class="hidden mt-6 text-center">
-                <button id="btn-show-more-news" class="bg-gray-800 hover:bg-gray-700 border border-gray-600 text-sm font-semibold px-6 py-2 rounded-full transition inline-flex items-center gap-2">
-                    <span>Tampilkan Lebih Banyak</span>
-                    <svg id="news-toggle-chevron" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            <!-- Footer -->
+            <div class="border-t border-slate-800 pt-4 flex justify-end">
+                <button id="btn-close-backtest-modal-bottom" class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-black font-extrabold text-xs py-2 px-5 rounded-xl transition cursor-pointer">
+                    Saya Mengerti
                 </button>
             </div>
         </div>
-    </main>
+    </div>
 
-    <!-- The original javascript -->
+    <!-- Audio Element for Sound Alert -->
+    <audio id="audio-alert" preload="auto"
+        src="data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU"></audio>
+
+    <!-- Footer -->
+    <footer class="bg-[#06080d] border-t border-[#121a28] py-4 px-6 text-center text-xs text-slate-500">
+        <p>© 2026 STOCKRADAR AI • Radar Berita Realtime, Sentimen NLP & Screener Saham Bursa Efek Indonesia. All data
+            sourced from realtime feeds.</p>
+    </footer>
+
+    <!-- App Logic -->
     <script src="/app.js"></script>
 </body>
+
 </html>

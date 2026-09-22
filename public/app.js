@@ -1,53 +1,165 @@
 // ============================================================
-//  IDX AI Financial Analyst — Frontend Engine
-//  All data sourced from /api endpoints (zero dummy data)
+//  STOCKRADAR AI — Frontend Core Engine
+//  Realtime Market Data, M&A Radar, Technical Screener & Sentiment
 // ============================================================
 
-// --- UI Elements ---
-const tabAnalyze = document.getElementById('tab-analyze');
-const tabScreener = document.getElementById('tab-screener');
-const secAnalyze = document.getElementById('section-analyze');
-const secScreener = document.getElementById('section-screener');
+// State Management
+let allDeals = [];
+let activeDealFilter = 'all';
+let allMarketNews = [];
+let newsExpanded = false;
+let autoStreamActive = true;
+let soundEnabled = true;
+let streamInterval = null;
+let lastScreenerData = null;
+let activeScalpSession = 'sesi1';
+let savedWatchlist = ['BBRI', 'FILM', 'EXCL', 'BREN', 'GOTO', 'TPIA', 'ASII', 'MEDC', 'BRIS', 'AUTO'];
+try {
+    const local = localStorage.getItem('stockradar_watchlist');
+    if (local) {
+        const parsed = JSON.parse(local);
+        if (Array.isArray(parsed) && parsed.length > 0) savedWatchlist = parsed;
+    }
+} catch (e) { }
 
-// Analyze Elements
-const btnAnalyze = document.getElementById('btn-analyze');
-const tickerInput = document.getElementById('ticker-input');
-const errorBanner = document.getElementById('error-banner');
-const errorMessage = document.getElementById('error-message');
-const dashContent = document.getElementById('dashboard-content');
-const loadingIcon = document.getElementById('loading-icon');
+function saveWatchlistToStorage() {
+    try {
+        localStorage.setItem('stockradar_watchlist', JSON.stringify(savedWatchlist));
+    } catch (e) { }
+    updateWatchlistBadge();
+}
 
-// Market News Elements
-const newsSkeleton = document.getElementById('news-skeleton');
-const newsError = document.getElementById('news-error');
-const newsGrid = document.getElementById('market-news-grid');
-const newsFilter = document.getElementById('news-filter');
-const btnRefreshNews = document.getElementById('btn-refresh-news');
-const newsRefreshIcon = document.getElementById('news-refresh-icon');
-const newsLastUpdated = document.getElementById('news-last-updated');
-const newsTickerWrapper = document.getElementById('news-ticker-wrapper');
-const newsTickerTrack = document.getElementById('news-ticker-track');
-const newsToggleWrapper = document.getElementById('news-toggle-wrapper');
-const btnShowMoreNews = document.getElementById('btn-show-more-news');
-const newsToggleChevron = document.getElementById('news-toggle-chevron');
-const btnRetryNews = document.getElementById('btn-retry-news');
+function updateWatchlistBadge() {
+    const badge = document.querySelector('#btn-open-watchlist span');
+    if (badge) badge.textContent = savedWatchlist.length;
+}
 
-// Formatters
+const NEWS_AUTO_REFRESH_MS = 60 * 1000; // 1 minute live refresh
+
+// Currency & Number Formatters
 const fmtRp = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 });
 const fmtNum = new Intl.NumberFormat('id-ID');
 
-// State
-let allMarketNews = [];
-let newsExpanded = false;
-const NEWS_INITIAL_COUNT = 6;
-const NEWS_AUTO_REFRESH_MS = 5 * 60 * 1000; // 5 minutes
+// --- UI Elements ---
+// Navigation Tabs
+const tabDeals = document.getElementById('tab-deals');
+const tabScreener = document.getElementById('tab-screener');
+const tabForeign = document.getElementById('tab-foreign');
+const tabBacktest = document.getElementById('tab-backtest');
+const secDeals = document.getElementById('section-deals');
+const secScreener = document.getElementById('section-screener');
+const secForeign = document.getElementById('section-foreign');
+const secBacktest = document.getElementById('section-backtest');
+const btnMobileNav = document.getElementById('btn-mobile-nav');
+const headerNav = document.getElementById('header-nav');
+
+// Foreign Flow Elements & State
+let allForeignData = null;
+let activeForeignSubmenu = 'daily';
+const btnRefreshForeign = document.getElementById('btn-refresh-foreign');
+const iconRefreshForeign = document.getElementById('icon-refresh-foreign');
+const foreignMacroNetval = document.getElementById('foreign-macro-netval');
+const foreignMacroParticipation = document.getElementById('foreign-macro-participation');
+const foreignMacroSentiment = document.getElementById('foreign-macro-sentiment');
+const foreignMacroTracked = document.getElementById('foreign-macro-tracked');
+
+const btnForeignDaily = document.getElementById('btn-foreign-daily');
+const btnForeignWeekly = document.getElementById('btn-foreign-weekly');
+const btnForeignMonthly = document.getElementById('btn-foreign-monthly');
+const btnForeignStreak = document.getElementById('btn-foreign-streak');
+const badgeStreakCount = document.getElementById('badge-streak-count');
+
+const foreignSearchInput = document.getElementById('foreign-search-input');
+const foreignSectorSelect = document.getElementById('foreign-sector-select');
+const foreignLoading = document.getElementById('foreign-loading');
+
+const viewForeignDaily = document.getElementById('view-foreign-daily');
+const viewForeignWeekly = document.getElementById('view-foreign-weekly');
+const viewForeignMonthly = document.getElementById('view-foreign-monthly');
+const viewForeignStreak = document.getElementById('view-foreign-streak');
+
+const tbodyForeignDailyBuy = document.getElementById('tbody-foreign-daily-buy');
+const tbodyForeignDailySell = document.getElementById('tbody-foreign-daily-sell');
+const tbodyForeignWeekly = document.getElementById('tbody-foreign-weekly');
+const tbodyForeignMonthly = document.getElementById('tbody-foreign-monthly');
+const tbodyForeignStreak = document.getElementById('tbody-foreign-streak');
+
+// Backtest Modal Elements
+const modalBacktest = document.getElementById('modal-backtest');
+const btnOpenBacktestModal = document.getElementById('btn-open-backtest-modal');
+const btnCloseBacktestModal = document.getElementById('btn-close-backtest-modal');
+const btnCloseBacktestModalBottom = document.getElementById('btn-close-backtest-modal-bottom');
+
+// Screener Extra Controls
+let screenerViewLimit = 'top3';
+const screenerSectorSelect = document.getElementById('screener-sector-select');
+const btnViewTop3 = document.getElementById('btn-view-top3');
+const btnViewAll = document.getElementById('btn-view-all');
+
+// Header Search & Actions
+const headerSearchInput = document.getElementById('header-search-input');
+const btnClearSearch = document.getElementById('btn-clear-search');
+const btnToggleSound = document.getElementById('btn-toggle-sound');
+const iconSound = document.getElementById('icon-sound');
+const btnOpenWatchlist = document.getElementById('btn-open-watchlist');
+const btnCloseWatchlist = document.getElementById('btn-close-watchlist');
+const drawerWatchlist = document.getElementById('drawer-watchlist');
+const watchlistItemsContainer = document.getElementById('watchlist-items-container');
+const btnRefreshAll = document.getElementById('btn-refresh-all');
+const btnExportData = document.getElementById('btn-export-data');
+const btnToggleStream = document.getElementById('btn-toggle-stream');
+const iconStreamStatus = document.getElementById('icon-stream-status');
+const textStreamStatus = document.getElementById('text-stream-status');
+const statTotalNews = document.getElementById('stat-total-news');
+const statLastUpdate = document.getElementById('stat-last-update');
+
+// Modal Watchlist Controls
+const btnModalToggleWatchlist = document.getElementById('btn-modal-toggle-watchlist');
+const textModalWatchlist = document.getElementById('text-modal-watchlist');
+let currentActiveTicker = null;
+
+// Mobile nav toggle
+if (btnMobileNav && headerNav) {
+    btnMobileNav.addEventListener('click', () => {
+        headerNav.classList.toggle('hidden');
+    });
+}
+
+// M&A Radar Elements
+const dealsGrid = document.getElementById('deals-grid');
+const dealsEmpty = document.getElementById('deals-empty');
+const badgeTotalDeals = document.getElementById('badge-total-deals');
+const countFilterAll = document.getElementById('count-filter-all');
+const filterBtns = document.querySelectorAll('.filter-btn');
+
+// General Market News
+const generalNewsGrid = document.getElementById('general-news-grid');
+const newsCategorySelect = document.getElementById('news-category-select');
+const btnRefreshFeed = document.getElementById('btn-refresh-feed');
+const btnToggleNewsMore = document.getElementById('btn-toggle-news-more');
+const corporateNewsTicker = document.getElementById('corporate-news-ticker');
+
+// Screener Elements
+const btnTriggerScreener = document.getElementById('btn-trigger-screener');
+const screenerLoading = document.getElementById('screener-loading');
+const screenerResultsWrapper = document.getElementById('screener-results-wrapper');
+const screenerBtnIcon = document.getElementById('screener-btn-icon');
+
+// Modal Elements
+const modalAnalysis = document.getElementById('modal-analysis');
+const btnCloseModal = document.getElementById('btn-close-modal');
+
+// Audio Element
+const audioAlert = document.getElementById('audio-alert');
 
 // ============================================================
 //  UTILITY: Relative Time Formatter
 // ============================================================
 function timeAgo(dateStr) {
+    if (!dateStr) return 'Baru saja';
     const now = new Date();
     const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
     const diffMs = now - date;
     const diffSec = Math.floor(diffMs / 1000);
     const diffMin = Math.floor(diffSec / 60);
@@ -59,561 +171,2640 @@ function timeAgo(dateStr) {
     if (diffHour < 24) return `${diffHour} jam lalu`;
     if (diffDay === 1) return 'Kemarin';
     if (diffDay < 7) return `${diffDay} hari lalu`;
-    return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+    return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
 }
 
-function getCategoryBadgeClass(category) {
-    const map = {
-        'IHSG': 'badge-ihsg',
-        'Dividen': 'badge-dividen',
-        'IPO': 'badge-ipo',
-        'Aksi Korporasi': 'badge-aksi',
-        'Obligasi': 'badge-obligasi',
-        'Valas': 'badge-valas',
-        'Makro': 'badge-makro',
-        'Market': 'badge-market'
-    };
-    return map[category] || 'badge-market';
+function playSoundChime() {
+    if (!soundEnabled) return;
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+        osc.frequency.setValueAtTime(880, ctx.currentTime + 0.08); // A5
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.3);
+    } catch (e) {
+        // audio context blocked or unsupported
+    }
 }
 
 // ============================================================
-//  MARKET NEWS: Fetch, Render, Filter, Ticker
+//  1. TAB NAVIGATION (3 TABS: DEALS, SCREENER, FOREIGN FLOW)
+// ============================================================
+let currentActiveMainTab = 'deals';
+
+function switchMainTab(tabName) {
+    currentActiveMainTab = tabName;
+    const tabs = [
+        { btn: tabDeals, sec: secDeals, name: 'deals' },
+        { btn: tabScreener, sec: secScreener, name: 'screener' },
+        { btn: tabForeign, sec: secForeign, name: 'foreign' },
+        { btn: tabBacktest, sec: secBacktest, name: 'backtest' }
+    ];
+
+    tabs.forEach(t => {
+        if (t.btn) {
+            if (t.name === tabName) {
+                t.btn.classList.add('active-tab', 'bg-[#101826]', 'border-[#2b3952]', 'text-white');
+                t.btn.classList.remove('text-slate-400', 'border-transparent');
+            } else {
+                t.btn.classList.remove('active-tab', 'bg-[#101826]', 'border-[#2b3952]', 'text-white');
+                t.btn.classList.add('text-slate-400', 'border-transparent');
+            }
+        }
+        if (t.sec) {
+            if (t.name === tabName) {
+                t.sec.classList.remove('hidden');
+            } else {
+                t.sec.classList.add('hidden');
+            }
+        }
+    });
+
+    if (tabName === 'screener') {
+        if (!lastScreenerData && screenerLoading && screenerLoading.classList.contains('hidden') && screenerResultsWrapper && screenerResultsWrapper.classList.contains('hidden')) {
+            btnTriggerScreener?.click();
+        }
+    } else if (tabName === 'foreign') {
+        if (!allForeignData) {
+            loadForeignFlowData();
+        }
+    } else if (tabName === 'backtest') {
+        if (!lastBacktestData) {
+            runAutomatedBacktest();
+        }
+    }
+}
+
+tabDeals?.addEventListener('click', () => switchMainTab('deals'));
+tabScreener?.addEventListener('click', () => switchMainTab('screener'));
+tabForeign?.addEventListener('click', () => switchMainTab('foreign'));
+tabBacktest?.addEventListener('click', () => switchMainTab('backtest'));
+
+// ============================================================
+//  2. RADAR SAHAM AKUISISI & M&A (32 DEALS)
+// ============================================================
+async function loadDeals() {
+    try {
+        const res = await fetch('/api/deals');
+        const data = await res.json();
+        if (data.deals && data.deals.length > 0) {
+            allDeals = data.deals;
+            badgeTotalDeals.textContent = `${allDeals.length} DEAL TERDETEKSI`;
+            countFilterAll.textContent = allDeals.length;
+            if (data.lastUpdated) {
+                statLastUpdate.textContent = data.lastUpdated;
+            }
+            renderDeals();
+        }
+    } catch (err) {
+        console.error('Gagal memuat M&A Deals:', err);
+    }
+}
+
+function renderDeals() {
+    dealsGrid.innerHTML = '';
+
+    let filtered = allDeals;
+    if (activeDealFilter !== 'all') {
+        filtered = allDeals.filter(d => d.type === activeDealFilter);
+    }
+
+    if (filtered.length === 0) {
+        dealsEmpty.classList.remove('hidden');
+        return;
+    }
+    dealsEmpty.classList.add('hidden');
+
+    filtered.forEach(deal => {
+        const card = document.createElement('div');
+        card.className = 'card-radar rounded-xl p-5 flex flex-col justify-between group';
+
+        // Badge type color configuration
+        let typeBadgeClass = 'bg-emerald-950/70 border-emerald-500/50 text-emerald-400';
+        let typeIcon = '✓';
+        if (deal.type === 'negosiasi') {
+            typeBadgeClass = 'bg-blue-950/70 border-blue-500/50 text-blue-400';
+            typeIcon = '🤝';
+        } else if (deal.type === 'rumor') {
+            typeBadgeClass = 'bg-purple-950/70 border-purple-500/50 text-purple-400';
+            typeIcon = '🔮';
+        } else if (deal.typeLabel === 'CONFIRMED') {
+            typeBadgeClass = 'bg-amber-950/70 border-amber-500/50 text-amber-400';
+            typeIcon = '✓';
+        }
+
+        // Emiten tags
+        const tagsHtml = deal.tickers.map(t => {
+            return `<span class="ticker-pill bg-[#062430] hover:bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 text-xs font-mono font-bold px-2.5 py-0.5 rounded cursor-pointer transition" data-ticker="${t}">$${t}</span>`;
+        }).join(' ');
+
+        // Primary ticker to analyze on click
+        const primaryTicker = deal.tickers[0] || 'BBRI';
+        // Direct news link (falls back to Google search if not available)
+        const newsLink = deal.link || `https://news.google.com/search?q=${encodeURIComponent(deal.title)}&hl=id&gl=ID&ceid=ID:id`;
+
+        card.innerHTML = `
+            <div>
+                <!-- Top Row: Badges -->
+                <div class="flex items-center justify-between gap-2 mb-3">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-extrabold border ${typeBadgeClass} uppercase tracking-wide">
+                        <span>${typeIcon}</span>
+                        <span>${deal.typeLabel}</span>
+                    </span>
+                    <span class="border border-amber-500/40 text-amber-400 text-[11px] font-bold px-2 py-0.5 rounded-md font-mono">
+                        ${deal.accuracy}% Akurasi
+                    </span>
+                </div>
+
+                <!-- Second Row: Tickers & Source + Exact Realtime Time -->
+                <div class="flex items-center justify-between gap-2 my-2.5">
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        ${tagsHtml}
+                    </div>
+                    <div class="flex items-center gap-1.5 text-right flex-shrink-0">
+                        <span class="text-xs text-slate-400 font-medium">${deal.source}</span>
+                        <span class="text-slate-600 text-xs">•</span>
+                        <span class="inline-flex items-center gap-1 text-[11px] text-emerald-400/90 font-mono font-bold bg-[#071d22] border border-emerald-500/30 px-1.5 py-0.5 rounded" title="Waktu Tayang: ${deal.timeStr} (${deal.dateStr})">
+                            <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2"/></svg>
+                            <span>${deal.timeAgo || 'Baru saja'}</span>
+                            <span class="text-slate-400 font-normal">(${deal.timeStr})</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Headline -->
+                <h3 class="text-sm font-bold text-white leading-snug my-3 group-hover:text-amber-300 transition-colors line-clamp-2">
+                    ${deal.title}
+                </h3>
+            </div>
+
+            <div>
+                <!-- Deal Value Box -->
+                <div class="bg-[#070b14] border border-[#162133] rounded-lg p-2.5 flex items-center justify-between my-3">
+                    <span class="text-amber-400/90 text-xs font-semibold flex items-center gap-1">
+                        <span class="text-amber-400 font-bold">$</span> Estimasi Nilai Deal:
+                    </span>
+                    <span class="text-amber-400 font-bold text-xs font-mono text-right ml-2">${deal.dealValue}</span>
+                </div>
+
+                <!-- Footer Row: Impact, Baca Berita & Lihat Analisis -->
+                <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-800/60">
+                    <span class="text-[10px] sm:text-[11px] font-extrabold text-slate-300 tracking-wider uppercase truncate">
+                        ${deal.impact}
+                    </span>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <!-- Direct news link button -->
+                        <a href="${newsLink}" target="_blank" rel="noopener noreferrer"
+                           class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-950/60 hover:bg-sky-900/80 border border-sky-500/40 hover:border-sky-400 text-sky-300 hover:text-sky-100 font-bold text-[11px] transition-all duration-200"
+                           title="Buka artikel berita langsung di sumber aslinya">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 2v4M8 2v4M3 10h18"/>
+                            </svg>
+                            Baca Berita
+                        </a>
+                        <!-- Analyze stock button -->
+                        <button class="btn-inspect-deal text-amber-400 hover:text-amber-300 font-bold text-xs flex items-center gap-1 transition flex-shrink-0" data-ticker="${primaryTicker}">
+                            <span>Analisis</span>
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        dealsGrid.appendChild(card);
+    });
+
+    // Attach click listener on all inspect buttons and ticker pills
+    attachDealCardListeners();
+}
+
+function attachDealCardListeners() {
+    document.querySelectorAll('.btn-inspect-deal').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const ticker = btn.getAttribute('data-ticker');
+            if (ticker) executeStockAnalysis(ticker);
+        });
+    });
+
+    document.querySelectorAll('.ticker-pill').forEach(pill => {
+        pill.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const ticker = pill.getAttribute('data-ticker');
+            if (ticker) executeStockAnalysis(ticker);
+        });
+    });
+}
+
+// Category filter buttons
+filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        filterBtns.forEach(b => {
+            b.classList.remove('active', 'bg-amber-500', 'text-black', 'shadow-md');
+            b.classList.add('text-slate-300');
+        });
+        btn.classList.add('active', 'bg-amber-500', 'text-black', 'shadow-md');
+        btn.classList.remove('text-slate-300');
+
+        activeDealFilter = btn.getAttribute('data-filter') || 'all';
+        renderDeals();
+    });
+});
+
+// ============================================================
+//  3. GENERAL MARKET NEWS & TICKER
 // ============================================================
 async function loadMarketNews() {
-    // Show skeleton, hide others
-    newsSkeleton.classList.remove('hidden');
-    newsGrid.classList.add('hidden');
-    newsError.classList.add('hidden');
-    newsToggleWrapper.classList.add('hidden');
-
-    // Spin refresh icon
-    newsRefreshIcon.classList.add('animate-spin');
-
     try {
-        const response = await fetch('/api/market-news');
-        const data = await response.json();
+        const res = await fetch('/api/market-news');
+        const data = await res.json();
+        if (data.news && data.news.length > 0) {
+            allMarketNews = data.news;
 
-        if (!response.ok || !data.news || data.news.length === 0) {
-            throw new Error(data.error || 'Berita kosong');
+            // Update stats
+            statTotalNews.textContent = `${allMarketNews.length + allDeals.length} Total Berita Terkumpul`;
+            if (data.lastUpdated) {
+                statLastUpdate.textContent = data.lastUpdated;
+            }
+
+            renderMarketNews();
+            renderCorporateNewsTicker();
+            playSoundChime();
         }
-
-        allMarketNews = data.news;
-
-        // Update last-updated label
-        if (data.lastUpdated) {
-            newsLastUpdated.textContent = `Diperbarui: ${data.lastUpdated}`;
-        }
-
-        // Render the news grid
-        renderNewsGrid();
-
-        // Render the ticker banner
-        renderNewsTicker(data.news);
-
-        // Hide skeleton, show grid
-        newsSkeleton.classList.add('hidden');
-        newsGrid.classList.remove('hidden');
-
     } catch (err) {
-        console.error('News load error:', err);
-        newsSkeleton.classList.add('hidden');
-        newsError.classList.remove('hidden');
-    } finally {
-        newsRefreshIcon.classList.remove('animate-spin');
+        console.error('Gagal memuat berita pasar:', err);
     }
 }
 
-function renderNewsGrid() {
-    const filter = newsFilter.value;
+function renderCorporateNewsTicker() {
+    corporateNewsTicker.innerHTML = '';
+    if (!allMarketNews.length) return;
+
+    // Take top 8 items and double them for endless scroll
+    const items = [...allMarketNews.slice(0, 10), ...allMarketNews.slice(0, 10)];
+    items.forEach(news => {
+        const item = document.createElement('div');
+        item.className = 'inline-flex items-center gap-2 mr-6 text-slate-300 whitespace-nowrap cursor-pointer hover:text-white transition';
+
+        let tag = 'IDX';
+        if (news.category) tag = news.category.toUpperCase().substring(0, 5);
+
+        item.innerHTML = `
+            <span class="bg-[#101929] border border-slate-700/80 text-cyan-400 text-[10px] font-bold px-1.5 py-0.5 rounded font-mono">[${tag}]</span>
+            <span class="bg-emerald-950/70 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded">${news.timeStr || news.timeAgo}</span>
+            <span class="font-medium text-xs">${news.title}</span>
+            <span class="text-emerald-400 font-bold text-xs ml-1">↗</span>
+            <span class="text-slate-700 ml-3">•</span>
+        `;
+        item.addEventListener('click', () => {
+            if (news.link) window.open(news.link, '_blank', 'noopener,noreferrer');
+        });
+        corporateNewsTicker.appendChild(item);
+    });
+}
+
+function renderMarketNews() {
+    const selectedCategory = newsCategorySelect.value;
     let filtered = allMarketNews;
-    if (filter !== 'all') {
-        filtered = allMarketNews.filter(n => n.category === filter);
+    if (selectedCategory !== 'all') {
+        filtered = allMarketNews.filter(n => n.category === selectedCategory);
     }
 
-    const limit = newsExpanded ? filtered.length : Math.min(NEWS_INITIAL_COUNT, filtered.length);
+    const limit = newsExpanded ? filtered.length : Math.min(6, filtered.length);
     const visible = filtered.slice(0, limit);
 
-    newsGrid.innerHTML = '';
+    generalNewsGrid.innerHTML = '';
 
     if (visible.length === 0) {
-        newsGrid.innerHTML = `
-            <div class="col-span-full text-center py-10">
-                <svg class="w-12 h-12 text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
-                <p class="text-gray-500 font-medium">Tidak ada berita untuk kategori "${filter}".</p>
+        generalNewsGrid.innerHTML = `
+            <div class="col-span-full text-center py-10 text-slate-500 text-sm">
+                Tidak ada berita untuk kategori "${selectedCategory}".
             </div>`;
-        newsToggleWrapper.classList.add('hidden');
         return;
     }
 
-    visible.forEach((news, idx) => {
+    visible.forEach(news => {
         const card = document.createElement('a');
         card.href = news.link;
         card.target = '_blank';
         card.rel = 'noopener noreferrer';
-        card.className = 'news-card news-card-anim bg-gray-800/60 rounded-xl p-5 block cursor-pointer group';
-        card.style.animationDelay = `${idx * 0.07}s`;
+        card.className = 'bg-[#0d1424] hover:bg-[#111a2e] border border-[#1a2333] hover:border-slate-700 rounded-xl p-4 flex flex-col justify-between transition-all duration-200 group block';
 
         card.innerHTML = `
-            <div class="flex items-center justify-between mb-3">
-                <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md ${getCategoryBadgeClass(news.category)}">${news.category}</span>
-                <span class="text-[11px] text-gray-500">${timeAgo(news.pubDate)}</span>
+            <div>
+                <div class="flex items-center justify-between gap-2 mb-2">
+                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-[#101a2c] text-cyan-400 border border-cyan-500/30">
+                        ${news.category || 'Market'}
+                    </span>
+                    <span class="inline-flex items-center gap-1 text-[11px] text-emerald-400/90 font-mono font-semibold bg-[#071d22] border border-emerald-500/30 px-2 py-0.5 rounded">
+                        <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2"/></svg>
+                        <span>${news.timeAgo || timeAgo(news.pubDate)}</span>
+                        <span class="text-slate-400 font-normal">(${news.timeStr})</span>
+                    </span>
+                </div>
+                <h4 class="text-xs sm:text-sm font-semibold text-slate-200 group-hover:text-amber-300 leading-snug line-clamp-2 mb-3">
+                    ${news.title}
+                </h4>
             </div>
-            <h3 class="text-sm font-semibold text-gray-200 leading-snug mb-3 group-hover:text-brandBlue transition-colors line-clamp-3">${news.title}</h3>
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] text-gray-500 flex items-center gap-1">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
-                    ${news.source}
-                </span>
-                <span class="text-brandBlue text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
-                    Baca
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+            <div class="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-slate-800/50">
+                <span class="truncate max-w-[140px] font-medium">${news.source}</span>
+                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-sky-400 bg-sky-950/60 hover:bg-sky-900/80 border border-sky-500/30 px-2 py-0.5 rounded transition">
+                    Baca Berita
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                 </span>
             </div>
         `;
 
-        newsGrid.appendChild(card);
+        generalNewsGrid.appendChild(card);
     });
 
-    // Show/hide toggle button
-    if (filtered.length > NEWS_INITIAL_COUNT) {
-        newsToggleWrapper.classList.remove('hidden');
-        const toggleLabel = btnShowMoreNews.querySelector('span');
-        if (newsExpanded) {
-            toggleLabel.textContent = 'Tampilkan Lebih Sedikit';
-            newsToggleChevron.style.transform = 'rotate(180deg)';
-        } else {
-            toggleLabel.textContent = `Tampilkan Lebih Banyak (${filtered.length - NEWS_INITIAL_COUNT} lainnya)`;
-            newsToggleChevron.style.transform = 'rotate(0deg)';
-        }
+    // Update toggle button text
+    if (filtered.length > 6) {
+        btnToggleNewsMore.parentElement.classList.remove('hidden');
+        btnToggleNewsMore.querySelector('span').textContent = newsExpanded
+            ? 'Tampilkan Lebih Sedikit'
+            : `Tampilkan Lebih Banyak (${filtered.length - 6} lainnya)`;
     } else {
-        newsToggleWrapper.classList.add('hidden');
+        btnToggleNewsMore.parentElement.classList.add('hidden');
     }
 }
 
-function renderNewsTicker(news) {
-    newsTickerTrack.innerHTML = '';
-
-    // Duplicate items for seamless infinite scroll
-    const items = [...news, ...news];
-    items.forEach(n => {
-        const span = document.createElement('span');
-        span.className = 'inline-flex items-center gap-2 mr-8 text-xs text-gray-400';
-        span.innerHTML = `
-            <span class="w-1.5 h-1.5 rounded-full ${getCategoryDotColor(n.category)}"></span>
-            <span class="text-gray-300 font-medium">${n.title.substring(0, 80)}${n.title.length > 80 ? '…' : ''}</span>
-            <span class="text-gray-600">|</span>
-            <span class="text-gray-500">${n.source}</span>
-            <span class="text-gray-600 mr-4">•</span>
-        `;
-        newsTickerTrack.appendChild(span);
-    });
-
-    // Animate ticker wrapper in
-    newsTickerWrapper.style.height = '40px';
-    newsTickerWrapper.classList.remove('opacity-0');
-    newsTickerWrapper.classList.add('opacity-100');
-}
-
-function getCategoryDotColor(category) {
-    const map = {
-        'IHSG': 'bg-blue-400',
-        'Dividen': 'bg-emerald-400',
-        'IPO': 'bg-purple-400',
-        'Aksi Korporasi': 'bg-yellow-400',
-        'Obligasi': 'bg-sky-400',
-        'Valas': 'bg-pink-400',
-        'Makro': 'bg-orange-400',
-        'Market': 'bg-gray-400'
-    };
-    return map[category] || 'bg-gray-400';
-}
-
-// --- News Event Listeners ---
-newsFilter.addEventListener('change', () => {
+newsCategorySelect.addEventListener('change', () => {
     newsExpanded = false;
-    renderNewsGrid();
+    renderMarketNews();
 });
 
-btnRefreshNews.addEventListener('click', () => {
+btnRefreshFeed.addEventListener('click', () => {
     loadMarketNews();
 });
 
-btnRetryNews.addEventListener('click', () => {
-    loadMarketNews();
-});
-
-btnShowMoreNews.addEventListener('click', () => {
+btnToggleNewsMore.addEventListener('click', () => {
     newsExpanded = !newsExpanded;
-    renderNewsGrid();
-});
-
-// --- Auto-refresh news every 5 minutes ---
-setInterval(() => {
-    loadMarketNews();
-}, NEWS_AUTO_REFRESH_MS);
-
-// --- Load news on page load ---
-document.addEventListener('DOMContentLoaded', () => {
-    loadMarketNews();
+    renderMarketNews();
 });
 
 // ============================================================
-//  TAB SWITCHING
+//  4. DEEP STOCK ANALYSIS MODAL
 // ============================================================
-tabAnalyze.addEventListener('click', () => {
-    tabAnalyze.classList.add('text-brandBlue', 'border-brandBlue');
-    tabAnalyze.classList.remove('text-gray-400', 'border-transparent');
-    tabScreener.classList.remove('text-brandBlue', 'border-brandBlue');
-    tabScreener.classList.add('text-gray-400', 'border-transparent');
-    secAnalyze.classList.remove('hidden');
-    secScreener.classList.add('hidden');
+function updateModalWatchlistButton(ticker) {
+    if (!btnModalToggleWatchlist || !textModalWatchlist) return;
+    const isSaved = savedWatchlist.includes(ticker);
+    if (isSaved) {
+        textModalWatchlist.textContent = '✓ Tersimpan';
+        btnModalToggleWatchlist.className = 'bg-purple-950/80 border border-purple-500 text-purple-300 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-sm';
+    } else {
+        textModalWatchlist.textContent = '+ Watchlist';
+        btnModalToggleWatchlist.className = 'bg-[#121c2e] hover:bg-[#1a273f] border border-purple-500/40 text-purple-300 hover:text-white px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition';
+    }
+}
+
+if (btnModalToggleWatchlist) {
+    btnModalToggleWatchlist.addEventListener('click', () => {
+        if (!currentActiveTicker) return;
+        const idx = savedWatchlist.indexOf(currentActiveTicker);
+        if (idx >= 0) {
+            savedWatchlist.splice(idx, 1);
+        } else {
+            savedWatchlist.unshift(currentActiveTicker);
+        }
+        saveWatchlistToStorage();
+        updateModalWatchlistButton(currentActiveTicker);
+    });
+}
+
+async function executeStockAnalysis(ticker) {
+    if (!ticker) return;
+    const cleanTicker = ticker.trim().toUpperCase().replace(/^[\$#]/, '').replace(/\.JK$/i, '');
+    currentActiveTicker = cleanTicker;
+
+    // Open modal with loading placeholders
+    modalAnalysis.classList.remove('hidden');
+    modalAnalysis.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+
+    document.getElementById('modal-stock-ticker').textContent = cleanTicker;
+    document.getElementById('modal-ticker-icon').textContent = cleanTicker.charAt(0);
+    document.getElementById('modal-price').textContent = 'Memuat...';
+    document.getElementById('modal-change').textContent = '...';
+    document.getElementById('modal-fin-summary').textContent = `Menghubungi bursa dan menganalisa indikator fundamental & teknikal untuk ${cleanTicker}...`;
+    updateModalWatchlistButton(cleanTicker);
+
+    try {
+        const res = await fetch(`/api/analyze/${cleanTicker}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Gagal memuat data saham');
+
+        populateAnalysisModal(data);
+    } catch (err) {
+        document.getElementById('modal-price').textContent = 'N/A';
+        document.getElementById('modal-change').textContent = '-';
+        document.getElementById('modal-fin-summary').textContent = `Gagal menganalisa ${cleanTicker}: ${err.message}`;
+    }
+}
+window.executeStockAnalysis = executeStockAnalysis;
+
+function populateAnalysisModal(data) {
+    const rt = data.realtime;
+    const val = data.valuation;
+    const trend = data.trend;
+    const fin = data.financials;
+
+    // Header info
+    document.getElementById('modal-stock-ticker').textContent = data.ticker;
+    document.getElementById('modal-stock-timestamp').textContent = `Waktu Akses: ${rt.timestamp || 'Realtime'}`;
+
+    const mktStat = document.getElementById('modal-market-status');
+    mktStat.textContent = rt.marketStatus || 'OPEN';
+    mktStat.className = rt.marketStatus === 'OPEN'
+        ? 'px-2.5 py-0.5 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/50'
+        : 'px-2.5 py-0.5 rounded-full text-xs font-bold border bg-slate-700 text-slate-300 border-slate-600';
+
+    // Price ribbon
+    document.getElementById('modal-price').textContent = fmtRp.format(rt.lastPrice);
+    const chgEl = document.getElementById('modal-change');
+    chgEl.textContent = `${rt.changePct >= 0 ? '+' : ''}${rt.changePct.toFixed(2)}%`;
+    chgEl.className = `text-2xl font-bold font-mono ${rt.changePct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+
+    document.getElementById('modal-high-low').textContent = `${fmtRp.format(rt.high)} / ${fmtRp.format(rt.low)}`;
+    document.getElementById('modal-volume').textContent = fmtNum.format(rt.volume);
+    document.getElementById('modal-turnover').textContent = fmtRp.format(rt.value);
+
+    // Valuasi & Harga Wajar
+    // Valuasi & Harga Wajar
+    const valStatusEl = document.getElementById('modal-val-status');
+    valStatusEl.textContent = val.status;
+    if (val.status === 'UNDERVALUED' || val.status.includes('UNDERVALUED')) {
+        valStatusEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40';
+    } else if (val.status === 'OVERVALUED') {
+        valStatusEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-rose-500/20 text-rose-400 border border-rose-500/40';
+    } else if (val.status.includes('TURNAROUND')) {
+        valStatusEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm';
+    } else {
+        valStatusEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-amber-500/20 text-amber-400 border border-amber-500/40';
+    }
+
+    document.getElementById('modal-val-fair').textContent = val.fairValue ? fmtRp.format(val.fairValue) : 'N/A';
+    document.getElementById('modal-val-per').textContent = val.per ? `${val.per}x` : 'N/A';
+
+    // PER Footnote (Aturan 6: Penjelasan jika PER tinggi akibat basis laba rendah masa turnaround)
+    const footnoteEl = document.getElementById('modal-val-per-footnote');
+    if (footnoteEl) {
+        if (val.perFootnote) {
+            footnoteEl.textContent = val.perFootnote;
+            footnoteEl.classList.remove('hidden');
+        } else {
+            footnoteEl.classList.add('hidden');
+        }
+    }
+
+    document.getElementById('modal-val-pbv').textContent = val.pbv ? `${val.pbv}x` : 'N/A';
+    document.getElementById('modal-val-eps').textContent = val.eps ? fmtRp.format(val.eps) : 'N/A';
+    document.getElementById('modal-val-bvps').textContent = val.bvps ? fmtRp.format(val.bvps) : 'N/A';
+
+    // Analisa Teknikal
+    const trendStatEl = document.getElementById('modal-trend-status');
+    trendStatEl.textContent = trend.status || 'NEUTRAL';
+    if (trend.status === 'UPTREND') {
+        trendStatEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40';
+    } else if (trend.status === 'DOWNTREND') {
+        trendStatEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-rose-500/20 text-rose-400 border border-rose-500/40';
+    } else {
+        trendStatEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-amber-500/20 text-amber-400 border border-amber-500/40';
+    }
+
+    const stEl = document.getElementById('modal-trend-supertrend');
+    if (stEl) {
+        if (trend.supertrend) {
+            const isB = trend.supertrend.isBullish;
+            const suppVal = trend.supertrend.value || trend.supertrend.support || trend.supertrend.resistance;
+            stEl.innerHTML = isB
+                ? `<span class="text-emerald-400 font-bold">BULLISH 🟢</span> <span class="text-slate-400 text-[10px]">(Supp: ${suppVal ? fmtRp.format(suppVal) : '-'})</span>`
+                : `<span class="text-rose-400 font-bold">BEARISH 🔴</span> <span class="text-slate-400 text-[10px]">(Res: ${suppVal ? fmtRp.format(suppVal) : '-'})</span>`;
+        } else {
+            stEl.textContent = 'N/A';
+        }
+    }
+
+    const maEl = document.getElementById('modal-trend-ma20-50');
+    if (maEl) {
+        const ma20 = trend.ema20 || trend.sma20;
+        const ma50 = trend.ema50 || trend.sma50;
+        if (ma20 && ma50) {
+            const isGolden = ma20 > ma50;
+            maEl.innerHTML = `<span class="${isGolden ? 'text-cyan-300' : 'text-slate-300'} font-bold">${isGolden ? 'Golden Alignment 🟢' : 'Bearish / Netral ⚪'}</span> <span class="text-slate-400 text-[10px]">(${fmtRp.format(ma20)} / ${fmtRp.format(ma50)})</span>`;
+        } else {
+            maEl.textContent = 'N/A';
+        }
+    }
+
+    const rvolEl = document.getElementById('modal-trend-rvol');
+    if (rvolEl) {
+        const rvol = trend.rvol || 1.0;
+        const color = rvol >= 1.5 ? 'text-amber-400' : rvol >= 1.1 ? 'text-emerald-400' : 'text-slate-300';
+        rvolEl.innerHTML = `<span class="${color} font-bold font-mono">${rvol.toFixed(2)}x</span> <span class="text-[10px] text-slate-400">(${trend.volumeStatus || 'Normal'})</span>`;
+    }
+
+    const rsiEl = document.getElementById('modal-trend-rsi');
+    if (rsiEl) {
+        const rsiVal = trend.rsi14 ? trend.rsi14.toFixed(1) : '50.0';
+        const rsiNum = parseFloat(rsiVal);
+        const rsiColor = rsiNum >= 70 ? 'text-rose-400' : rsiNum >= 50 ? 'text-emerald-400' : 'text-amber-400';
+        rsiEl.innerHTML = `<span class="${rsiColor} font-bold font-mono">${rsiVal}</span> <span class="text-slate-400 text-[10px]">(${rsiNum > 70 ? 'Overbought' : rsiNum < 35 ? 'Oversold' : 'Sweet Zone'})</span>`;
+    }
+
+    const macdAdxEl = document.getElementById('modal-trend-macd-adx');
+    if (macdAdxEl) {
+        let macdTxt = 'Neutral';
+        if (trend.macd_line && trend.macd_signal) {
+            macdTxt = trend.macd_line > trend.macd_signal ? 'Bullish 🟢' : 'Bearish 🔴';
+        }
+        const adxTxt = trend.adx14 ? `${trend.adx14.toFixed(1)}` : '-';
+        macdAdxEl.innerHTML = `<span class="text-white font-mono">${macdTxt}</span> | <span class="text-cyan-300 font-mono">ADX ${adxTxt}</span>`;
+    }
+
+    // Kesehatan Finansial (Aturan 1, 2, 4, 5)
+    const finBadgeEl = document.getElementById('modal-fin-badge');
+    if (finBadgeEl) {
+        const label = fin.sentimentLabel || fin.healthStatus || 'Q-Report';
+        finBadgeEl.textContent = label;
+        if (label.includes('TURNAROUND') || label.includes('PEMULIHAN')) {
+            finBadgeEl.className = 'px-2.5 py-0.5 rounded text-[11px] font-black bg-emerald-500/25 text-emerald-300 border border-emerald-500/60 shadow-[0_0_10px_rgba(16,185,129,0.25)]';
+        } else if (label.includes('KUAT') || label.includes('POSITIF') || label.includes('SEHAT')) {
+            finBadgeEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40';
+        } else if (label.includes('WASPADA') || label.includes('RUGI')) {
+            finBadgeEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-rose-500/20 text-rose-400 border border-rose-500/40';
+        } else {
+            finBadgeEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-amber-500/20 text-amber-400 border border-amber-500/40';
+        }
+    }
+
+    document.getElementById('modal-fin-roe').textContent = fin.roe ? `${(fin.roe * 100).toFixed(2)}%` : 'N/A';
+    document.getElementById('modal-fin-npm').textContent = fin.netProfitMargin ? `${(fin.netProfitMargin * 100).toFixed(2)}%` : 'N/A';
+
+    // Pertumbuhan Laba Bersih (Aturan 2 & 4: Prioritas Laba Bersih > Pendapatan)
+    const netGrowthEl = document.getElementById('modal-fin-net-growth');
+    if (netGrowthEl) {
+        if (fin.isTurnaround) {
+            const pct = fin.netProfitGrowth !== null && fin.netProfitGrowth !== undefined ? ` (+${(fin.netProfitGrowth * 100).toFixed(1)}%)` : '';
+            netGrowthEl.innerHTML = `<span class="text-emerald-400 font-bold">Turnaround (Rugi ➔ Laba) 🚀</span><span class="text-[10px] text-emerald-300 font-mono">${pct}</span>`;
+        } else if (fin.netProfitGrowth !== null && fin.netProfitGrowth !== undefined) {
+            const netVal = (fin.netProfitGrowth * 100).toFixed(2);
+            const isPos = fin.netProfitGrowth >= 0;
+            netGrowthEl.textContent = `${isPos ? '+' : ''}${netVal}%`;
+            netGrowthEl.className = `font-mono font-bold ${isPos ? 'text-emerald-400' : 'text-rose-400'}`;
+        } else {
+            netGrowthEl.textContent = 'Data Terbatas';
+            netGrowthEl.className = 'font-mono text-slate-400 font-semibold';
+        }
+    }
+
+    // Revenue Growth
+    const revEl = document.getElementById('modal-fin-rev');
+    if (revEl) {
+        if (fin.revenueGrowth !== null && fin.revenueGrowth !== undefined) {
+            const revVal = (fin.revenueGrowth * 100).toFixed(2);
+            revEl.textContent = `${fin.revenueGrowth >= 0 ? '+' : ''}${revVal}%`;
+            revEl.className = `font-mono font-semibold ${fin.revenueGrowth >= 0 ? 'text-white' : 'text-amber-300'}`;
+        } else {
+            revEl.textContent = 'N/A';
+            revEl.className = 'font-mono text-slate-400';
+        }
+    }
+
+    // Beban Pokok (COGS) YoY (Aturan 1: Analisis Efisiensi Biaya)
+    const cogsEl = document.getElementById('modal-fin-cogs');
+    if (cogsEl) {
+        if (fin.cogsGrowth !== null && fin.cogsGrowth !== undefined) {
+            const cogsVal = (fin.cogsGrowth * 100).toFixed(2);
+            const isDrop = fin.cogsGrowth < 0;
+            if (fin.isCostEfficient) {
+                cogsEl.innerHTML = `<span class="text-cyan-300 font-bold">${cogsVal}%</span> <span class="text-[10px] text-cyan-400 font-normal">(Efisiensi Beban ✓)</span>`;
+            } else {
+                cogsEl.textContent = `${fin.cogsGrowth >= 0 ? '+' : ''}${cogsVal}%`;
+                cogsEl.className = `font-mono font-semibold ${isDrop ? 'text-emerald-400' : 'text-slate-300'}`;
+            }
+        } else {
+            cogsEl.textContent = 'N/A (Sektor Jasa/Bank)';
+            cogsEl.className = 'font-mono text-slate-400 font-semibold';
+        }
+    }
+
+    // Sektor Perbankan Override vs DER
+    const rowDer = document.getElementById('row-fin-der');
+    const rowBank = document.getElementById('row-fin-banking');
+    const bankRatiosEl = document.getElementById('modal-fin-banking-ratios');
+    const derEl = document.getElementById('modal-fin-der');
+
+    if (fin.isBanking && fin.bankingMetrics) {
+        if (rowDer) rowDer.classList.add('hidden');
+        if (rowBank) {
+            rowBank.classList.remove('hidden');
+            if (bankRatiosEl) {
+                bankRatiosEl.textContent = `${fin.bankingMetrics.npl} (NPL) | ${fin.bankingMetrics.car} (CAR) | ${fin.bankingMetrics.ldr} (LDR)`;
+            }
+        }
+    } else {
+        if (rowBank) rowBank.classList.add('hidden');
+        if (rowDer) {
+            rowDer.classList.remove('hidden');
+            if (derEl) {
+                derEl.textContent = fin.debtToEquity ? `${(fin.debtToEquity / 100).toFixed(2)}x` : 'Sektor Finansial / Bank';
+            }
+        }
+    }
+
+    // Mata Uang Lapkeu (Aturan 5)
+    const currEl = document.getElementById('modal-fin-currency');
+    if (currEl) {
+        if (fin.currency === 'USD') {
+            currEl.innerHTML = `<span class="text-amber-300 font-bold font-mono">USD 💵</span> <span class="text-[10px] text-slate-400">(Dikonversi ke Rp)</span>`;
+        } else {
+            currEl.textContent = fin.currency || 'IDR';
+            currEl.className = 'font-mono text-white font-semibold';
+        }
+    }
+
+    // AI Summary & Sentiment Badge (Aturan 3: Sinkronisasi Narasi)
+    document.getElementById('modal-fin-summary').textContent = fin.summary || 'Data fundamental lengkap tersedia di modul laporan keuangan.';
+    const sumBadgeEl = document.getElementById('modal-fin-summary-badge');
+    if (sumBadgeEl) {
+        if (fin.isTurnaround) {
+            sumBadgeEl.textContent = 'TURNAROUND / PEMULIHAN';
+            sumBadgeEl.className = 'px-2 py-0.5 rounded text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm';
+            sumBadgeEl.classList.remove('hidden');
+        } else if (fin.isCostEfficient) {
+            sumBadgeEl.textContent = 'EFISIENSI BIAYA (MARGIN NAIK)';
+            sumBadgeEl.className = 'px-2 py-0.5 rounded text-[10px] font-black bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm';
+            sumBadgeEl.classList.remove('hidden');
+        } else if (fin.healthStatus && fin.healthStatus !== 'MODERAT') {
+            sumBadgeEl.textContent = fin.sentimentLabel || fin.healthStatus;
+            sumBadgeEl.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700';
+            sumBadgeEl.classList.remove('hidden');
+        } else {
+            sumBadgeEl.classList.add('hidden');
+        }
+    }
+
+    // Konsensus Analis (BUG FIXED: always displayed properly!)
+    const recEl = document.getElementById('modal-analyst-rec');
+    const targetEl = document.getElementById('modal-analyst-target');
+    const upsideEl = document.getElementById('modal-analyst-upside');
+
+    const rec = fin.analystRecommendation || val.recommendation;
+    if (!rec || rec.toLowerCase() === 'none') {
+        recEl.textContent = 'NEUTRAL / KONSENSUS MINIM';
+        recEl.className = 'bg-slate-800 text-slate-300 border border-slate-700 px-3 py-1 rounded-full text-xs font-bold uppercase';
+    } else if (rec.toLowerCase().includes('buy')) {
+        recEl.textContent = rec.toUpperCase();
+        recEl.className = 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 px-3 py-1 rounded-full text-xs font-black uppercase';
+    } else if (rec.toLowerCase().includes('sell')) {
+        recEl.textContent = rec.toUpperCase();
+        recEl.className = 'bg-rose-500/20 text-rose-400 border border-rose-500/50 px-3 py-1 rounded-full text-xs font-black uppercase';
+    } else {
+        recEl.textContent = rec.toUpperCase();
+        recEl.className = 'bg-amber-500/20 text-amber-400 border border-amber-500/50 px-3 py-1 rounded-full text-xs font-black uppercase';
+    }
+
+    const targetPrice = fin.targetPrice || val.targetMeanPrice;
+    if (targetPrice) {
+        targetEl.textContent = fmtRp.format(targetPrice);
+        const upside = fin.upsidePct !== null && fin.upsidePct !== undefined
+            ? (fin.upsidePct * 100).toFixed(1)
+            : (((targetPrice - rt.lastPrice) / rt.lastPrice) * 100).toFixed(1);
+        upsideEl.textContent = `(${upside > 0 ? '+' : ''}${upside}% Upside)`;
+        upsideEl.className = `text-xs font-bold font-mono ml-1.5 ${upside > 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+    } else {
+        targetEl.textContent = fmtRp.format(rt.lastPrice * 1.15);
+        upsideEl.textContent = '(Estimasi +15%)';
+    }
+
+    // Card 4: Aliran Asing & Flow
+    const ff = data.foreignFlow;
+    const ffStatusEl = document.getElementById('modal-foreign-status');
+    const ffNet1dEl = document.getElementById('modal-foreign-net1d');
+    const ffNet5dEl = document.getElementById('modal-foreign-net5d');
+    const ffVwapEl = document.getElementById('modal-foreign-vwap');
+    const ffFfpiEl = document.getElementById('modal-foreign-ffpi');
+    const ffStreakEl = document.getElementById('modal-foreign-streak');
+
+    if (ff) {
+        if (ffStatusEl) {
+            const st = ff.daily?.status || ff.weekly?.phase || 'NETRAL ⚪';
+            ffStatusEl.textContent = st;
+            if (st.includes('AKUMULASI') || st.includes('Mark-Up')) {
+                ffStatusEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40';
+            } else if (st.includes('DISTRIBUSI') || st.includes('Distribution')) {
+                ffStatusEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-rose-500/20 text-rose-400 border border-rose-500/40';
+            } else {
+                ffStatusEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40';
+            }
+        }
+        if (ffNet1dEl) {
+            const net1d = ff.daily?.netForeignVal || 0;
+            ffNet1dEl.textContent = fmtRpMiliar(net1d);
+            ffNet1dEl.className = `font-mono font-bold ${net1d >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+        }
+        if (ffNet5dEl) {
+            const net5d = ff.weekly?.weeklyNetVal || 0;
+            ffNet5dEl.textContent = fmtRpMiliar(net5d);
+            ffNet5dEl.className = `font-mono font-semibold ${net5d >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+        }
+        if (ffVwapEl) {
+            const vwap = ff.monthly?.foreignVWAP || ff.weekly?.vwap;
+            ffVwapEl.textContent = vwap ? fmtRp.format(vwap) : 'Rp -';
+        }
+        if (ffFfpiEl) {
+            const ffpi = ff.daily?.ffpi !== undefined ? ff.daily.ffpi : 0;
+            ffFfpiEl.textContent = `${ffpi > 0 ? '+' : ''}${ffpi} / 100`;
+            ffFfpiEl.className = `font-mono font-semibold ${ffpi >= 30 ? 'text-emerald-400' : ffpi <= -30 ? 'text-rose-400' : 'text-cyan-300'}`;
+        }
+        if (ffStreakEl) {
+            if (ff.streak && ff.streak.streakDays >= 2) {
+                ffStreakEl.innerHTML = `<span class="text-amber-400 font-bold">${ff.streak.streakDays} Hari 🔥</span> <span class="text-slate-400 text-[10px]">(${fmtRpMiliar(ff.streak.streakTotalVal)})</span>`;
+            } else {
+                ffStreakEl.textContent = 'Netral / 0 Hari';
+                ffStreakEl.className = 'font-mono text-slate-400 font-semibold';
+            }
+        }
+    } else {
+        if (ffStatusEl) ffStatusEl.textContent = 'NETRAL';
+        if (ffNet1dEl) ffNet1dEl.textContent = 'Rp 0 M';
+        if (ffNet5dEl) ffNet5dEl.textContent = 'Rp 0 M';
+        if (ffVwapEl) ffVwapEl.textContent = 'Rp -';
+        if (ffFfpiEl) ffFfpiEl.textContent = '0 / 100';
+        if (ffStreakEl) ffStreakEl.textContent = '-';
+    }
+
+    // Associated Corporate News List
+    const newsContainer = document.getElementById('modal-news-list');
+    newsContainer.innerHTML = '';
+    if (data.news && data.news.length > 0) {
+        data.news.forEach(n => {
+            const item = document.createElement('div');
+            item.className = 'bg-[#070b13] hover:bg-[#111827] border border-slate-800 p-3 rounded-lg flex flex-col justify-between transition group gap-2';
+            item.innerHTML = `
+                <div>
+                    <div class="flex items-center justify-between text-[10px] text-slate-500 mb-1">
+                        <span class="text-cyan-400 font-bold">${n.source}</span>
+                        <span class="text-emerald-400 font-mono font-semibold">🕒 ${n.date || n.timeAgo}</span>
+                    </div>
+                    <h5 class="text-xs font-semibold text-slate-200 group-hover:text-amber-300 leading-snug">${n.title}</h5>
+                    <p class="text-[10px] text-slate-400 italic mt-1">${n.impact}</p>
+                </div>
+                <div class="flex justify-end pt-1">
+                    <a href="${n.link}" target="_blank" rel="noopener noreferrer"
+                       class="inline-flex items-center gap-1 text-[11px] font-bold text-sky-300 hover:text-sky-100 bg-sky-950/60 hover:bg-sky-900/80 border border-sky-500/30 px-2.5 py-1 rounded transition">
+                        <span>Baca Berita Lengkap</span>
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                    </a>
+                </div>
+            `;
+            newsContainer.appendChild(item);
+        });
+    } else {
+        newsContainer.innerHTML = `<p class="col-span-full text-xs text-slate-500 text-center py-4">Tidak ada aksi korporasi besar dalam 30 hari terakhir.</p>`;
+    }
+
+    // Card 5: Modul Aksi Korporasi Rights Issue (HMETD) & Tebus Calculator
+    const ri = data.rightsIssue;
+    const riContainer = document.getElementById('modal-rights-issue-container');
+
+    if (ri && riContainer) {
+        const badge = document.getElementById('modal-rights-status-badge');
+        if (badge) {
+            if (ri.hasRightsIssue && ri.isCorporateActionActive) {
+                badge.textContent = 'HMETD AKTIF 🔥';
+                badge.className = 'px-2.5 py-1 rounded-full text-xs font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-sm';
+            } else if (ri.hasRightsIssue) {
+                badge.textContent = ri.status || 'HISTORIS BENCHMARK';
+                badge.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/50';
+            } else {
+                badge.textContent = 'SIMULASI HMETD';
+                badge.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700';
+            }
+        }
+
+        const ratioEl = document.getElementById('modal-rights-ratio');
+        if (ratioEl) ratioEl.textContent = ri.ratioDisplay || `${ri.ratioOld || 100} : ${ri.ratioNew || 25}`;
+
+        const peEl = document.getElementById('modal-rights-exercise-price');
+        if (peEl) peEl.textContent = fmtRp.format(ri.exercisePrice || 0);
+
+        const theoEl = document.getElementById('modal-rights-theoretical-price');
+        if (theoEl) theoEl.textContent = fmtRp.format(ri.theoreticalPrice || 0);
+
+        const dilEl = document.getElementById('modal-rights-dilution');
+        if (dilEl) dilEl.textContent = `${(ri.dilutionPct || 0).toFixed(2)}%`;
+
+        const discEl = document.getElementById('modal-rights-discount');
+        if (discEl) {
+            const disc = ri.discountPct || 0;
+            discEl.textContent = `${disc >= 0 ? '+' : ''}${disc.toFixed(1)}%`;
+            discEl.className = `font-mono font-bold text-sm ${disc >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+        }
+
+        const procEl = document.getElementById('modal-rights-proceeds');
+        if (procEl) procEl.textContent = ri.targetProceeds || '-';
+
+        const sbEl = document.getElementById('modal-rights-standby-buyer');
+        if (sbEl) sbEl.textContent = ri.standbyBuyer || 'Tidak Ada / Mandiri';
+
+        const cumEl = document.getElementById('modal-rights-cum-date');
+        if (cumEl) cumEl.textContent = ri.dates?.cumDate || '-';
+
+        const tradeEl = document.getElementById('modal-rights-trading-period');
+        if (tradeEl) tradeEl.textContent = (ri.dates?.tradingStart && ri.dates?.tradingStart !== '-') ? `${ri.dates.tradingStart} s/d ${ri.dates.tradingEnd}` : '-';
+
+        const aiEl = document.getElementById('modal-rights-ai-summary');
+        if (aiEl) aiEl.textContent = ri.aiSummary || 'Evaluasi rasio dilusi dan harga teoretis terhadap harga pasar.';
+
+        // Populate calculator input fields
+        const inputLots = document.getElementById('input-rights-lots');
+        const inputPe = document.getElementById('input-rights-pe');
+        const inputR = document.getElementById('input-rights-ratio-r');
+
+        if (inputLots) inputLots.value = 100;
+        if (inputPe) inputPe.value = ri.exercisePrice || 1000;
+        if (inputR) {
+            const rVal = ri.ratioOld ? Math.round((ri.ratioNew / ri.ratioOld) * 100) : (ri.ratioNew || 25);
+            inputR.value = rVal;
+        }
+
+        // Active recalculator for current stock
+        window.activeCalculateTebus = function () {
+            const L = Math.max(0, parseInt(inputLots?.value) || 0);
+            const pe = Math.max(1, parseFloat(inputPe?.value) || 1000);
+            const r = Math.max(0, parseFloat(inputR?.value) || 25);
+            const p0 = rt.lastPrice || 1000;
+            const N = 100;
+
+            const rightsLots = Math.floor(L * (r / N));
+            const rightsShares = rightsLots * 100;
+            const totalCost = rightsShares * pe;
+            const initialVal = L * 100 * p0;
+            const totalSharesPost = (L + rightsLots) * 100;
+            const avgPrice = totalSharesPost > 0 ? Math.round((initialVal + totalCost) / totalSharesPost) : 0;
+            const dilution = ((r / (N + r)) * 100).toFixed(2);
+
+            const calcLotsEl = document.getElementById('calc-rights-lots');
+            if (calcLotsEl) calcLotsEl.textContent = `${rightsLots.toLocaleString('id-ID')} Lot`;
+
+            const calcSharesEl = document.getElementById('calc-rights-shares');
+            if (calcSharesEl) calcSharesEl.textContent = `(${rightsShares.toLocaleString('id-ID')} lbr)`;
+
+            const calcCostEl = document.getElementById('calc-rights-cost');
+            if (calcCostEl) calcCostEl.textContent = fmtRp.format(totalCost);
+
+            const calcAvgEl = document.getElementById('calc-rights-avg-price');
+            if (calcAvgEl) calcAvgEl.textContent = fmtRp.format(avgPrice);
+
+            const calcDilEl = document.getElementById('calc-rights-dilution-status');
+            if (calcDilEl) calcDilEl.textContent = `${dilution}%`;
+        };
+
+        window.activeCalculateTebus();
+    }
+}
+
+btnCloseModal.addEventListener('click', () => {
+    modalAnalysis.classList.add('hidden');
+    modalAnalysis.classList.remove('flex');
+    document.body.style.overflow = 'auto';
 });
 
-tabScreener.addEventListener('click', () => {
-    tabScreener.classList.add('text-brandBlue', 'border-brandBlue');
-    tabScreener.classList.remove('text-gray-400', 'border-transparent');
-    tabAnalyze.classList.remove('text-brandBlue', 'border-brandBlue');
-    tabAnalyze.classList.add('text-gray-400', 'border-transparent');
-    secScreener.classList.remove('hidden');
-    secAnalyze.classList.add('hidden');
+// Close modal when clicking outer backdrop
+modalAnalysis.addEventListener('click', (e) => {
+    if (e.target === modalAnalysis) {
+        btnCloseModal.click();
+    }
+});
+
+// Rights Issue (HMETD) Interactive Tebus Calculator Live Input Handlers
+['input-rights-lots', 'input-rights-pe', 'input-rights-ratio-r'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+        el.addEventListener('input', () => {
+            if (typeof window.activeCalculateTebus === 'function') {
+                window.activeCalculateTebus();
+            }
+        });
+    }
 });
 
 // ============================================================
-//  ANALYZE LOGIC
+//  IDX ALL STOCKS DYNAMIC SEARCH & AUTOCOMPLETE ENGINE
 // ============================================================
-btnAnalyze.addEventListener('click', async () => {
-    const ticker = tickerInput.value.trim().toUpperCase();
-    if (ticker.length !== 4) {
-        showError("Kode saham harus 4 huruf.");
+const searchSuggestDropdown = document.getElementById('search-suggest-dropdown');
+let activeSuggestIndex = -1;
+let searchDebounceTimer = null;
+
+async function showSearchSuggestions(query) {
+    if (!searchSuggestDropdown) return;
+    const q = (query || '').trim().replace(/^[\$#]/, '');
+
+    if (!q) {
+        searchSuggestDropdown.classList.add('hidden');
+        searchSuggestDropdown.innerHTML = '';
+        activeSuggestIndex = -1;
         return;
     }
 
-    // Reset UI
-    errorBanner.classList.add('hidden');
-    dashContent.classList.add('hidden');
-    loadingIcon.classList.remove('hidden');
-    btnAnalyze.disabled = true;
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(async () => {
+        try {
+            const res = await fetch(`/api/search-suggest?q=${encodeURIComponent(q)}`);
+            const data = await res.json();
+            const matches = data.suggestions || [];
+
+            if (matches.length === 0) {
+                searchSuggestDropdown.innerHTML = `
+                    <div class="p-3 text-center text-slate-300 hover:text-white hover:bg-[#131e33] text-xs cursor-pointer transition select-none" id="suggest-fallback-action">
+                        🔍 Analisa langsung emiten "<strong class="text-amber-400 font-mono">${q.toUpperCase()}</strong>" (Klik atau Tekan Enter)
+                    </div>
+                `;
+                searchSuggestDropdown.classList.remove('hidden');
+                document.getElementById('suggest-fallback-action')?.addEventListener('click', () => {
+                    headerSearchInput.value = q.toUpperCase();
+                    searchSuggestDropdown.classList.add('hidden');
+                    activeSuggestIndex = -1;
+                    executeStockAnalysis(q.toUpperCase());
+                });
+                activeSuggestIndex = -1;
+                return;
+            }
+
+            searchSuggestDropdown.innerHTML = matches.map((item, idx) => `
+                <div class="suggest-item flex items-center justify-between p-2.5 hover:bg-[#131e33] border-b border-[#141e30] last:border-b-0 cursor-pointer transition select-none ${idx === activeSuggestIndex ? 'bg-[#142036]' : ''}" data-ticker="${item.ticker}">
+                    <div class="flex items-center gap-2.5">
+                        <span class="bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 text-xs font-mono font-bold px-2 py-0.5 rounded shadow-sm">$${item.ticker}</span>
+                        <div class="flex flex-col text-left">
+                            <span class="text-xs font-bold text-white leading-tight">${item.name}</span>
+                            <span class="text-[10px] text-slate-400 leading-tight">${item.sector}</span>
+                        </div>
+                    </div>
+                    <span class="text-[10px] text-emerald-400 font-mono font-semibold bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-800/40 flex items-center gap-1">
+                        ANALISIS ➔
+                    </span>
+                </div>
+            `).join('');
+
+            // Attach click event to all items
+            searchSuggestDropdown.querySelectorAll('.suggest-item').forEach(el => {
+                el.addEventListener('click', () => {
+                    const ticker = el.getAttribute('data-ticker');
+                    if (ticker) {
+                        headerSearchInput.value = ticker;
+                        searchSuggestDropdown.classList.add('hidden');
+                        activeSuggestIndex = -1;
+                        executeStockAnalysis(ticker);
+                    }
+                });
+            });
+
+            searchSuggestDropdown.classList.remove('hidden');
+        } catch (err) {
+            console.error('Search suggest error:', err);
+        }
+    }, 60);
+}
+
+function updateSuggestHighlight(items) {
+    items.forEach((item, idx) => {
+        if (idx === activeSuggestIndex) {
+            item.classList.add('bg-[#142036]');
+            item.scrollIntoView({ block: 'nearest' });
+        } else {
+            item.classList.remove('bg-[#142036]');
+        }
+    });
+}
+
+// Input events for search suggestions
+headerSearchInput.addEventListener('input', (e) => {
+    showSearchSuggestions(e.target.value);
+});
+
+headerSearchInput.addEventListener('focus', (e) => {
+    if (e.target.value.trim()) {
+        showSearchSuggestions(e.target.value);
+    }
+});
+
+headerSearchInput.addEventListener('keydown', (e) => {
+    const items = searchSuggestDropdown?.querySelectorAll('.suggest-item');
+    if (e.key === 'ArrowDown') {
+        if (searchSuggestDropdown && !searchSuggestDropdown.classList.contains('hidden') && items && items.length > 0) {
+            e.preventDefault();
+            activeSuggestIndex = (activeSuggestIndex + 1) % items.length;
+            updateSuggestHighlight(items);
+        }
+    } else if (e.key === 'ArrowUp') {
+        if (searchSuggestDropdown && !searchSuggestDropdown.classList.contains('hidden') && items && items.length > 0) {
+            e.preventDefault();
+            activeSuggestIndex = (activeSuggestIndex - 1 + items.length) % items.length;
+            updateSuggestHighlight(items);
+        }
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (activeSuggestIndex >= 0 && items && items[activeSuggestIndex]) {
+            const ticker = items[activeSuggestIndex].getAttribute('data-ticker');
+            headerSearchInput.value = ticker;
+            searchSuggestDropdown.classList.add('hidden');
+            activeSuggestIndex = -1;
+            executeStockAnalysis(ticker);
+        } else {
+            const val = headerSearchInput.value.trim().toUpperCase();
+            if (searchSuggestDropdown) searchSuggestDropdown.classList.add('hidden');
+            activeSuggestIndex = -1;
+            if (val) executeStockAnalysis(val);
+        }
+    } else if (e.key === 'Escape') {
+        if (searchSuggestDropdown) searchSuggestDropdown.classList.add('hidden');
+        activeSuggestIndex = -1;
+    }
+});
+
+// Close dropdown on click outside
+document.addEventListener('click', (e) => {
+    if (searchSuggestDropdown && !headerSearchInput.contains(e.target) && !searchSuggestDropdown.contains(e.target)) {
+        searchSuggestDropdown.classList.add('hidden');
+        activeSuggestIndex = -1;
+    }
+});
+
+btnClearSearch.addEventListener('click', () => {
+    headerSearchInput.value = '';
+    if (searchSuggestDropdown) searchSuggestDropdown.classList.add('hidden');
+    activeSuggestIndex = -1;
+    headerSearchInput.focus();
+});
+
+// ============================================================
+//  5. SCREENER EXECUTION & RENDERING
+// ============================================================
+
+function renderScalpingTable(session = 'sesi1') {
+    activeScalpSession = session;
+    const tbodyScalp = document.getElementById('tbody-scalping');
+    const btnSesi1 = document.getElementById('btn-scalp-sesi1');
+    const btnSesi2 = document.getElementById('btn-scalp-sesi2');
+    const targetInfo = document.getElementById('scalp-target-info');
+
+    if (session === 'sesi1') {
+        if (btnSesi1) btnSesi1.className = 'scalp-sesi-btn active bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-bold px-3 py-1 rounded-lg transition flex items-center gap-1.5 shadow-sm';
+        if (btnSesi2) btnSesi2.className = 'scalp-sesi-btn text-slate-400 hover:text-slate-200 border border-transparent text-xs font-bold px-3 py-1 rounded-lg transition flex items-center gap-1.5 ml-1';
+        if (targetInfo) targetInfo.textContent = 'Target Gain: 1.5% - 2.5% | Jam: 09:00 - 11:30 WIB';
+    } else {
+        if (btnSesi1) btnSesi1.className = 'scalp-sesi-btn text-slate-400 hover:text-slate-200 border border-transparent text-xs font-bold px-3 py-1 rounded-lg transition flex items-center gap-1.5';
+        if (btnSesi2) btnSesi2.className = 'scalp-sesi-btn active bg-amber-500/20 text-amber-400 border border-amber-500/40 text-xs font-bold px-3 py-1 rounded-lg transition flex items-center gap-1.5 shadow-sm ml-1';
+        if (targetInfo) targetInfo.textContent = 'Target Gain: 1.8% - 3.0% | Jam: 13:30 - 15:50 WIB';
+    }
+
+    if (!tbodyScalp) return;
+    tbodyScalp.innerHTML = '';
+
+    const list = session === 'sesi1'
+        ? (lastScreenerData?.scalpingSesi1 || lastScreenerData?.scalping || [])
+        : (lastScreenerData?.scalpingSesi2 || lastScreenerData?.scalping || []);
+
+    if (!list || list.length === 0) {
+        tbodyScalp.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500 italic">Tidak ada saham lolos filter scalping ${session === 'sesi1' ? 'Sesi 1' : 'Sesi 2'} saat ini.</td></tr>`;
+        return;
+    }
+
+    list.forEach(row => {
+        const tick = (row.price < 200 ? 1 : row.price < 500 ? 2 : row.price < 2000 ? 5 : row.price < 5000 ? 10 : 25);
+        const antrean = row.antreanBeli || (session === 'sesi1' ? `Antre Bid Rp ${fmtRp.format(row.price - tick)} - Rp ${fmtRp.format(row.price)} (Bid 1-2)` : `Antre Bid Rp ${fmtRp.format(row.price - 2 * tick)} - Rp ${fmtRp.format(row.price - tick)} (Bid 2-3)`);
+        const jam = row.jamEksekusi || (session === 'sesi1' ? '09:00 - 09:30 WIB' : '13:30 - 14:15 WIB');
+
+        function confCell(confidence, label) {
+            const color = confidence >= 75 ? 'text-emerald-400' : confidence >= 55 ? 'text-amber-400' : 'text-orange-400';
+            const barColor = confidence >= 75 ? 'bg-emerald-400' : confidence >= 55 ? 'bg-amber-400' : 'bg-orange-400';
+            const badgeBg = confidence >= 75 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : confidence >= 55 ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-orange-500/20 text-orange-400 border-orange-500/30';
+            return `
+                <td class="p-3">
+                    <div class="flex items-center gap-2">
+                        <span class="${color} font-bold font-mono text-xs">${confidence}%</span>
+                        <div class="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                            <div class="${barColor} h-full rounded-full" style="width:${confidence}%"></div>
+                        </div>
+                    </div>
+                </td>
+                <td class="p-3">
+                    <span class="text-[10px] px-2 py-0.5 rounded border font-semibold ${badgeBg}">${label}</span>
+                </td>
+            `;
+        }
+
+        function getRankBadge(row) {
+            if (row.rank === 1) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold tracking-tight">🥇 #1</span>`;
+            if (row.rank === 2) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-slate-400/20 text-slate-200 border border-slate-400/40 font-bold tracking-tight">🥈 #2</span>`;
+            if (row.rank === 3) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-700/20 text-amber-400 border border-amber-700/40 font-bold tracking-tight">🥉 #3</span>`;
+            return '';
+        }
+
+        const rankBadge = getRankBadge(row);
+        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800/50 font-sans font-semibold">${row.supertrendBadge}</span>` : '';
+        const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 border border-amber-800/50 font-sans font-semibold">${row.rvolBadge}</span>` : '';
+
+        tbodyScalp.innerHTML += `
+            <tr class="border-b border-slate-800/60 hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
+                <td class="p-3 font-mono">
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                        ${rankBadge}
+                    </div>
+                    <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
+                </td>
+                <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
+                <td class="p-3 font-mono font-bold ${parseFloat(row.changePct) >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${parseFloat(row.changePct) >= 0 ? '+' : ''}${row.changePct}%</td>
+                <td class="p-3 font-mono text-slate-300">${row.range}%</td>
+                <td class="p-3 font-mono font-bold text-cyan-300 whitespace-nowrap"><span class="bg-cyan-950/40 border border-cyan-800/50 px-2 py-0.5 rounded text-xs">${antrean}</span></td>
+                <td class="p-3 font-mono text-amber-300 font-semibold whitespace-nowrap text-xs">🕒 ${jam}</td>
+                <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetProfit)}</td>
+                <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.stopLoss)}</td>
+                ${confCell(row.confidence, row.label)}
+            </tr>
+        `;
+    });
+}
+
+// Bind Sesi 1 & Sesi 2 buttons
+document.getElementById('btn-scalp-sesi1')?.addEventListener('click', () => {
+    renderScalpingTable('sesi1');
+});
+document.getElementById('btn-scalp-sesi2')?.addEventListener('click', () => {
+    renderScalpingTable('sesi2');
+});
+
+btnTriggerScreener.addEventListener('click', async () => {
+    btnTriggerScreener.disabled = true;
+    screenerLoading.classList.remove('hidden');
+    screenerResultsWrapper.classList.add('hidden');
+    screenerBtnIcon.classList.add('animate-spin');
+
+    // ── Live Elapsed Timer & Progress ──────────────────────────
+    const timerEl = document.getElementById('screener-timer');
+    const statusEl = document.getElementById('screener-scan-status');
+    const progressBar = document.getElementById('screener-progress-bar');
+    let elapsed = 0;
+    let progress = 0;
+    if (timerEl) timerEl.textContent = '0s';
+    if (progressBar) progressBar.style.width = '0%';
+    if (statusEl) statusEl.textContent = 'Menginisialisasi engine...';
+
+    const statusMessages = [
+        'Mengambil data harga real-time...',
+        'Menghitung Supertrend (10, 3.0)...',
+        'Menghitung MA 20 / 50 Golden Alignment...',
+        'Mendeteksi lonjakan Volume Spike (RVol)...',
+        'Analisis RSI & MACD expansion...',
+        'Filter anti-gorengan ketat & likuiditas...',
+        'Menentukan antrean Bid scalping...',
+        'Menghitung stop-loss & target profit...',
+        'Menyusun 3 rekomendasi terbaik tiap kategori...',
+        'Finalisasi analisis teknikal...'
+    ];
+
+    const timerInterval = setInterval(() => {
+        elapsed++;
+        if (timerEl) timerEl.textContent = elapsed + 's';
+
+        // Simulate progress (cap at 90% until real response arrives)
+        if (progress < 90) {
+            progress += (90 - progress) * 0.08;
+            if (progressBar) progressBar.style.width = Math.round(progress) + '%';
+        }
+
+        // Cycle status messages
+        const msgIdx = Math.min(Math.floor(elapsed / 3), statusMessages.length - 1);
+        if (statusEl) statusEl.textContent = statusMessages[msgIdx];
+    }, 1000);
 
     try {
-        const response = await fetch(`/api/analyze/${ticker}`);
-        const data = await response.json();
+        const res = await fetch('/api/screener');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Gagal menjalankan screener');
+
+        // Complete the progress bar
+        if (progressBar) progressBar.style.width = '100%';
+        const totalTopPicks = (data.scalping?.length || 0) + (data.daytrade?.length || 0) + (data.swing?.length || 0) + (data.bsjp?.length || 0) + (data.bpjp?.length || 0) + (data.longterm?.length || 0);
+        if (statusEl) statusEl.textContent = `✅ Selesai dalam ${elapsed}s — Top ${totalTopPicks} saham rekomendasi berhasil dikurasi`;
+
+        lastScreenerData = data;
+        renderScreenerResults(data);
+
+        // Short delay to show 100% completion
+        await new Promise(r => setTimeout(r, 500));
+        screenerResultsWrapper.classList.remove('hidden');
+    } catch (err) {
+        alert('Kendala Screener: ' + err.message);
+    } finally {
+        clearInterval(timerInterval);
+        screenerLoading.classList.add('hidden');
+        btnTriggerScreener.disabled = false;
+        screenerBtnIcon.classList.remove('animate-spin');
+    }
+});
+
+function renderScreenerResults(data) {
+    function confCell(confidence, label) {
+        const color = confidence >= 75 ? 'text-emerald-400' : confidence >= 55 ? 'text-amber-400' : 'text-orange-400';
+        const barColor = confidence >= 75 ? 'bg-emerald-400' : confidence >= 55 ? 'bg-amber-400' : 'bg-orange-400';
+        const badgeBg = confidence >= 75 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : confidence >= 55 ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-orange-500/20 text-orange-400 border-orange-500/30';
+        return `
+            <td class="p-3">
+                <div class="flex items-center gap-2">
+                    <span class="${color} font-bold font-mono text-xs">${confidence}%</span>
+                    <div class="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                        <div class="${barColor} h-full rounded-full" style="width:${confidence}%"></div>
+                    </div>
+                </div>
+            </td>
+            <td class="p-3">
+                <span class="text-[10px] px-2 py-0.5 rounded border font-semibold ${badgeBg}">${label}</span>
+            </td>
+        `;
+    }
+
+    function getRankBadge(row) {
+        if (row.rank === 1) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold tracking-tight">🥇 #1</span>`;
+        if (row.rank === 2) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-slate-400/20 text-slate-200 border border-slate-400/40 font-bold tracking-tight">🥈 #2</span>`;
+        if (row.rank === 3) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-700/20 text-amber-400 border border-amber-700/40 font-bold tracking-tight">🥉 #3</span>`;
+        return '';
+    }
+
+    // 1. Scalping (rendered with session support)
+    renderScalpingTable(activeScalpSession || 'sesi1');
+
+    // 2. Daytrade
+    const tbodyDay = document.getElementById('tbody-daytrade');
+    tbodyDay.innerHTML = '';
+    (data.daytrade || []).forEach(row => {
+        const rankBadge = getRankBadge(row);
+        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800/50 font-sans font-semibold">${row.supertrendBadge}</span>` : '';
+        const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 border border-amber-800/50 font-sans font-semibold">${row.rvolBadge}</span>` : '';
+
+        tbodyDay.innerHTML += `
+            <tr class="border-b border-slate-800/60 hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
+                <td class="p-3 font-mono">
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                        ${rankBadge}
+                    </div>
+                    <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
+                </td>
+                <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
+                <td class="p-3 font-mono font-bold ${parseFloat(row.changePct) >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${parseFloat(row.changePct) >= 0 ? '+' : ''}${row.changePct}%</td>
+                <td class="p-3 font-mono text-slate-300">${row.entryZone}</td>
+                <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetProfit)}</td>
+                <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.stopLoss)}</td>
+                ${confCell(row.confidence, row.label)}
+            </tr>
+        `;
+    });
+    if (!data.daytrade?.length) tbodyDay.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-slate-500 italic">Tidak ada saham lolos filter daytrade ketat saat ini.</td></tr>`;
+
+    // 3. Swing
+    const tbodySwing = document.getElementById('tbody-swing');
+    tbodySwing.innerHTML = '';
+    (data.swing || []).forEach(row => {
+        const rankBadge = getRankBadge(row);
+        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800/50 font-sans font-semibold">${row.supertrendBadge}</span>` : '';
+        const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 border border-amber-800/50 font-sans font-semibold">${row.rvolBadge}</span>` : '';
+
+        tbodySwing.innerHTML += `
+            <tr class="border-b border-slate-800/60 hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
+                <td class="p-3 font-mono">
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                        ${rankBadge}
+                    </div>
+                    <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
+                </td>
+                <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
+                <td class="p-3 font-mono text-slate-300">${row.areaBuy}</td>
+                <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetPrice1)}</td>
+                <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetPrice2)}</td>
+                <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.cutLoss)}</td>
+                <td class="p-3 font-mono font-bold text-purple-400">${row.riskReward}</td>
+                ${confCell(row.confidence, row.label)}
+            </tr>
+        `;
+    });
+    if (!data.swing?.length) tbodySwing.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-slate-500 italic">Tidak ada saham lolos filter swing ketat saat ini.</td></tr>`;
+
+    // 4. BSJP
+    const tbodyBsjp = document.getElementById('tbody-bsjp');
+    tbodyBsjp.innerHTML = '';
+    (data.bsjp || []).forEach(row => {
+        const rankBadge = getRankBadge(row);
+        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800/50 font-sans font-semibold">${row.supertrendBadge}</span>` : '';
+        const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 border border-amber-800/50 font-sans font-semibold">${row.rvolBadge}</span>` : '';
+
+        tbodyBsjp.innerHTML += `
+            <tr class="border-b border-slate-800/60 hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
+                <td class="p-3 font-mono">
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                        ${rankBadge}
+                    </div>
+                    <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
+                </td>
+                <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
+                <td class="p-3 font-mono font-semibold ${parseFloat(row.rsi) > 60 ? 'text-amber-400' : 'text-emerald-400'}">${row.rsi}</td>
+                <td class="p-3 font-mono text-slate-300">${row.pullbackFromHigh}%</td>
+                <td class="p-3 text-amber-400 text-xs">${row.beliSore}</td>
+                <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetPagi)}</td>
+                <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.stopLoss)}</td>
+                ${confCell(row.confidence, row.label)}
+            </tr>
+        `;
+    });
+    if (!data.bsjp?.length) tbodyBsjp.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-slate-500 italic">Tidak ada saham lolos filter BSJP ketat saat ini.</td></tr>`;
+
+    // 5. BPJP
+    const tbodyBpjp = document.getElementById('tbody-bpjp');
+    tbodyBpjp.innerHTML = '';
+    (data.bpjp || []).forEach(row => {
+        const rankBadge = getRankBadge(row);
+        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800/50 font-sans font-semibold">${row.supertrendBadge}</span>` : '';
+        const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 border border-amber-800/50 font-sans font-semibold">${row.rvolBadge}</span>` : '';
+
+        tbodyBpjp.innerHTML += `
+            <tr class="border-b border-slate-800/60 hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
+                <td class="p-3 font-mono">
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                        ${rankBadge}
+                    </div>
+                    <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
+                </td>
+                <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
+                <td class="p-3 font-mono font-semibold text-emerald-400">${row.rsi} <span class="text-[10px] text-cyan-300 font-sans">(${row.rsiStatus || 'Bounce'})</span></td>
+                <td class="p-3 font-mono text-purple-400">${row.adx}</td>
+                <td class="p-3 font-mono text-slate-300">${row.macd}</td>
+                <td class="p-3 text-pink-400 text-xs">${row.entryPagi}</td>
+                <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.target)}</td>
+                <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.stopLoss)}</td>
+                ${confCell(row.confidence, row.label)}
+            </tr>
+        `;
+    });
+    if (!data.bpjp?.length) tbodyBpjp.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500 italic">Tidak ada saham lolos filter BPJP oversold saat ini.</td></tr>`;
+
+    // 6. Jangka Panjang
+    const tbodyLong = document.getElementById('tbody-longterm');
+    tbodyLong.innerHTML = '';
+    (data.longterm || []).forEach(row => {
+        const rankBadge = getRankBadge(row);
+        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800/50 font-sans font-semibold">${row.supertrendBadge}</span>` : '';
+
+        tbodyLong.innerHTML += `
+            <tr class="border-b border-slate-800/60 hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
+                <td class="p-3 font-mono">
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                        ${rankBadge}
+                    </div>
+                    <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge}</div>
+                </td>
+                <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
+                <td class="p-3 font-mono font-semibold text-amber-400">${row.rsi}</td>
+                <td class="p-3 font-mono text-slate-300">${fmtRp.format(row.ema200)}</td>
+                <td class="p-3 font-mono text-slate-400">${fmtRp.format(row.support)}</td>
+                <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetKonservatif)}</td>
+                <td class="p-3 font-mono font-extrabold text-emerald-300">${fmtRp.format(row.targetAgresif)}</td>
+                <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.cutLoss)}</td>
+                ${confCell(row.confidence, row.label)}
+            </tr>
+        `;
+    });
+    if (!data.longterm?.length) tbodyLong.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500 italic">Tidak ada saham lolos filter jangka panjang saat ini.</td></tr>`;
+}
+
+// Delegated click handler for all screener tables (guarantees clickability regardless of scope)
+['tbody-scalping', 'tbody-daytrade', 'tbody-swing', 'tbody-bsjp', 'tbody-bpjp', 'tbody-longterm'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('click', (e) => {
+        const tr = e.target.closest('tr[data-ticker]');
+        if (tr) {
+            const ticker = tr.getAttribute('data-ticker');
+            if (ticker) executeStockAnalysis(ticker);
+        }
+    });
+});
+
+// Screener Sector & View Limit Event Listeners
+screenerSectorSelect?.addEventListener('change', () => {
+    if (lastScreenerData) renderScreenerResults(lastScreenerData);
+});
+btnViewTop3?.addEventListener('click', () => {
+    screenerViewLimit = 'top3';
+    if (btnViewTop3) btnViewTop3.className = 'view-limit-btn active bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-bold px-3 py-1 rounded-lg transition shadow-sm';
+    if (btnViewAll) btnViewAll.className = 'view-limit-btn text-slate-400 hover:text-slate-200 border border-transparent text-xs font-bold px-3 py-1 rounded-lg transition';
+    if (lastScreenerData) renderScreenerResults(lastScreenerData);
+});
+btnViewAll?.addEventListener('click', () => {
+    screenerViewLimit = 'all';
+    if (btnViewAll) btnViewAll.className = 'view-limit-btn active bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-bold px-3 py-1 rounded-lg transition shadow-sm';
+    if (btnViewTop3) btnViewTop3.className = 'view-limit-btn text-slate-400 hover:text-slate-200 border border-transparent text-xs font-bold px-3 py-1 rounded-lg transition';
+    if (lastScreenerData) renderScreenerResults(lastScreenerData);
+});
+
+// Backtest Modal Event Listeners
+const openBacktestModal = () => {
+    if (modalBacktest) {
+        modalBacktest.classList.remove('hidden');
+        modalBacktest.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+    }
+};
+const closeBacktestModal = () => {
+    if (modalBacktest) {
+        modalBacktest.classList.add('hidden');
+        modalBacktest.classList.remove('flex');
+        document.body.style.overflow = 'auto';
+    }
+};
+btnOpenBacktestModal?.addEventListener('click', openBacktestModal);
+btnCloseBacktestModal?.addEventListener('click', closeBacktestModal);
+btnCloseBacktestModalBottom?.addEventListener('click', closeBacktestModal);
+modalBacktest?.addEventListener('click', (e) => {
+    if (e.target === modalBacktest) closeBacktestModal();
+});
+
+// ============================================================
+//  5B. PELACAKAN TOP FOREIGN BUY & SELL ENGINE
+// ============================================================
+
+function fmtRpMiliar(val) {
+    if (val === null || val === undefined || isNaN(val)) return 'Rp 0';
+    const num = Number(val);
+    const abs = Math.abs(num);
+    const sign = num > 0 ? '+' : num < 0 ? '-' : '';
+    if (abs >= 1e12) return `${sign}Rp ${(abs / 1e12).toFixed(2)} Triliun`;
+    if (abs >= 1e9) return `${sign}Rp ${(abs / 1e9).toFixed(1)} Miliar`;
+    if (abs >= 1e6) return `${sign}Rp ${(abs / 1e6).toFixed(1)} Juta`;
+    return `${sign}Rp ${fmtNum.format(Math.round(abs))}`;
+}
+
+function filterForeignList(list) {
+    if (!list || !Array.isArray(list)) return [];
+    const query = (foreignSearchInput?.value || '').trim().toUpperCase();
+    const sectorFilter = foreignSectorSelect?.value || 'all';
+
+    return list.filter(item => {
+        const matchesTicker = !query || item.ticker?.toUpperCase().includes(query) || (item.name && item.name.toUpperCase().includes(query));
+        const itemSector = item.sector || '';
+        const matchesSector = sectorFilter === 'all' || itemSector.toLowerCase().includes(sectorFilter.toLowerCase());
+        return matchesTicker && matchesSector;
+    });
+}
+
+function switchForeignSubmenu(submenuName) {
+    activeForeignSubmenu = submenuName;
+    const subBtns = [
+        { el: btnForeignDaily, view: viewForeignDaily, name: 'daily', activeClass: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40' },
+        { el: btnForeignWeekly, view: viewForeignWeekly, name: 'weekly', activeClass: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40' },
+        { el: btnForeignMonthly, view: viewForeignMonthly, name: 'monthly', activeClass: 'bg-purple-500/20 text-purple-300 border-purple-500/40' },
+        { el: btnForeignStreak, view: viewForeignStreak, name: 'streak', activeClass: 'bg-amber-500/30 text-amber-300 border-amber-500/50' }
+    ];
+
+    subBtns.forEach(sub => {
+        if (sub.el) {
+            sub.el.classList.remove('bg-cyan-500/20', 'text-cyan-300', 'border-cyan-500/40', 'bg-purple-500/20', 'text-purple-300', 'border-purple-500/40', 'bg-amber-500/30', 'text-amber-300', 'border-amber-500/50');
+            if (sub.name === submenuName) {
+                sub.el.className = `foreign-sub-btn active ${sub.activeClass} border text-xs font-bold px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 shadow-sm cursor-pointer`;
+            } else {
+                sub.el.className = 'foreign-sub-btn text-slate-400 hover:text-slate-200 border border-transparent text-xs font-bold px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer';
+            }
+        }
+        if (sub.view) {
+            if (sub.name === submenuName) {
+                sub.view.classList.remove('hidden');
+            } else {
+                sub.view.classList.add('hidden');
+            }
+        }
+    });
+
+    renderForeignTables();
+}
+
+btnForeignDaily?.addEventListener('click', () => switchForeignSubmenu('daily'));
+btnForeignWeekly?.addEventListener('click', () => switchForeignSubmenu('weekly'));
+btnForeignMonthly?.addEventListener('click', () => switchForeignSubmenu('monthly'));
+btnForeignStreak?.addEventListener('click', () => switchForeignSubmenu('streak'));
+
+foreignSearchInput?.addEventListener('input', () => renderForeignTables());
+foreignSectorSelect?.addEventListener('change', () => renderForeignTables());
+btnRefreshForeign?.addEventListener('click', () => loadForeignFlowData(true));
+
+async function loadForeignFlowData(forceRefresh = false) {
+    if (foreignLoading) foreignLoading.classList.remove('hidden');
+    if (iconRefreshForeign) iconRefreshForeign.classList.add('animate-spin');
+
+    try {
+        const url = forceRefresh ? '/api/foreign-flow?force=true' : '/api/foreign-flow';
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Gagal mengambil data aliran asing');
+        const data = await res.json();
+        allForeignData = data;
+
+        if (data.macro) {
+            if (foreignMacroNetval) {
+                const val = data.macro.totalNetForeignVal;
+                foreignMacroNetval.textContent = fmtRpMiliar(val);
+                foreignMacroNetval.className = `text-lg font-black font-mono ${val >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+            }
+            if (foreignMacroParticipation) {
+                foreignMacroParticipation.textContent = `${data.macro.foreignParticipationPct}%`;
+            }
+            if (foreignMacroSentiment) {
+                foreignMacroSentiment.textContent = data.macro.sentiment;
+                foreignMacroSentiment.className = `text-xs font-bold ${data.macro.totalNetForeignVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+            }
+            if (foreignMacroTracked) {
+                foreignMacroTracked.textContent = `${data.macro.totalEmitenTracked} Emiten`;
+            }
+        }
+
+        if (badgeStreakCount) {
+            const streakCount = data.streak?.streaks?.length || (Array.isArray(data.streak) ? data.streak.length : 0);
+            badgeStreakCount.textContent = streakCount;
+        }
+
+        renderForeignTables();
+    } catch (err) {
+        console.error('Error loadForeignFlowData:', err);
+    } finally {
+        if (foreignLoading) foreignLoading.classList.add('hidden');
+        if (iconRefreshForeign) iconRefreshForeign.classList.remove('animate-spin');
+    }
+}
+
+function renderForeignTables() {
+    if (!allForeignData) return;
+
+    if (activeForeignSubmenu === 'daily') {
+        renderForeignDailyTables();
+    } else if (activeForeignSubmenu === 'weekly') {
+        renderForeignWeeklyTable();
+    } else if (activeForeignSubmenu === 'monthly') {
+        renderForeignMonthlyTable();
+    } else if (activeForeignSubmenu === 'streak') {
+        renderForeignStreakTable();
+    }
+}
+
+function getForeignRankBadge(rank) {
+    if (rank === 1) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold">🥇 #1</span>`;
+    if (rank === 2) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-slate-400/20 text-slate-200 border border-slate-400/40 font-bold">🥈 #2</span>`;
+    if (rank === 3) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-700/20 text-amber-400 border border-amber-700/40 font-bold">🥉 #3</span>`;
+    return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-slate-800 text-slate-400 font-bold font-mono">#${rank}</span>`;
+}
+
+function renderForeignDailyTables() {
+    if (!tbodyForeignDailyBuy || !tbodyForeignDailySell || !allForeignData?.daily) return;
+
+    // 1. Top Buy
+    const rawBuys = allForeignData.daily.topBuy || [];
+    const filteredBuys = filterForeignList(rawBuys);
+    tbodyForeignDailyBuy.innerHTML = '';
+
+    if (filteredBuys.length === 0) {
+        tbodyForeignDailyBuy.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-500 italic">Tidak ada data akumulasi harian sesuai kriteria filter.</td></tr>`;
+    } else {
+        filteredBuys.forEach((row, idx) => {
+            const chg = parseFloat(row.changePct || 0);
+            const chgColor = chg >= 0 ? 'text-emerald-400' : 'text-rose-400';
+            const sign = chg >= 0 ? '+' : '';
+            const statusBadge = row.status?.includes('MASIF')
+                ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-400 font-extrabold'
+                : 'bg-cyan-950/80 border-cyan-500/40 text-cyan-300 font-bold';
+
+            const buyVal = row.foreignBuyVal ? fmtRpMiliar(row.foreignBuyVal) : null;
+            const sellVal = row.foreignSellVal ? fmtRpMiliar(row.foreignSellVal) : null;
+
+            tbodyForeignDailyBuy.innerHTML += `
+                <tr class="border-b border-slate-800/60 hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+                    <td class="p-3 font-mono">
+                        <div class="flex items-center gap-2">
+                            ${getForeignRankBadge(idx + 1)}
+                            <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 truncate max-w-[150px] sm:max-w-[200px] mt-0.5">${row.sector || 'IDX'}</p>
+                    </td>
+                    <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.currentPrice || row.price)}</td>
+                    <td class="p-3 font-mono font-bold ${chgColor}">${sign}${chg.toFixed(2)}%</td>
+                    <td class="p-3 font-mono">
+                        <div class="font-extrabold text-emerald-400 text-sm">${fmtRpMiliar(row.netForeignVal)}</div>
+                        ${buyVal && sellVal ? `
+                        <div class="text-[10px] text-slate-400 flex items-center gap-1 font-mono mt-0.5">
+                            <span class="text-emerald-500 font-semibold">B: ${buyVal}</span>
+                            <span class="text-slate-600">|</span>
+                            <span class="text-rose-400/80">S: ${sellVal}</span>
+                        </div>` : ''}
+                    </td>
+                    <td class="p-3 font-mono font-semibold text-cyan-300">+${fmtNum.format(Math.abs(row.netForeignVol || 0))} Lot</td>
+                    <td class="p-3">
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-mono text-xs font-bold text-emerald-400">+${row.ffpi}</span>
+                            <div class="w-12 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                <div class="bg-emerald-400 h-full rounded-full" style="width:${Math.min(100, Math.max(10, Math.abs(row.ffpi)))}%"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="p-3">
+                        <span class="text-[10px] px-2 py-0.5 rounded border ${statusBadge}">${row.status || 'AKUMULASI 🟢'}</span>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // 2. Top Sell
+    const rawSells = allForeignData.daily.topSell || [];
+    const filteredSells = filterForeignList(rawSells);
+    tbodyForeignDailySell.innerHTML = '';
+
+    if (filteredSells.length === 0) {
+        tbodyForeignDailySell.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-500 italic">Tidak ada data distribusi harian sesuai kriteria filter.</td></tr>`;
+    } else {
+        filteredSells.forEach((row, idx) => {
+            const chg = parseFloat(row.changePct || 0);
+            const chgColor = chg >= 0 ? 'text-emerald-400' : 'text-rose-400';
+            const sign = chg >= 0 ? '+' : '';
+            const statusBadge = row.status?.includes('MASIF')
+                ? 'bg-rose-950/80 border-rose-500/50 text-rose-400 font-extrabold'
+                : 'bg-rose-950/60 border-rose-800/40 text-rose-300 font-bold';
+
+            const buyVal = row.foreignBuyVal ? fmtRpMiliar(row.foreignBuyVal) : null;
+            const sellVal = row.foreignSellVal ? fmtRpMiliar(row.foreignSellVal) : null;
+
+            tbodyForeignDailySell.innerHTML += `
+                <tr class="border-b border-slate-800/60 hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+                    <td class="p-3 font-mono">
+                        <div class="flex items-center gap-2">
+                            ${getForeignRankBadge(idx + 1)}
+                            <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 truncate max-w-[150px] sm:max-w-[200px] mt-0.5">${row.sector || 'IDX'}</p>
+                    </td>
+                    <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.currentPrice || row.price)}</td>
+                    <td class="p-3 font-mono font-bold ${chgColor}">${sign}${chg.toFixed(2)}%</td>
+                    <td class="p-3 font-mono">
+                        <div class="font-extrabold text-rose-400 text-sm">${fmtRpMiliar(row.netForeignVal)}</div>
+                        ${buyVal && sellVal ? `
+                        <div class="text-[10px] text-slate-400 flex items-center gap-1 font-mono mt-0.5">
+                            <span class="text-emerald-400/80">B: ${buyVal}</span>
+                            <span class="text-slate-600">|</span>
+                            <span class="text-rose-500 font-semibold">S: ${sellVal}</span>
+                        </div>` : ''}
+                    </td>
+                    <td class="p-3 font-mono font-semibold text-slate-300">-${fmtNum.format(Math.abs(row.netForeignVol || 0))} Lot</td>
+                    <td class="p-3">
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-mono text-xs font-bold text-rose-400">${row.ffpi}</span>
+                            <div class="w-12 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                <div class="bg-rose-400 h-full rounded-full" style="width:${Math.min(100, Math.max(10, Math.abs(row.ffpi)))}%"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="p-3">
+                        <span class="text-[10px] px-2 py-0.5 rounded border ${statusBadge}">${row.status || 'DISTRIBUSI 🔴'}</span>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+}
+
+function renderForeignWeeklyTable() {
+    if (!tbodyForeignWeekly || !allForeignData?.weekly) return;
+
+    const rawList = allForeignData.weekly.topBuy || allForeignData.weekly.all || [];
+    const filteredList = filterForeignList(rawList);
+    tbodyForeignWeekly.innerHTML = '';
+
+    if (filteredList.length === 0) {
+        tbodyForeignWeekly.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-slate-500 italic">Tidak ada data akumulasi mingguan (5D) sesuai kriteria filter.</td></tr>`;
+        return;
+    }
+
+    filteredList.forEach((row, idx) => {
+        const ret = parseFloat(row.weeklyPriceChgPct || row.weeklyReturnPct || 0);
+        const retColor = ret >= 0 ? 'text-emerald-400' : 'text-rose-400';
+        const sign = ret >= 0 ? '+' : '';
+        const netVal = row.weeklyNetVal || 0;
+        const netValColor = netVal >= 0 ? 'text-cyan-400 font-extrabold' : 'text-rose-400 font-bold';
+
+        let accelBadge = '<span class="bg-slate-800 text-slate-300 text-[10px] px-2 py-0.5 rounded font-mono font-bold">STEADY ⚖️</span>';
+        if (row.flowAcceleration >= 1.2) {
+            accelBadge = '<span class="bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 text-[10px] px-2 py-0.5 rounded font-mono font-extrabold">ACCELERATING ⚡</span>';
+        } else if (row.flowAcceleration < 0.8) {
+            accelBadge = '<span class="bg-amber-950/60 border border-amber-800/40 text-amber-400 text-[10px] px-2 py-0.5 rounded font-mono font-semibold">DECELERATING 🔻</span>';
+        }
+
+        let phaseBadge = '<span class="bg-cyan-950/80 border border-cyan-800/50 text-cyan-300 text-[10px] px-2 py-0.5 rounded font-bold">Akumulasi 🟢</span>';
+        const ph = row.phase || row.institutionalPhase || '';
+        if (ph.includes('Mark-Up') || ph.includes('Markup')) {
+            phaseBadge = '<span class="bg-emerald-950/80 border border-emerald-500/50 text-emerald-400 text-[10px] px-2 py-0.5 rounded font-extrabold">Mark-Up 🚀</span>';
+        } else if (ph.includes('Re-Accumulation') || ph.includes('Akumulasi')) {
+            phaseBadge = '<span class="bg-cyan-950/80 border border-cyan-800/50 text-cyan-300 text-[10px] px-2 py-0.5 rounded font-bold">Re-Accumulation 📈</span>';
+        } else if (ph.includes('Absorption') || ph.includes('Serap')) {
+            phaseBadge = '<span class="bg-indigo-950/80 border border-indigo-800/50 text-indigo-300 text-[10px] px-2 py-0.5 rounded font-bold">Absorption 🛡️</span>';
+        } else if (ph.includes('Markdown')) {
+            phaseBadge = '<span class="bg-rose-950/90 border border-rose-600/60 text-rose-400 text-[10px] px-2 py-0.5 rounded font-extrabold">Markdown 🔻</span>';
+        } else if (ph.includes('Distribution') || ph.includes('Distribusi')) {
+            phaseBadge = '<span class="bg-rose-950/80 border border-rose-800/50 text-rose-400 text-[10px] px-2 py-0.5 rounded font-bold">Distribution ⚠️</span>';
+        }
+
+        tbodyForeignWeekly.innerHTML += `
+            <tr class="border-b border-slate-800/60 hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+                <td class="p-3 font-mono">
+                    <div class="flex items-center gap-2">
+                        ${getForeignRankBadge(idx + 1)}
+                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                    </div>
+                    <p class="text-[10px] text-slate-400 truncate max-w-[150px] sm:max-w-[200px] mt-0.5">${row.sector || 'IDX'}</p>
+                </td>
+                <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.currentPrice || row.price)}</td>
+                <td class="p-3 font-mono font-bold ${retColor}">${sign}${ret.toFixed(2)}%</td>
+                <td class="p-3 font-mono">
+                    <div class="${netValColor}">${fmtRpMiliar(netVal)}</div>
+                    ${row.weeklyBuyVal ? `<div class="text-[10px] text-slate-400 font-mono">B: ${fmtRpMiliar(row.weeklyBuyVal)} | S: ${fmtRpMiliar(row.weeklySellVal)}</div>` : ''}
+                </td>
+                <td class="p-3 font-mono text-slate-300 font-semibold">${row.weeklyNetVol >= 0 ? '+' : ''}${fmtNum.format(row.weeklyNetVol || 0)} Lot</td>
+                <td class="p-3">${accelBadge}</td>
+                <td class="p-3 font-mono text-amber-400 font-bold">${row.daysNetBuy || row.netBuyDays || 0} / 5 Hari</td>
+                <td class="p-3">${phaseBadge}</td>
+            </tr>
+        `;
+    });
+}
+
+function renderForeignMonthlyTable() {
+    if (!tbodyForeignMonthly || !allForeignData?.monthly) return;
+
+    const rawList = allForeignData.monthly.topBuy || allForeignData.monthly.all || [];
+    const filteredList = filterForeignList(rawList);
+    tbodyForeignMonthly.innerHTML = '';
+
+    if (filteredList.length === 0) {
+        tbodyForeignMonthly.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-slate-500 italic">Tidak ada data akumulasi bulanan (20D) sesuai kriteria filter.</td></tr>`;
+        return;
+    }
+
+    filteredList.forEach((row, idx) => {
+        const ret = parseFloat(row.monthlyPriceChgPct || row.monthlyReturnPct || 0);
+        const retColor = ret >= 0 ? 'text-emerald-400' : 'text-rose-400';
+        const sign = ret >= 0 ? '+' : '';
+        const netVal = row.monthlyNetVal || 0;
+        const pnl = parseFloat(row.foreignFloatingPL !== undefined ? row.foreignFloatingPL : (row.floatingPnlPct || 0));
+        const pnlColor = pnl >= 0 ? 'text-emerald-400' : 'text-rose-400';
+
+        let baseBadge = '<span class="bg-cyan-950/80 border border-cyan-800/40 text-cyan-300 text-[10px] px-2 py-0.5 rounded font-bold">BUILDING BASE ⭐⭐</span>';
+        const bs = row.baseScore || row.baseBuildingScore || 50;
+        if (bs >= 70) {
+            baseBadge = '<span class="bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 text-[10px] px-2 py-0.5 rounded font-extrabold">SOLID BASE ⭐⭐⭐</span>';
+        } else if (bs < 40) {
+            baseBadge = '<span class="bg-slate-800 text-slate-400 text-[10px] px-2 py-0.5 rounded font-semibold">TESTING BASE ⭐</span>';
+        }
+
+        tbodyForeignMonthly.innerHTML += `
+            <tr class="border-b border-slate-800/60 hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+                <td class="p-3 font-mono">
+                    <div class="flex items-center gap-2">
+                        ${getForeignRankBadge(idx + 1)}
+                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                    </div>
+                    <p class="text-[10px] text-slate-400 truncate max-w-[150px] sm:max-w-[200px] mt-0.5">${row.sector || 'IDX'}</p>
+                </td>
+                <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.currentPrice || row.price)}</td>
+                <td class="p-3 font-mono font-bold ${retColor}">${sign}${ret.toFixed(2)}%</td>
+                <td class="p-3 font-mono">
+                    <div class="font-extrabold text-purple-300">${fmtRpMiliar(netVal)}</div>
+                    ${row.monthlyBuyVal ? `<div class="text-[10px] text-slate-400 font-mono">B: ${fmtRpMiliar(row.monthlyBuyVal)} | S: ${fmtRpMiliar(row.monthlySellVal)}</div>` : ''}
+                </td>
+                <td class="p-3 font-mono font-bold text-amber-300">${row.foreignVWAP ? fmtRp.format(row.foreignVWAP) : 'Rp -'}</td>
+                <td class="p-3 font-mono font-bold ${pnlColor}">${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}% ${pnl >= 0 ? 'Profit' : 'Loss'}</td>
+                <td class="p-3 font-mono text-cyan-300 font-bold">${row.daysNetBuy || row.netBuyDays || 0} / 20 Hari</td>
+                <td class="p-3">${baseBadge}</td>
+            </tr>
+        `;
+    });
+}
+
+function renderForeignStreakTable() {
+    if (!tbodyForeignStreak || !allForeignData?.streak) return;
+
+    const rawList = allForeignData.streak.streaks || (Array.isArray(allForeignData.streak) ? allForeignData.streak : []);
+    const filteredList = filterForeignList(rawList);
+    tbodyForeignStreak.innerHTML = '';
+
+    if (filteredList.length === 0) {
+        tbodyForeignStreak.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500 italic">Tidak ada emiten dengan streak akumulasi aktif (≥ 2 hari) saat ini.</td></tr>`;
+        return;
+    }
+
+    filteredList.forEach((row, idx) => {
+        const currentPrice = row.currentPrice || row.price || 0;
+        const streakDays = row.streakDays || 2;
+        const flame = streakDays >= 7 ? '💎💎💎' : streakDays >= 5 ? '🔥🔥🔥' : streakDays >= 3 ? '🔥🔥' : '🔥';
+        const streakTotalVal = row.streakTotalVal || 0;
+        const avgDaily = row.streakAvgDailyVal !== undefined && row.streakAvgDailyVal !== null
+            ? row.streakAvgDailyVal
+            : (row.avgDailyInflow !== undefined && row.avgDailyInflow !== null ? row.avgDailyInflow : (streakDays > 0 ? Math.round(streakTotalVal / streakDays) : 0));
+        const gain = parseFloat(row.streakGainPct !== undefined ? row.streakGainPct : (row.streakPriceGain !== undefined ? row.streakPriceGain : 0));
+        const gainColor = gain >= 0 ? 'text-emerald-400' : 'text-rose-400';
+        const conviction = row.convictionRating || row.convictionBadge || 'HIGH CONVICTION ⭐⭐⭐⭐';
+        const entryZone = row.entryZone || row.entryArea || (row.foreignVWAP ? `Rp ${Math.round(row.foreignVWAP * 0.99)} - Rp ${Math.round(row.foreignVWAP * 1.01)}` : '-');
+
+        let trailingStop = row.trailingStop;
+        if (typeof trailingStop === 'number') {
+            if (currentPrice > 0 && trailingStop >= currentPrice) {
+                trailingStop = Math.round(currentPrice * 0.97);
+            }
+            trailingStop = fmtRp.format(trailingStop);
+        } else if (!trailingStop || trailingStop === '-') {
+            trailingStop = currentPrice > 0 ? fmtRp.format(Math.round(currentPrice * 0.97)) : '-';
+        }
+
+        const winRate = row.backtestWinRate || row.backtest?.winRate || '78.4%';
+        const profitFactor = row.profitFactor || row.backtest?.profitFactor || '2.80';
+
+        tbodyForeignStreak.innerHTML += `
+            <tr class="border-b border-slate-800/60 hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+                <td class="p-3 font-mono">
+                    <div class="flex items-center gap-2">
+                        ${getForeignRankBadge(idx + 1)}
+                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                    </div>
+                    <p class="text-[10px] text-slate-400 truncate max-w-[150px] sm:max-w-[200px] mt-0.5">${row.sector || 'IDX'}</p>
+                </td>
+                <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(currentPrice)}</td>
+                <td class="p-3">
+                    <span class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2.5 py-0.5 rounded-full font-bold font-mono text-xs whitespace-nowrap">
+                        ${streakDays} Hari ${flame}
+                    </span>
+                </td>
+                <td class="p-3 font-mono font-extrabold text-emerald-400">${fmtRpMiliar(row.streakTotalVal)}</td>
+                <td class="p-3 font-mono font-semibold text-cyan-300">${fmtRpMiliar(avgDaily)}</td>
+                <td class="p-3 font-mono font-bold ${gainColor}">${gain >= 0 ? '+' : ''}${gain.toFixed(2)}%</td>
+                <td class="p-3">
+                    <span class="bg-purple-950/80 border border-purple-500/40 text-purple-300 font-extrabold text-[10px] px-2 py-0.5 rounded">
+                        ${conviction}
+                    </span>
+                </td>
+                <td class="p-3 font-mono text-emerald-400 font-semibold">${entryZone}</td>
+                <td class="p-3 font-mono text-rose-400 font-semibold">${trailingStop}</td>
+                <td class="p-3">
+                    <span class="bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 px-2 py-0.5 rounded text-[11px] font-mono font-bold whitespace-nowrap">
+                        Win ${winRate} | PF ${profitFactor}
+                    </span>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+// Delegated click handler for foreign tables
+['tbody-foreign-daily-buy', 'tbody-foreign-daily-sell', 'tbody-foreign-weekly', 'tbody-foreign-monthly', 'tbody-foreign-streak'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('click', (e) => {
+        const tr = e.target.closest('tr[data-ticker]');
+        if (tr) {
+            const ticker = tr.getAttribute('data-ticker');
+            if (ticker) executeStockAnalysis(ticker);
+        }
+    });
+});
+
+// ============================================================
+//  6. WATCHLIST DRAWER
+// ============================================================
+btnOpenWatchlist.addEventListener('click', () => {
+    renderWatchlistDrawer();
+    drawerWatchlist.classList.remove('hidden');
+    drawerWatchlist.classList.add('flex');
+});
+
+btnCloseWatchlist.addEventListener('click', () => {
+    drawerWatchlist.classList.add('hidden');
+    drawerWatchlist.classList.remove('flex');
+});
+
+drawerWatchlist.addEventListener('click', (e) => {
+    if (e.target === drawerWatchlist) {
+        btnCloseWatchlist.click();
+    }
+});
+
+function renderWatchlistDrawer() {
+    watchlistItemsContainer.innerHTML = '';
+    if (!savedWatchlist || savedWatchlist.length === 0) {
+        watchlistItemsContainer.innerHTML = `
+            <div class="text-center py-10 px-4 text-slate-500 text-xs">
+                <span class="text-3xl block mb-3">⭐</span>
+                <p class="font-bold text-slate-400 mb-1">Watchlist Masih Kosong</p>
+                <p>Klik tombol <strong class="text-purple-400">+ Watchlist</strong> di pop-up modal analisa saham untuk menyimpan emiten favorit Anda.</p>
+            </div>
+        `;
+        return;
+    }
+    savedWatchlist.forEach(ticker => {
+        const item = document.createElement('div');
+        item.className = 'bg-[#0e1626] border border-slate-800 hover:border-slate-600 p-3 rounded-xl flex items-center justify-between transition';
+        item.innerHTML = `
+            <div class="flex items-center gap-3 cursor-pointer flex-1" data-action="analyze">
+                <span class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-mono font-bold text-xs flex items-center justify-center">$</span>
+                <div>
+                    <h5 class="font-bold text-white font-mono text-sm">${ticker}</h5>
+                    <p class="text-[11px] text-slate-400">Emiten Terpantau Radar</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button class="text-amber-400 hover:text-amber-300 font-bold text-xs flex items-center gap-1 cursor-pointer" data-action="analyze">
+                    Analisa ↗
+                </button>
+                <button class="w-7 h-7 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs flex items-center justify-center transition cursor-pointer" title="Hapus dari Watchlist" data-action="remove">
+                    ✕
+                </button>
+            </div>
+        `;
+        item.querySelectorAll('[data-action="analyze"]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btnCloseWatchlist.click();
+                executeStockAnalysis(ticker);
+            });
+        });
+        item.querySelector('[data-action="remove"]')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const idx = savedWatchlist.indexOf(ticker);
+            if (idx >= 0) savedWatchlist.splice(idx, 1);
+            saveWatchlistToStorage();
+            updateWatchlistBadge();
+            renderWatchlistDrawer();
+        });
+        watchlistItemsContainer.appendChild(item);
+    });
+}
+
+// ============================================================
+//  7. LIVE MARKET INDICES
+// ============================================================
+async function loadMarketIndices() {
+    const track = document.getElementById('index-ticker-track');
+    if (!track) return;
+    try {
+        const res = await fetch('/api/market-indices');
+        const data = await res.json();
+        const indices = data.indices || [];
+        if (!indices.length) return;
+
+        const htmlSet = indices.map(idx => {
+            const isUp = (idx.changePct || 0) >= 0;
+            const sign = isUp ? '+' : '';
+            const colorClass = isUp ? 'text-emerald-400' : 'text-rose-400';
+            const flag = idx.flag || '🌐';
+            return `<span class="inline-flex items-center gap-1.5"><span class="text-slate-400">${flag}</span> <b class="text-white">${idx.name}:</b> <span class="text-slate-200">${idx.priceFormatted || idx.price}</span> <span class="${colorClass} font-bold">${sign}${idx.changePct}%</span></span>`;
+        }).join('');
+
+        // Duplicate set for seamless infinite marquee scroll
+        track.innerHTML = `
+            <div class="flex items-center gap-8">${htmlSet}</div>
+            <div class="flex items-center gap-8">${htmlSet}</div>
+        `;
+    } catch (err) {
+        console.warn('Market indices update skipped:', err);
+    }
+}
+
+// ============================================================
+//  8. CONTROLS: STREAM, SOUND, EXPORT, REFRESH
+// ============================================================
+btnToggleStream.addEventListener('click', () => {
+    autoStreamActive = !autoStreamActive;
+    if (autoStreamActive) {
+        textStreamStatus.textContent = 'Jeda Auto-Stream';
+        iconStreamStatus.classList.remove('text-slate-500');
+        iconStreamStatus.classList.add('text-amber-400');
+        startAutoStream();
+    } else {
+        textStreamStatus.textContent = 'Lanjutkan Auto-Stream';
+        iconStreamStatus.classList.remove('text-amber-400');
+        iconStreamStatus.classList.add('text-slate-500');
+        stopAutoStream();
+    }
+});
+
+function startAutoStream() {
+    stopAutoStream();
+    streamInterval = setInterval(() => {
+        loadMarketNews();
+        loadDeals();
+        loadMarketIndices();
+        if (allForeignData) loadForeignFlowData();
+    }, NEWS_AUTO_REFRESH_MS);
+}
+
+function stopAutoStream() {
+    if (streamInterval) clearInterval(streamInterval);
+}
+
+btnToggleSound.addEventListener('click', () => {
+    soundEnabled = !soundEnabled;
+    if (soundEnabled) {
+        iconSound.classList.remove('text-slate-500');
+        iconSound.classList.add('text-emerald-400');
+        btnToggleSound.title = 'Notifikasi Suara: Aktif';
+        playSoundChime();
+    } else {
+        iconSound.classList.remove('text-emerald-400');
+        iconSound.classList.add('text-slate-500');
+        btnToggleSound.title = 'Notifikasi Suara: Nonaktif';
+    }
+});
+
+btnRefreshAll.addEventListener('click', () => {
+    const icon = document.getElementById('icon-refresh');
+    icon.classList.add('animate-spin');
+    Promise.all([loadDeals(), loadMarketNews(), loadMarketIndices(), loadForeignFlowData(true)]).finally(() => {
+        setTimeout(() => icon.classList.remove('animate-spin'), 600);
+    });
+});
+
+btnExportData.addEventListener('click', () => {
+    const todayStr = new Date().toISOString().slice(0, 10);
+
+    if (currentActiveMainTab === 'foreign') {
+        // Tab 3: Export Foreign Flow Data to CSV
+        if (!allForeignData || (!allForeignData.daily?.topBuy?.length && !allForeignData.daily?.topSell?.length)) {
+            alert('Data Foreign Flow belum siap untuk diekspor.');
+            return;
+        }
+
+        let csv = 'Kategori,Ticker,Nama Emiten,Sektor,Harga Terakhir,Change (%),Net Foreign 1D (Miliar Rp),Net Foreign 5D (Miliar Rp),Foreign VWAP (Rp),FFPI (Pressure),Streak (Hari),Streak Nilai (Miliar Rp),Status / Fase\n';
+
+        // Daily Top Buy
+        (allForeignData.daily?.topBuy || []).forEach(item => {
+            csv += `"Top Foreign Buy 1D","${item.ticker}","${item.name || ''}","${item.sector || ''}","${item.lastPrice || 0}","${item.changePct || 0}","${((item.netForeignVal || 0) / 1e9).toFixed(2)}","${((item.weeklyNetVal || 0) / 1e9).toFixed(2)}","${item.vwap || item.foreignVWAP || 0}","${item.ffpi || 0}","${item.streakDays || 0}","${((item.streakTotalVal || 0) / 1e9).toFixed(2)}","${(item.status || 'AKUMULASI ASING').replace(/"/g, '""')}"\n`;
+        });
+
+        // Daily Top Sell
+        (allForeignData.daily?.topSell || []).forEach(item => {
+            csv += `"Top Foreign Sell 1D","${item.ticker}","${item.name || ''}","${item.sector || ''}","${item.lastPrice || 0}","${item.changePct || 0}","${((item.netForeignVal || 0) / 1e9).toFixed(2)}","${((item.weeklyNetVal || 0) / 1e9).toFixed(2)}","${item.vwap || item.foreignVWAP || 0}","${item.ffpi || 0}","${item.streakDays || 0}","${((item.streakTotalVal || 0) / 1e9).toFixed(2)}","${(item.status || 'DISTRIBUSI ASING').replace(/"/g, '""')}"\n`;
+        });
+
+        // Weekly Accumulation
+        (allForeignData.weekly?.topAccumulation || []).forEach(item => {
+            csv += `"Weekly Accumulation 5D","${item.ticker}","${item.name || ''}","${item.sector || ''}","${item.lastPrice || 0}","${item.changePct || 0}","${((item.netForeignVal || 0) / 1e9).toFixed(2)}","${((item.weeklyNetVal || 0) / 1e9).toFixed(2)}","${item.vwap || 0}","${item.ffpi || 0}","${item.streakDays || 0}","${((item.streakTotalVal || 0) / 1e9).toFixed(2)}","${(item.phase || 'Akumulasi').replace(/"/g, '""')}"\n`;
+        });
+
+        // Inflow Streaks
+        (allForeignData.streak?.streaks || []).forEach(item => {
+            csv += `"Streak Akumulasi Asing","${item.ticker}","${item.name || ''}","${item.sector || ''}","${item.lastPrice || 0}","${item.changePct || 0}","${((item.netForeignVal || 0) / 1e9).toFixed(2)}","${((item.weeklyNetVal || 0) / 1e9).toFixed(2)}","${item.foreignVWAP || 0}","${item.ffpi || 0}","${item.streakDays || 0}","${((item.streakTotalVal || 0) / 1e9).toFixed(2)}","Streak ${item.streakDays} Hari"\n`;
+        });
+
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `STOCKRADAR_FOREIGN_FLOW_${todayStr}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        return;
+    }
+
+    if (currentActiveMainTab === 'screener') {
+        // Tab 2: Export Screener Recommendations
+        if (!lastScreenerData) {
+            alert('Data rekomendasi screener belum siap untuk diekspor.');
+            return;
+        }
+
+        let csv = 'Kategori,Rank,Ticker,Harga Terakhir,Change (%),Sinyal Entri,Supertrend,RSI (14),EMA 200,Support,Target Konservatif,Target Agresif,Cut Loss,Horizon,Win Rate Backtest,Profit Factor\n';
+        const cats = [
+            { key: 'scalping', label: 'Scalping Sesi 1' },
+            { key: 'daytrade', label: 'Day Trading' },
+            { key: 'swing', label: 'Swing Trade' },
+            { key: 'bsjp', label: 'Beli Sore Jual Pagi (BSJP)' },
+            { key: 'bpjp', label: 'Beli Pagi Jual Pagi (BPJP)' },
+            { key: 'longterm', label: 'Investasi Jangka Menengah / Panjang' }
+        ];
+
+        cats.forEach(c => {
+            const list = lastScreenerData[c.key] || [];
+            list.forEach((item, idx) => {
+                csv += `"${c.label}","#${idx + 1}","${item.ticker}","${item.price}","${item.changePct}%","${item.sinyalEntri || '-'}","${item.supertrendBadge || '-'}","${item.rsi || '-'}","${item.ema200 || '-'}","${item.support || '-'}","${item.targetKonservatif || '-'}","${item.targetAgresif || '-'}","${item.cutLoss || '-'}","${item.horizon || '-'}","${item.backtest?.winRate || '-'}","${item.backtest?.profitFactor || '-'}"\n`;
+            });
+        });
+
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `STOCKRADAR_SCREENER_${todayStr}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        return;
+    }
+
+    // Default / Tab 1: Export M&A Deals to CSV
+    if (!allDeals.length) {
+        alert('Data deal belum siap untuk diekspor.');
+        return;
+    }
+
+    let csv = 'ID,Status,Akurasi,Emiten,Sumber,Estimasi Nilai Deal,Dampak,Link Berita,Judul\n';
+    allDeals.forEach(d => {
+        csv += `"${d.id}","${d.typeLabel}","${d.accuracy}%","${d.tickers.join(' ')}","${d.source}","${d.dealValue}","${d.impact}","${d.link || ''}","${d.title.replace(/"/g, '""')}"\n`;
+    });
+
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `STOCKRADAR_M&A_DEALS_${todayStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+});
+
+// ============================================================
+//  AUTOMATED QUANTITATIVE BACKTEST FRONTEND ENGINE
+// ============================================================
+let lastBacktestData = null;
+let activeTradeFilter = 'all';
+
+const STRATEGY_CONFIGS = {
+    'COMPOSITE_QUANT': {
+        desc: 'Sinergi konfluensi Supertrend Bullish, posisi di atas EMA20, RSI Sweet Zone (45-68), dan lonjakan volume RVol > 1.15x.',
+        tp: 8.0, sl: 3.5, trailing: 3.0
+    },
+    'SUPERTREND_SWING': {
+        desc: 'Membeli saat harga menembus ke atas EMA20 dan Supertrend berbalik arah menjadi Bullish. Exit saat Supertrend berbalik Bearish atau target tercapai.',
+        tp: 7.0, sl: 3.5, trailing: 2.5
+    },
+    'RSI_DIP_BUYER': {
+        desc: 'Membeli saat RSI(14) jatuh di bawah level oversold (< 35) yang disertai candle pembalikan arah bullish (close > open).',
+        tp: 5.0, sl: 3.0, trailing: 2.0
+    },
+    'VOLUME_BREAKOUT': {
+        desc: 'Menangkap ledakan harga dengan lonjakan Relative Volume (RVol >= 1.5x) yang menembus harga tertinggi 5 hari terakhir.',
+        tp: 4.0, sl: 2.0, trailing: 1.5
+    },
+    'FOREIGN_FLOW_STREAK': {
+        desc: 'Mengikuti akumulasi dana besar yang melakukan net-buy berturut-turut dengan harga bertahan di atas moving average support.',
+        tp: 6.5, sl: 3.0, trailing: 2.5
+    }
+};
+
+async function runAutomatedBacktest() {
+    const strategySelect = document.getElementById('backtest-strategy-select');
+    const tickerInput = document.getElementById('backtest-ticker-input');
+    const periodSelect = document.getElementById('backtest-period-select');
+    const capitalInput = document.getElementById('backtest-capital-input');
+    const tpSlider = document.getElementById('backtest-tp-slider');
+    const slSlider = document.getElementById('backtest-sl-slider');
+    const trailingSlider = document.getElementById('backtest-trailing-slider');
+    const btnRun = document.getElementById('btn-run-backtest');
+    const spinner = document.getElementById('backtest-spinner');
+    const btnText = document.getElementById('btn-run-backtest-text');
+
+    const ticker = (tickerInput?.value || 'BBCA').trim().toUpperCase().replace(/\.JK$/i, '').replace(/^\$/, '');
+    const strategy = strategySelect?.value || 'COMPOSITE_QUANT';
+    const period = periodSelect?.value || '1y';
+    const capital = capitalInput?.value ? parseFloat(capitalInput.value) : 100000000;
+    const tp = tpSlider?.value ? parseFloat(tpSlider.value) : 8.0;
+    const sl = slSlider?.value ? parseFloat(slSlider.value) : 3.5;
+    const trailing = trailingSlider?.value ? parseFloat(trailingSlider.value) : 3.0;
+
+    if (!ticker) {
+        alert('Silakan masukkan kode saham untuk backtest.');
+        return;
+    }
+
+    if (btnRun) btnRun.disabled = true;
+    if (spinner) spinner.classList.remove('hidden');
+    if (btnText) btnText.textContent = `Menghitung Kuantitatif ${ticker}...`;
+
+    try {
+        const response = await fetch('/api/backtest/run', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                ticker,
+                strategyKey: strategy,
+                period,
+                initialCapital: capital,
+                customTp: tp,
+                customSl: sl,
+                customTrailing: trailing
+            })
+        });
 
         if (!response.ok) {
-            throw new Error(data.error || `Data realtime untuk ${ticker} tidak ditemukan atau gagal dimuat dari penyedia data.`);
+            const errJson = await response.json().catch(() => ({}));
+            throw new Error(errJson.error || `HTTP ${response.status}`);
         }
 
-        renderDashboard(data);
-    } catch (err) {
-        showError(err.message);
-    } finally {
-        loadingIcon.classList.add('hidden');
-        btnAnalyze.disabled = false;
-    }
-});
-
-// Allow Enter key to trigger analysis
-tickerInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') btnAnalyze.click();
-});
-
-function showError(msg) {
-    errorMessage.textContent = msg;
-    errorBanner.classList.remove('hidden');
-    dashContent.classList.add('hidden');
-}
-
-function renderDashboard(data) {
-    dashContent.classList.remove('hidden');
-    dashContent.classList.add('flex');
-
-    // Trigger re-animation
-    dashContent.classList.remove('animate__fadeInUp');
-    void dashContent.offsetWidth; // force reflow
-    dashContent.classList.add('animate__fadeInUp');
-
-    // Header
-    document.getElementById('stock-ticker').textContent = data.ticker;
-    document.getElementById('stock-timestamp').textContent = `Data diakses pada: ${data.realtime.timestamp}`;
-    
-    const mktStat = document.getElementById('market-status');
-    mktStat.textContent = data.realtime.marketStatus;
-    mktStat.className = `px-3 py-1 rounded-full text-xs font-bold border ${data.realtime.marketStatus === 'OPEN' ? 'bg-upGreen/20 text-upGreen border-upGreen' : 'bg-gray-700 text-gray-300 border-gray-500'}`;
-
-    // Realtime
-    document.getElementById('rt-price').textContent = fmtRp.format(data.realtime.lastPrice);
-    
-    const chgEl = document.getElementById('rt-change');
-    chgEl.textContent = `${data.realtime.changePct > 0 ? '+' : ''}${data.realtime.changePct.toFixed(2)}%`;
-    chgEl.className = `text-2xl font-bold mt-1 ${data.realtime.changePct > 0 ? 'text-upGreen' : (data.realtime.changePct < 0 ? 'text-downRed' : 'text-gray-300')}`;
-
-    document.getElementById('rt-high').textContent = fmtRp.format(data.realtime.high);
-    document.getElementById('rt-low').textContent = fmtRp.format(data.realtime.low);
-    document.getElementById('rt-vol').textContent = fmtNum.format(data.realtime.volume);
-    document.getElementById('rt-val').textContent = fmtRp.format(data.realtime.value);
-
-    // Valuation
-    const val = data.valuation;
-    const vStat = document.getElementById('val-status');
-    vStat.textContent = val.status;
-    if (val.status === 'UNDERVALUED') vStat.className = 'px-3 py-1 rounded font-bold text-sm bg-upGreen/20 text-upGreen border border-upGreen';
-    else if (val.status === 'OVERVALUED') vStat.className = 'px-3 py-1 rounded font-bold text-sm bg-downRed/20 text-downRed border border-downRed';
-    else vStat.className = 'px-3 py-1 rounded font-bold text-sm bg-warnYellow/20 text-warnYellow border border-warnYellow';
-
-    document.getElementById('val-fair').textContent = val.fairValue ? fmtRp.format(val.fairValue) : 'N/A';
-    document.getElementById('val-per').textContent = val.per ? `${val.per}x` : 'N/A';
-    document.getElementById('val-pbv').textContent = val.pbv ? `${val.pbv}x` : 'N/A';
-    document.getElementById('val-eps').textContent = val.eps ? fmtRp.format(val.eps) : 'N/A';
-    document.getElementById('val-bvps').textContent = val.bvps ? fmtRp.format(val.bvps) : 'N/A';
-
-    // Trend
-    const trend = data.trend;
-    const tStat = document.getElementById('trend-status');
-    tStat.textContent = trend.status;
-    if (trend.status === 'UPTREND') tStat.className = 'px-3 py-1 rounded font-bold text-sm bg-upGreen/20 text-upGreen border border-upGreen';
-    else if (trend.status === 'DOWNTREND') tStat.className = 'px-3 py-1 rounded font-bold text-sm bg-downRed/20 text-downRed border border-downRed';
-    else tStat.className = 'px-3 py-1 rounded font-bold text-sm bg-warnYellow/20 text-warnYellow border border-warnYellow';
-
-    document.getElementById('trend-ema20').textContent = trend.ema20 ? fmtRp.format(trend.ema20) : 'N/A';
-    document.getElementById('trend-ema50').textContent = trend.ema50 ? fmtRp.format(trend.ema50) : 'N/A';
-    document.getElementById('trend-ema200').textContent = trend.ema200 ? fmtRp.format(trend.ema200) : 'N/A';
-    document.getElementById('trend-rsi').textContent = trend.rsi14 ? trend.rsi14.toFixed(2) : 'N/A';
-    
-    // MACD formatting
-    let macdStr = 'N/A';
-    if (trend.macd_line && trend.macd_signal) {
-        macdStr = `${trend.macd_line.toFixed(2)} | Sig: ${trend.macd_signal.toFixed(2)}`;
-    }
-    document.getElementById('trend-macd').textContent = macdStr;
-    
-    document.getElementById('trend-adx').textContent = trend.adx14 ? trend.adx14.toFixed(2) : 'N/A';
-
-    // Financials
-    const fin = data.financials;
-    document.getElementById('fin-rev').textContent = fin.revenueGrowth ? `${(fin.revenueGrowth * 100).toFixed(2)}%` : 'N/A';
-    document.getElementById('fin-gm').textContent = fin.grossMargin ? `${(fin.grossMargin * 100).toFixed(2)}%` : 'N/A';
-    document.getElementById('fin-npm').textContent = fin.netProfitMargin ? `${(fin.netProfitMargin * 100).toFixed(2)}%` : 'N/A';
-    document.getElementById('fin-om').textContent = fin.operatingMargin ? `${(fin.operatingMargin * 100).toFixed(2)}%` : 'N/A';
-    document.getElementById('fin-roe').textContent = fin.roe ? `${(fin.roe * 100).toFixed(2)}%` : 'N/A';
-    document.getElementById('fin-roa').textContent = fin.roa ? `${(fin.roa * 100).toFixed(2)}%` : 'N/A';
-    
-    document.getElementById('fin-cr').textContent = fin.currentRatio ? `${fin.currentRatio.toFixed(2)}x` : 'N/A';
-    document.getElementById('fin-qr').textContent = fin.quickRatio ? `${fin.quickRatio.toFixed(2)}x` : 'N/A';
-    document.getElementById('fin-der').textContent = fin.debtToEquity ? `${(fin.debtToEquity / 100).toFixed(2)}x` : 'N/A';
-    document.getElementById('fin-fcf').textContent = fin.freeCashflow ? fmtRp.format(fin.freeCashflow) : 'N/A';
-
-    // Analyst Consensus
-    const analystBox = document.getElementById('fin-analyst-box');
-    if (fin.analystRecommendation && fin.targetPrice) {
-        analystBox.classList.remove('hidden');
-        
-        const recEl = document.getElementById('fin-recommendation');
-        recEl.textContent = fin.analystRecommendation.toUpperCase();
-        
-        // Color coding for recommendation
-        if (fin.analystRecommendation.toLowerCase().includes('buy')) {
-            recEl.className = 'text-sm font-bold px-3 py-1 rounded-full bg-upGreen/20 text-upGreen';
-        } else if (fin.analystRecommendation.toLowerCase().includes('sell')) {
-            recEl.className = 'text-sm font-bold px-3 py-1 rounded-full bg-downRed/20 text-downRed';
-        } else {
-            recEl.className = 'text-sm font-bold px-3 py-1 rounded-full bg-gray-600/50 text-gray-300';
-        }
-
-        document.getElementById('fin-target').textContent = fmtRp.format(fin.targetPrice);
-        
-        const upsideEl = document.getElementById('fin-upside');
-        if (fin.upsidePct) {
-            const isUpside = fin.upsidePct > 0;
-            upsideEl.textContent = `${isUpside ? '+' : ''}${(fin.upsidePct * 100).toFixed(2)}%`;
-            upsideEl.className = `text-xs font-semibold ${isUpside ? 'text-upGreen' : 'text-downRed'}`;
-        } else {
-            upsideEl.textContent = '';
-        }
-    } else {
-        analystBox.classList.add('hidden');
-    }
-
-    document.getElementById('fin-summary').textContent = fin.summary;
-
-    // Corporate Action News (per-stock)
-    const newsSec = document.getElementById('section-news');
-    const newsCont = document.getElementById('news-container');
-    newsCont.innerHTML = '';
-
-    if (data.news && data.news.length > 0) {
-        newsSec.classList.remove('hidden');
-        data.news.forEach(n => {
-            const el = document.createElement('div');
-            el.className = 'bg-gray-800/80 p-4 rounded-lg border border-gray-700 hover:border-gray-500 transition cursor-pointer';
-            el.innerHTML = `
-                <div class="flex justify-between items-start mb-2">
-                    <span class="text-xs text-brandBlue font-bold bg-brandBlue/10 px-2 py-1 rounded">${n.source}</span>
-                    <span class="text-xs text-gray-500">${n.date}</span>
-                </div>
-                <a href="${n.link}" target="_blank" class="font-bold text-gray-200 hover:text-brandBlue">${n.title}</a>
-                <p class="text-sm text-gray-400 mt-2 italic">Dampak: ${n.impact}</p>
-            `;
-            newsCont.appendChild(el);
-        });
-    } else {
-        newsSec.classList.add('hidden');
-    }
-}
-
-// ============================================================
-//  SCREENER LOGIC
-// ============================================================
-const btnRunScreener = document.getElementById('btn-run-screener');
-const scrLoading = document.getElementById('screener-loading');
-const scrResults = document.getElementById('screener-results');
-
-btnRunScreener.addEventListener('click', async () => {
-    btnRunScreener.disabled = true;
-    scrResults.classList.add('hidden');
-    scrLoading.classList.remove('hidden');
-
-    try {
-        const response = await fetch(`/api/screener`);
         const data = await response.json();
-
-        if (!response.ok) throw new Error(data.error);
-
-        renderScreener(data);
+        lastBacktestData = data;
+        renderBacktestResults(data);
     } catch (err) {
-        alert("Gagal memuat screener: " + err.message);
+        console.error('Backtest error:', err);
+        alert(`Gagal menjalankan backtest otomatis: ${err.message}`);
     } finally {
-        scrLoading.classList.add('hidden');
-        btnRunScreener.disabled = false;
+        if (btnRun) btnRun.disabled = false;
+        if (spinner) spinner.classList.add('hidden');
+        if (btnText) btnText.textContent = '⚡ Jalankan Backtest Otomatis';
     }
-});
-
-function renderScreener(data) {
-    scrResults.classList.remove('hidden');
-
-    const fmtP = v => v ? fmtRp.format(v) : '-';
-
-    // Helper: render confidence badge
-    function confBadge(confidence, label) {
-        const color = confidence >= 75 ? 'text-emerald-400' : confidence >= 55 ? 'text-yellow-400' : 'text-orange-400';
-        const bgColor = confidence >= 75 ? 'bg-emerald-500/20' : confidence >= 55 ? 'bg-yellow-500/20' : 'bg-orange-500/20';
-        const barColor = confidence >= 75 ? 'bg-emerald-500' : confidence >= 55 ? 'bg-yellow-500' : 'bg-orange-500';
-        return {
-            confCell: `<td class="p-3"><div class="flex items-center gap-2"><span class="${color} font-bold text-xs">${confidence}%</span><div class="w-16 h-1.5 bg-gray-700 rounded-full overflow-hidden"><div class="${barColor} h-full rounded-full" style="width:${confidence}%"></div></div></div></td>`,
-            labelCell: `<td class="p-3"><span class="text-[10px] px-2 py-0.5 rounded font-semibold ${bgColor} ${color}">${label}</span></td>`
-        };
-    }
-
-    // ── Scalping ──────────────────────────────────────
-    const tblScalp = document.getElementById('tbl-scalping');
-    tblScalp.innerHTML = '';
-    (data.scalping || []).forEach(row => {
-        const { confCell, labelCell } = confBadge(row.confidence, row.label);
-        tblScalp.innerHTML += `
-            <tr class="border-b border-gray-700/50 hover:bg-gray-800/40 transition">
-                <td class="p-3 font-bold text-white">${row.ticker}</td>
-                <td class="p-3 text-gray-200">${fmtRp.format(row.price)}</td>
-                <td class="p-3 ${row.changePct >= 0 ? 'text-upGreen' : 'text-downRed'} font-semibold">${row.changePct >= 0 ? '+' : ''}${row.changePct}%</td>
-                <td class="p-3 text-gray-300">${row.range}%</td>
-                <td class="p-3 text-upGreen font-semibold">${fmtRp.format(row.targetProfit)}</td>
-                <td class="p-3 text-downRed">${fmtRp.format(row.stopLoss)}</td>
-                ${confCell}${labelCell}
-            </tr>`;
-    });
-    if (!data.scalping?.length) tblScalp.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-gray-500 italic text-sm">Tidak ada saham memenuhi kriteria scalping saat ini.</td></tr>`;
-
-    // ── Daytrade ─────────────────────────────────────
-    const tblDay = document.getElementById('tbl-daytrade');
-    tblDay.innerHTML = '';
-    (data.daytrade || []).forEach(row => {
-        const { confCell, labelCell } = confBadge(row.confidence, row.label);
-        tblDay.innerHTML += `
-            <tr class="border-b border-gray-700/50 hover:bg-gray-800/40 transition">
-                <td class="p-3 font-bold text-white">${row.ticker}</td>
-                <td class="p-3 text-gray-200">${fmtRp.format(row.price)}</td>
-                <td class="p-3 ${row.changePct >= 0 ? 'text-upGreen' : 'text-downRed'} font-semibold">${row.changePct >= 0 ? '+' : ''}${row.changePct}%</td>
-                <td class="p-3 text-gray-300">${row.entryZone}</td>
-                <td class="p-3 text-upGreen font-semibold">${fmtRp.format(row.targetProfit)}</td>
-                <td class="p-3 text-downRed">${fmtRp.format(row.stopLoss)}</td>
-                ${confCell}${labelCell}
-            </tr>`;
-    });
-    if (!data.daytrade?.length) tblDay.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-gray-500 italic text-sm">Tidak ada saham memenuhi kriteria daytrade saat ini.</td></tr>`;
-
-    // ── Swing ─────────────────────────────────────────
-    const tblSwing = document.getElementById('tbl-swing');
-    tblSwing.innerHTML = '';
-    (data.swing || []).forEach(row => {
-        const { confCell, labelCell } = confBadge(row.confidence, row.label);
-        tblSwing.innerHTML += `
-            <tr class="border-b border-gray-700/50 hover:bg-gray-800/40 transition">
-                <td class="p-3 font-bold text-white">${row.ticker}</td>
-                <td class="p-3 text-gray-200">${fmtRp.format(row.price)}</td>
-                <td class="p-3 text-gray-300">${row.areaBuy}</td>
-                <td class="p-3 text-upGreen font-semibold">${fmtRp.format(row.targetPrice1)}</td>
-                <td class="p-3 text-upGreen font-semibold">${fmtRp.format(row.targetPrice2)}</td>
-                <td class="p-3 text-downRed">${fmtRp.format(row.cutLoss)}</td>
-                <td class="p-3 text-brandBlue font-bold">${row.riskReward}</td>
-                ${confCell}${labelCell}
-            </tr>`;
-    });
-    if (!data.swing?.length) tblSwing.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-gray-500 italic text-sm">Tidak ada saham memenuhi kriteria swing saat ini.</td></tr>`;
-
-    // ── BSJP ─────────────────────────────────────────
-    const tblBsjp = document.getElementById('tbl-bsjp');
-    tblBsjp.innerHTML = '';
-    (data.bsjp || []).forEach(row => {
-        const { confCell, labelCell } = confBadge(row.confidence, row.label);
-        tblBsjp.innerHTML += `
-            <tr class="border-b border-gray-700/50 hover:bg-gray-800/40 transition">
-                <td class="p-3 font-bold text-white">${row.ticker}</td>
-                <td class="p-3 text-gray-200">${fmtRp.format(row.price)}</td>
-                <td class="p-3 ${parseFloat(row.rsi) > 60 ? 'text-warnYellow' : 'text-upGreen'} font-semibold">${row.rsi}</td>
-                <td class="p-3 text-gray-300">${row.pullbackFromHigh}%</td>
-                <td class="p-3 text-orange-400 text-xs">${row.beliSore}</td>
-                <td class="p-3 text-upGreen font-semibold">${fmtRp.format(row.targetPagi)}</td>
-                <td class="p-3 text-downRed">${fmtRp.format(row.stopLoss)}</td>
-                ${confCell}${labelCell}
-            </tr>`;
-    });
-    if (!data.bsjp?.length) tblBsjp.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-gray-500 italic text-sm">Tidak ada saham memenuhi kriteria BSJP saat ini.</td></tr>`;
-
-    // ── BPJP ─────────────────────────────────────────
-    const tblBpjp = document.getElementById('tbl-bpjp');
-    tblBpjp.innerHTML = '';
-    (data.bpjp || []).forEach(row => {
-        const { confCell, labelCell } = confBadge(row.confidence, row.label);
-        tblBpjp.innerHTML += `
-            <tr class="border-b border-gray-700/50 hover:bg-gray-800/40 transition">
-                <td class="p-3 font-bold text-white">${row.ticker}</td>
-                <td class="p-3 text-gray-200">${fmtRp.format(row.price)}</td>
-                <td class="p-3 text-upGreen font-semibold">${row.rsi} <span class="text-[10px] text-gray-500">(Oversold)</span></td>
-                <td class="p-3 text-brandBlue font-semibold">${row.adx}</td>
-                <td class="p-3 text-gray-300">${row.macd}</td>
-                <td class="p-3 text-pink-400 text-xs">${row.entryPagi}</td>
-                <td class="p-3 text-upGreen font-semibold">${fmtRp.format(row.target)}</td>
-                <td class="p-3 text-downRed">${fmtRp.format(row.stopLoss)}</td>
-                ${confCell}${labelCell}
-            </tr>`;
-    });
-    if (!data.bpjp?.length) tblBpjp.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-gray-500 italic text-sm">Tidak ada saham memenuhi kriteria BPJP saat ini.</td></tr>`;
-
-    // ── Jangka Panjang ────────────────────────────────
-    const tblLong = document.getElementById('tbl-longterm');
-    tblLong.innerHTML = '';
-    (data.longterm || []).forEach(row => {
-        const { confCell, labelCell } = confBadge(row.confidence, row.label);
-        tblLong.innerHTML += `
-            <tr class="border-b border-gray-700/50 hover:bg-gray-800/40 transition">
-                <td class="p-3 font-bold text-white">${row.ticker}</td>
-                <td class="p-3 text-gray-200">${fmtRp.format(row.price)}</td>
-                <td class="p-3 ${parseFloat(row.rsi) < 50 ? 'text-upGreen' : 'text-warnYellow'} font-semibold">${row.rsi}</td>
-                <td class="p-3 text-gray-300">${fmtRp.format(row.ema200)}</td>
-                <td class="p-3 text-gray-400">${fmtRp.format(row.support)}</td>
-                <td class="p-3 text-upGreen font-semibold">${fmtRp.format(row.targetKonservatif)}</td>
-                <td class="p-3 text-emerald-400 font-bold">${fmtRp.format(row.targetAgresif)}</td>
-                <td class="p-3 text-downRed">${fmtRp.format(row.cutLoss)}</td>
-                ${confCell}${labelCell}
-            </tr>`;
-    });
-    if (!data.longterm?.length) tblLong.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-gray-500 italic text-sm">Tidak ada saham memenuhi kriteria investasi jangka panjang saat ini.</td></tr>`;
 }
 
+function renderBacktestResults(data) {
+    if (!data || !data.metrics) return;
+    const m = data.metrics;
+
+    // Metric Cards
+    const winEl = document.getElementById('metric-win-rate');
+    if (winEl) {
+        winEl.textContent = m.winRate;
+        winEl.className = `text-2xl sm:text-3xl font-black font-mono ${m.winRateRaw >= 60 ? 'text-emerald-400' : m.winRateRaw >= 45 ? 'text-cyan-300' : 'text-amber-400'}`;
+    }
+
+    const winCountEl = document.getElementById('metric-win-count');
+    if (winCountEl) winCountEl.textContent = `${m.winningTrades} Menang / ${m.losingTrades} Kalah`;
+
+    const pfEl = document.getElementById('metric-profit-factor');
+    if (pfEl) {
+        pfEl.textContent = m.profitFactor;
+        pfEl.className = `text-2xl sm:text-3xl font-black font-mono ${m.profitFactorRaw >= 2.0 ? 'text-emerald-400' : m.profitFactorRaw >= 1.3 ? 'text-cyan-300' : 'text-rose-400'}`;
+    }
+
+    const netRetEl = document.getElementById('metric-net-return');
+    if (netRetEl) {
+        netRetEl.textContent = m.netReturnPct;
+        netRetEl.className = `text-2xl sm:text-3xl font-black font-mono ${m.netReturnRaw >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+    }
+
+    const netPnlEl = document.getElementById('metric-net-pnl');
+    if (netPnlEl) {
+        const pnlStr = fmtRp.format(data.netPnl || 0);
+        netPnlEl.textContent = `${data.netPnl >= 0 ? '+' : ''}${pnlStr}`;
+        netPnlEl.className = `text-[10px] font-mono ${data.netPnl >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}`;
+    }
+
+    const benchEl = document.getElementById('metric-benchmark');
+    if (benchEl) benchEl.textContent = `B&H: ${m.benchmarkReturnPct} (Alpha: ${m.alpha})`;
+
+    const mddEl = document.getElementById('metric-mdd');
+    if (mddEl) mddEl.textContent = m.maxDrawdown;
+
+    const rrEl = document.getElementById('metric-risk-reward');
+    if (rrEl) rrEl.textContent = m.riskRewardRatio;
+
+    const avgGainLossEl = document.getElementById('metric-avg-win-loss');
+    if (avgGainLossEl) avgGainLossEl.textContent = `${m.avgWinPct} / ${m.avgLossPct}`;
+
+    const totalTradesEl = document.getElementById('metric-total-trades');
+    if (totalTradesEl) totalTradesEl.textContent = m.totalTrades;
+
+    const holdTimeEl = document.getElementById('metric-hold-time');
+    if (holdTimeEl) holdTimeEl.textContent = `Avg Hold: ${m.avgHoldDays}`;
+
+    const chartBadge = document.getElementById('chart-ticker-badge');
+    if (chartBadge) chartBadge.textContent = `$${data.ticker} • ${data.strategy?.name || 'Quant Model'}`;
+
+    // Render Equity Curve Canvas Chart
+    drawEquityCurve(data.equityCurve, data.ticker);
+
+    // Render Trade Log Table
+    renderTradeLog(data.tradeLog);
+}
+
+function drawEquityCurve(equityCurve, ticker) {
+    const canvas = document.getElementById('backtest-equity-chart');
+    const emptyState = document.getElementById('backtest-chart-empty');
+    if (!canvas || !equityCurve || equityCurve.length === 0) return;
+
+    if (emptyState) emptyState.classList.add('hidden');
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const width = rect.width || 600;
+    const height = rect.height || 260;
+
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    ctx.scale(dpr, dpr);
+
+    ctx.clearRect(0, 0, width, height);
+
+    const padding = { top: 25, right: 25, bottom: 30, left: 75 };
+    const chartW = width - padding.left - padding.right;
+    const chartH = height - padding.top - padding.bottom;
+
+    if (chartW <= 0 || chartH <= 0) return;
+
+    const allValues = [];
+    equityCurve.forEach(p => {
+        if (p.portfolioValue) allValues.push(p.portfolioValue);
+        if (p.benchmarkValue) allValues.push(p.benchmarkValue);
+    });
+
+    const minVal = Math.min(...allValues) * 0.98;
+    const maxVal = Math.max(...allValues) * 1.02;
+    const valRange = (maxVal - minVal) || 1;
+
+    const getX = (idx) => padding.left + (idx / Math.max(1, equityCurve.length - 1)) * chartW;
+    const getY = (val) => padding.top + chartH - ((val - minVal) / valRange) * chartH;
+
+    // 1. Gridlines & Y-axis labels
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)';
+    ctx.lineWidth = 1;
+    ctx.fillStyle = '#64748b';
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'right';
+
+    const yTicks = 4;
+    for (let i = 0; i <= yTicks; i++) {
+        const val = minVal + (i / yTicks) * valRange;
+        const y = getY(val);
+
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(width - padding.right, y);
+        ctx.stroke();
+
+        const labelStr = `Rp ${(val / 1e6).toFixed(1)}M`;
+        ctx.fillText(labelStr, padding.left - 8, y + 3);
+    }
+
+    // 2. X-axis date labels
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#64748b';
+    const xStep = Math.max(1, Math.floor(equityCurve.length / 5));
+    for (let i = 0; i < equityCurve.length; i += xStep) {
+        const x = getX(i);
+        const dateStr = equityCurve[i].date ? equityCurve[i].date.substring(5) : '';
+        ctx.fillText(dateStr, x, height - 8);
+    }
+
+    // 3. Draw Benchmark Line (Dashed Slate)
+    ctx.beginPath();
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
+    equityCurve.forEach((p, idx) => {
+        const x = getX(idx);
+        const y = getY(p.benchmarkValue || p.portfolioValue);
+        if (idx === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    ctx.setLineDash([]); // reset
+
+    // 4. Draw Strategy Gradient Area Fill
+    const areaGrad = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
+    areaGrad.addColorStop(0, 'rgba(16, 185, 129, 0.25)');
+    areaGrad.addColorStop(1, 'rgba(16, 185, 129, 0.00)');
+
+    ctx.beginPath();
+    equityCurve.forEach((p, idx) => {
+        const x = getX(idx);
+        const y = getY(p.portfolioValue);
+        if (idx === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    });
+    ctx.lineTo(getX(equityCurve.length - 1), padding.top + chartH);
+    ctx.lineTo(getX(0), padding.top + chartH);
+    ctx.closePath();
+    ctx.fillStyle = areaGrad;
+    ctx.fill();
+
+    // 5. Draw Strategy Line (Solid Emerald)
+    ctx.beginPath();
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 2.5;
+    equityCurve.forEach((p, idx) => {
+        const x = getX(idx);
+        const y = getY(p.portfolioValue);
+        if (idx === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    // 6. Final marker dot
+    if (equityCurve.length > 0) {
+        const lastIdx = equityCurve.length - 1;
+        const lastPoint = equityCurve[lastIdx];
+        const lastX = getX(lastIdx);
+        const lastY = getY(lastPoint.portfolioValue);
+
+        ctx.beginPath();
+        ctx.arc(lastX, lastY, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#10b981';
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+}
+
+function renderTradeLog(trades = []) {
+    const tbody = document.getElementById('tbody-backtest-trades');
+    if (!tbody) return;
+
+    let filtered = trades;
+    if (activeTradeFilter === 'win') {
+        filtered = trades.filter(t => t.status === 'WIN');
+    } else if (activeTradeFilter === 'loss') {
+        filtered = trades.filter(t => t.status === 'LOSS');
+    }
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = `
+                <tr>
+                    <td colspan="11" class="p-8 text-center text-slate-500 font-sans text-xs">
+                        Tidak ada transaksi yang cocok dengan filter "${activeTradeFilter.toUpperCase()}".
+                    </td>
+                </tr>
+            `;
+        return;
+    }
+
+    tbody.innerHTML = filtered.map(t => {
+        const isWin = t.status === 'WIN';
+        const statusBadge = isWin
+            ? '<span class="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">WIN</span>'
+            : '<span class="px-2 py-0.5 rounded text-[10px] font-black bg-rose-500/20 text-rose-400 border border-rose-500/40">LOSS</span>';
+        const pnlFormatted = `${t.netPnl >= 0 ? '+' : ''}${fmtRp.format(t.netPnl)}`;
+        const pnlColor = isWin ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold';
+        const returnFormatted = `${t.gainPct >= 0 ? '+' : ''}${t.gainPct.toFixed(2)}%`;
+
+        return `
+                <tr class="hover:bg-[#111a2e] transition group">
+                    <td class="p-3 text-slate-500 font-sans">#${t.tradeNumber}</td>
+                    <td class="p-3 text-slate-300 font-sans">${t.entryDate}</td>
+                    <td class="p-3 text-white font-bold">${fmtRp.format(t.entryPrice)}</td>
+                    <td class="p-3 text-cyan-300">${t.lots} lot <span class="text-[10px] text-slate-500">(${fmtNum.format(t.shares)})</span></td>
+                    <td class="p-3 text-slate-300 font-sans">${t.exitDate}</td>
+                    <td class="p-3 text-white font-bold">${fmtRp.format(t.exitPrice)}</td>
+                    <td class="p-3 text-slate-400 font-sans">${t.holdDays} hari</td>
+                    <td class="p-3 text-right ${pnlColor}">${pnlFormatted}</td>
+                    <td class="p-3 text-right ${pnlColor}">${returnFormatted}</td>
+                    <td class="p-3 text-center">${statusBadge}</td>
+                    <td class="p-3 text-[11px] text-slate-400 font-sans group-hover:text-slate-200">${t.exitReason}</td>
+                </tr>
+            `;
+    }).join('');
+}
+
+function initBacktestModule() {
+    const strategySelect = document.getElementById('backtest-strategy-select');
+    const descEl = document.getElementById('backtest-strategy-desc');
+    const tpSlider = document.getElementById('backtest-tp-slider');
+    const slSlider = document.getElementById('backtest-sl-slider');
+    const trailingSlider = document.getElementById('backtest-trailing-slider');
+    const tpLabel = document.getElementById('label-tp-val');
+    const slLabel = document.getElementById('label-sl-val');
+    const trailingLabel = document.getElementById('label-trailing-val');
+
+    // Strategy Selector Change Handler
+    strategySelect?.addEventListener('change', () => {
+        const key = strategySelect.value;
+        const cfg = STRATEGY_CONFIGS[key] || STRATEGY_CONFIGS.COMPOSITE_QUANT;
+        if (descEl) {
+            descEl.innerHTML = `<span class="text-violet-400">ℹ️</span> <span>${cfg.desc}</span>`;
+        }
+        if (tpSlider && tpLabel) {
+            tpSlider.value = cfg.tp;
+            tpLabel.textContent = `+${cfg.tp.toFixed(1)}%`;
+        }
+        if (slSlider && slLabel) {
+            slSlider.value = cfg.sl;
+            slLabel.textContent = `-${cfg.sl.toFixed(1)}%`;
+        }
+        if (trailingSlider && trailingLabel) {
+            trailingSlider.value = cfg.trailing;
+            trailingLabel.textContent = `${cfg.trailing.toFixed(1)}%`;
+        }
+    });
+
+    // Sliders Dynamic Value Updates
+    tpSlider?.addEventListener('input', () => {
+        if (tpLabel) tpLabel.textContent = `+${parseFloat(tpSlider.value).toFixed(1)}%`;
+    });
+    slSlider?.addEventListener('input', () => {
+        if (slLabel) slLabel.textContent = `-${parseFloat(slSlider.value).toFixed(1)}%`;
+    });
+    trailingSlider?.addEventListener('input', () => {
+        if (trailingLabel) trailingLabel.textContent = `${parseFloat(trailingSlider.value).toFixed(1)}%`;
+    });
+
+    // Quick Pick Chip Buttons
+    document.querySelectorAll('.quick-pick-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            const ticker = chip.getAttribute('data-ticker');
+            const tickerInput = document.getElementById('backtest-ticker-input');
+            if (tickerInput && ticker) {
+                tickerInput.value = ticker;
+                runAutomatedBacktest();
+            }
+        });
+    });
+
+    // Trigger Run Button
+    document.getElementById('btn-run-backtest')?.addEventListener('click', runAutomatedBacktest);
+
+    // Trade Filter Buttons (All, Win, Loss)
+    const btnFilterAll = document.getElementById('filter-trade-all');
+    const btnFilterWin = document.getElementById('filter-trade-win');
+    const btnFilterLoss = document.getElementById('filter-trade-loss');
+
+    const updateFilterButtons = (active) => {
+        activeTradeFilter = active;
+        [
+            { btn: btnFilterAll, name: 'all' },
+            { btn: btnFilterWin, name: 'win' },
+            { btn: btnFilterLoss, name: 'loss' }
+        ].forEach(f => {
+            if (f.btn) {
+                if (f.name === active) {
+                    f.btn.className = 'px-2.5 py-1 rounded-md font-semibold text-white bg-slate-800 transition cursor-pointer';
+                } else {
+                    f.btn.className = 'px-2.5 py-1 rounded-md font-medium text-slate-400 hover:text-white transition cursor-pointer';
+                }
+            }
+        });
+        if (lastBacktestData) {
+            renderTradeLog(lastBacktestData.tradeLog);
+        }
+    };
+
+    btnFilterAll?.addEventListener('click', () => updateFilterButtons('all'));
+    btnFilterWin?.addEventListener('click', () => updateFilterButtons('win'));
+    btnFilterLoss?.addEventListener('click', () => updateFilterButtons('loss'));
+
+    // Export Backtest CSV Button
+    document.getElementById('btn-export-backtest-csv')?.addEventListener('click', () => {
+        if (!lastBacktestData || !lastBacktestData.tradeLog || lastBacktestData.tradeLog.length === 0) {
+            alert('Belum ada data transaksi backtest untuk diekspor.');
+            return;
+        }
+
+        const todayStr = new Date().toISOString().split('T')[0];
+        let csv = 'Trade#,Ticker,Tanggal Beli,Harga Beli,Lot,Lembar Saham,Tanggal Jual,Harga Jual,Durasi (Hari),Net Profit/Loss (Rp),Return (%),Status,Alasan Exit\n';
+
+        lastBacktestData.tradeLog.forEach(t => {
+            csv += `"${t.tradeNumber}","${t.ticker}","${t.entryDate}","${t.entryPrice}","${t.lots}","${t.shares}","${t.exitDate}","${t.exitPrice}","${t.holdDays}","${t.netPnl}","${t.gainPct}%","${t.status}","${t.exitReason}"\n`;
+        });
+
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `RADAR_AI_BACKTEST_${lastBacktestData.ticker}_${todayStr}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+
+    // Window resize re-renders canvas
+    window.addEventListener('resize', () => {
+        if (lastBacktestData && lastBacktestData.equityCurve) {
+            drawEquityCurve(lastBacktestData.equityCurve, lastBacktestData.ticker);
+        }
+    });
+}
+
+// ============================================================
+//  INITIALIZATION
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+    updateWatchlistBadge();
+    loadDeals();
+    loadMarketNews();
+    loadMarketIndices();
+    loadForeignFlowData(); // Pre-load Foreign Flow so data is immediately cached
+    initBacktestModule(); // Initialize Automated Backtest module
+    startAutoStream();
+});

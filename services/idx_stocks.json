@@ -1,0 +1,4677 @@
+[
+  {
+    "ticker": "AADI",
+    "name": "Adaro Andalan Indonesia Tbk",
+    "sector": "Energi / Tambang Batubara Termal Terbesar Adaro"
+  },
+  {
+    "ticker": "AALI",
+    "name": "Astra Agro Lestari Tbk",
+    "sector": "Perkebunan & Pertanian Sawit"
+  },
+  {
+    "ticker": "ABBA",
+    "name": "Mahaka Media Tbk",
+    "sector": "Media & Penyiaran"
+  },
+  {
+    "ticker": "ABDA",
+    "name": "Asuransi Bina Dana Arta Tbk",
+    "sector": "Asuransi Umum"
+  },
+  {
+    "ticker": "ABMM",
+    "name": "ABM Investama Tbk",
+    "sector": "Energi / Jasa Pertambangan"
+  },
+  {
+    "ticker": "ACES",
+    "name": "Aspirasi Hidup Indonesia (Ace Hardware) Tbk",
+    "sector": "Ritel & Perlengkapan Rumah"
+  },
+  {
+    "ticker": "ACRO",
+    "name": "Samcro Hyosung Adilestari Tbk",
+    "sector": "Produk Konsumen / Perekat & Kait"
+  },
+  {
+    "ticker": "ACST",
+    "name": "Acset Indonusa Tbk",
+    "sector": "Infrastruktur & Konstruksi Fondasi"
+  },
+  {
+    "ticker": "ADCP",
+    "name": "Adhi Commuter Properti Tbk",
+    "sector": "Properti / TOD & Residensial LRT"
+  },
+  {
+    "ticker": "ADES",
+    "name": "Akasha Wira International Tbk",
+    "sector": "Konsumer / Nestle Pure Life & Kosmetik"
+  },
+  {
+    "ticker": "ADHI",
+    "name": "Adhi Karya (Persero) Tbk",
+    "sector": "Infrastruktur / Konstruksi LRT & Tol BUMN"
+  },
+  {
+    "ticker": "ADMG",
+    "name": "Polychem Indonesia Tbk",
+    "sector": "Material Dasar / Kimia Tekstil & Poliester"
+  },
+  {
+    "ticker": "ADMR",
+    "name": "Adaro Minerals Indonesia Tbk",
+    "sector": "Energi / Batubara Metalurgi & Aluminium"
+  },
+  {
+    "ticker": "ADRO",
+    "name": "Adaro Energy Indonesia Tbk",
+    "sector": "Energi / Batubara Terintegrasi & Infrastruktur"
+  },
+  {
+    "ticker": "AGAR",
+    "name": "Asia Sejahtera Mina Tbk",
+    "sector": "Perikanan / Pengolahan Rumput Laut"
+  },
+  {
+    "ticker": "AGII",
+    "name": "Samator Indo Gas Tbk",
+    "sector": "Material Dasar / Gas Industri & Medis Samator"
+  },
+  {
+    "ticker": "AGRO",
+    "name": "Bank Raya Indonesia Tbk",
+    "sector": "Finansial / Bank Digital BRI Group"
+  },
+  {
+    "ticker": "AGRS",
+    "name": "Bank IBK Indonesia Tbk",
+    "sector": "Finansial / Perbankan IBK"
+  },
+  {
+    "ticker": "AHAP",
+    "name": "Asuransi Harta Aman Pratama Tbk",
+    "sector": "Finansial / Asuransi Kerugian"
+  },
+  {
+    "ticker": "AIMS",
+    "name": "Akbar Indo Makmur Stimec Tbk",
+    "sector": "Perdagangan & Distribusi Batubara"
+  },
+  {
+    "ticker": "AISA",
+    "name": "FKS Food Sejahtera Tbk",
+    "sector": "Konsumer / Bihunku, Taro & Makanan Ringan"
+  },
+  {
+    "ticker": "AKKU",
+    "name": "Anugerah Kagum Karya Utama Tbk",
+    "sector": "Properti / Hotel & Pariwisata"
+  },
+  {
+    "ticker": "AKPI",
+    "name": "Argha Karya Prima Industry Tbk",
+    "sector": "Kemasan Plastik Film & Fleksibel"
+  },
+  {
+    "ticker": "AKRA",
+    "name": "AKR Corporindo Tbk",
+    "sector": "Energi / Distribusi BBM, Kimia & Kawasan JIIPE"
+  },
+  {
+    "ticker": "ALDO",
+    "name": "Alkindo Naratama Tbk",
+    "sector": "Material / Kertas Daur Ulang & Kemasan"
+  },
+  {
+    "ticker": "ALII",
+    "name": "Ancara Logistics Indonesia Tbk",
+    "sector": "Logistik & Kapal Tongkang Pertambangan"
+  },
+  {
+    "ticker": "ALKA",
+    "name": "Alakasa Industrindo Tbk",
+    "sector": "Material Dasar / Fabrikasi Aluminium"
+  },
+  {
+    "ticker": "ALMI",
+    "name": "Alumindo Light Metal Industry Tbk",
+    "sector": "Material Dasar / Lembaran Aluminium Maspion"
+  },
+  {
+    "ticker": "AMAG",
+    "name": "Asuransi Multi Artha Guna Tbk",
+    "sector": "Finansial / Asuransi Umum Fairfax"
+  },
+  {
+    "ticker": "AMAN",
+    "name": "Makmur Berkah Amanda Tbk",
+    "sector": "Properti / Kawasan Industri Safe n Lock"
+  },
+  {
+    "ticker": "AMAR",
+    "name": "Bank Amar Indonesia Tbk",
+    "sector": "Finansial / Bank Digital & Tunaiku"
+  },
+  {
+    "ticker": "AMFG",
+    "name": "Asahimas Flat Glass Tbk",
+    "sector": "Material / Kaca Lembaran Otomotif & Bangunan"
+  },
+  {
+    "ticker": "AMIN",
+    "name": "Ateliers Mecaniques D Indonesie Tbk",
+    "sector": "Industri / Manufaktur Boiler Pabrik Sawit"
+  },
+  {
+    "ticker": "AMMN",
+    "name": "Amman Mineral Internasional Tbk",
+    "sector": "Mineral / Tambang Tembaga & Emas Batu Hijau"
+  },
+  {
+    "ticker": "AMMS",
+    "name": "Agung Menjangan Mas Tbk",
+    "sector": "Jasa Penunjang Budidaya Perikanan"
+  },
+  {
+    "ticker": "AMOR",
+    "name": "Ashmore Asset Management Indonesia Tbk",
+    "sector": "Finansial / Manajemen Investasi Reksa Dana"
+  },
+  {
+    "ticker": "AMRT",
+    "name": "Sumber Alfaria Trijaya (Alfamart) Tbk",
+    "sector": "Ritel / Jaringan Minimarket Terbesar Indonesia"
+  },
+  {
+    "ticker": "ANDI",
+    "name": "Andira Agro Tbk",
+    "sector": "Perkebunan & Pengolahan Kelapa Sawit"
+  },
+  {
+    "ticker": "ANJT",
+    "name": "Austindo Nusantara Jaya Tbk",
+    "sector": "Perkebunan Kelapa Sawit & Sagu"
+  },
+  {
+    "ticker": "ANTM",
+    "name": "Aneka Tambang Tbk",
+    "sector": "Mineral / Emas Logam Mulia, Nikel & Bauksit BUMN"
+  },
+  {
+    "ticker": "APEX",
+    "name": "Apexindo Pratama Duta Tbk",
+    "sector": "Energi / Jasa Pengeboran Minyak & Gas Lepas Pantai"
+  },
+  {
+    "ticker": "APIC",
+    "name": "Pacific Strategic Financial Tbk",
+    "sector": "Finansial / Jasa Keuangan & Investasi"
+  },
+  {
+    "ticker": "APII",
+    "name": "Arita Prima Indonesia Tbk",
+    "sector": "Industri / Distributor Valve & Fitting Industri"
+  },
+  {
+    "ticker": "APLI",
+    "name": "Asiaplast Industries Tbk",
+    "sector": "Material / Manufaktur Lembaran Plastik PVC"
+  },
+  {
+    "ticker": "APLN",
+    "name": "Agung Podomoro Land Tbk",
+    "sector": "Properti / Superblok Podomoro City & Senayan"
+  },
+  {
+    "ticker": "ARCI",
+    "name": "Archi Indonesia Tbk",
+    "sector": "Mineral / Tambang Emas Terbesar Toka Tindung"
+  },
+  {
+    "ticker": "AREA",
+    "name": "Dunia Virtual Online Tbk",
+    "sector": "Teknologi & Data Center AREA31"
+  },
+  {
+    "ticker": "ARGO",
+    "name": "Argo Pantes Tbk",
+    "sector": "Tekstil & Produk Tekstil Argo Manunggal"
+  },
+  {
+    "ticker": "ARII",
+    "name": "Atlas Resources Tbk",
+    "sector": "Energi / Tambang Batubara Kokas & Termal"
+  },
+  {
+    "ticker": "ARKA",
+    "name": "Arkha Jayanti Persada Tbk",
+    "sector": "Industri / Komponen Alat Berat & Fabrikasi Baja"
+  },
+  {
+    "ticker": "ARKO",
+    "name": "Arkora Hydro Tbk",
+    "sector": "Energi Terbarukan / Pembangkit Listrik Minihidro"
+  },
+  {
+    "ticker": "ARNA",
+    "name": "Arwana Citramulia Tbk",
+    "sector": "Material / Keramik Lantai Arwana & Uno"
+  },
+  {
+    "ticker": "ARTA",
+    "name": "Arthavest Tbk",
+    "sector": "Finansial & Investasi / Hotel Redtop"
+  },
+  {
+    "ticker": "ARTI",
+    "name": "Ratu Prabu Energi Tbk",
+    "sector": "Energi / Jasa Minyak & Properti"
+  },
+  {
+    "ticker": "ARTO",
+    "name": "Bank Jago Tbk",
+    "sector": "Finansial / Bank Digital Ekosistem GoTo & GOTO Financial"
+  },
+  {
+    "ticker": "ASBI",
+    "name": "Asuransi Bintang Tbk",
+    "sector": "Finansial / Asuransi Kerugian & Kebakaran"
+  },
+  {
+    "ticker": "ASDF",
+    "name": "Astra Sedaya Finance Tbk",
+    "sector": "Finansial / Multifinance Astra Credit Companies"
+  },
+  {
+    "ticker": "ASGR",
+    "name": "Astra Graphia Tbk",
+    "sector": "Teknologi & Percetakan Digital FujiFilm Astra"
+  },
+  {
+    "ticker": "ASIA",
+    "name": "PT ASIA Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "ASII",
+    "name": "Astra International Tbk",
+    "sector": "Konglomerasi Otomotif Toyota/Daihatsu, Tambang & Jasa Keuangan"
+  },
+  {
+    "ticker": "ASJT",
+    "name": "Asuransi Jasa Tania Tbk",
+    "sector": "Finansial / Asuransi Perkebunan & Umum"
+  },
+  {
+    "ticker": "ASLC",
+    "name": "Autopedia Sukses Lestari Tbk",
+    "sector": "Otomotif / Balai Lelang JBA & Mobil Bekas Caroline"
+  },
+  {
+    "ticker": "ASMI",
+    "name": "Asuransi Maximus Graha Persada Tbk",
+    "sector": "Finansial / Asuransi Kerugian Maximus"
+  },
+  {
+    "ticker": "ASPI",
+    "name": "Astra Otoparts Tbk (Alt)",
+    "sector": "Komponen Otomotif"
+  },
+  {
+    "ticker": "ASRI",
+    "name": "Alam Sutera Realty Tbk",
+    "sector": "Properti / Kota Mandiri Alam Sutera & Suvarna Sutera"
+  },
+  {
+    "ticker": "ASRM",
+    "name": "Asuransi Ramayana Tbk",
+    "sector": "Finansial / Asuransi Kerugian Ramayana"
+  },
+  {
+    "ticker": "ASSA",
+    "name": "Adi Sarana Armada Tbk",
+    "sector": "Logistik / Rental Kendaraan ASSA & Ekspedisi Anteraja"
+  },
+  {
+    "ticker": "ATAP",
+    "name": "Trimitra Prawara Goldland Tbk",
+    "sector": "Properti / Pengembang Perumahan Bersubsidi"
+  },
+  {
+    "ticker": "ATIC",
+    "name": "Anabatic Technologies Tbk",
+    "sector": "Teknologi / Solusi IT Perbankan & Keamanan Cyber"
+  },
+  {
+    "ticker": "ATLA",
+    "name": "Atlantis Subsea Indonesia Tbk",
+    "sector": "Jasa Survei & Rekayasa Bawah Laut Migas"
+  },
+  {
+    "ticker": "AUTO",
+    "name": "Astra Otoparts Tbk",
+    "sector": "Otomotif / Produsen Suku Cadang & Komponen Terbesar RI"
+  },
+  {
+    "ticker": "AVIA",
+    "name": "Avia Avian Tbk",
+    "sector": "Material / Cat Dinding Terbesar Indonesia Avian Brands"
+  },
+  {
+    "ticker": "AWAN",
+    "name": "Era Digital Media Tbk",
+    "sector": "Teknologi / Layanan Cloud Computing & CDN Cloudku"
+  },
+  {
+    "ticker": "AXIO",
+    "name": "PT AXIO Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "AYAM",
+    "name": "PT AYAM Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "AYLS",
+    "name": "Agro Yasa Lestari Tbk",
+    "sector": "Material / Perdagangan Aspal & Kimia"
+  },
+  {
+    "ticker": "BABP",
+    "name": "Bank MNC Internasional Tbk",
+    "sector": "Finansial / Bank Komersial & MotionBank MNC Group"
+  },
+  {
+    "ticker": "BABY",
+    "name": "Era Media Sejahtera Tbk",
+    "sector": "Media Periklanan Digital Out of Home"
+  },
+  {
+    "ticker": "BACA",
+    "name": "Bank Capital Indonesia Tbk",
+    "sector": "Finansial / Bank Komersial Capital"
+  },
+  {
+    "ticker": "BAJA",
+    "name": "Saranacentral Bajatama Tbk",
+    "sector": "Material / Plat Baja Lapis Seng Saranalume"
+  },
+  {
+    "ticker": "BALI",
+    "name": "Bali Towerindo Sentra Tbk",
+    "sector": "Infrastruktur / Menara Telekomunikasi & Fiber Optik Bali"
+  },
+  {
+    "ticker": "BANK",
+    "name": "Bank Aladin Syariah Tbk",
+    "sector": "Finansial / Bank Digital Syariah Mitra Alfamart"
+  },
+  {
+    "ticker": "BAPA",
+    "name": "Bekasi Asri Pemula Tbk",
+    "sector": "Properti / Pengembang Hunian Bekasi"
+  },
+  {
+    "ticker": "BAPI",
+    "name": "Bhakti Agung Propertindo Tbk",
+    "sector": "Properti / Perumahan Green Cleosa"
+  },
+  {
+    "ticker": "BATA",
+    "name": "Sepatu Bata Tbk",
+    "sector": "Konsumer / Alas Kaki & Sepatu Legendaris"
+  },
+  {
+    "ticker": "BATR",
+    "name": "Benteng Anugerah Sejahtera Tbk",
+    "sector": "Material & Konstruksi"
+  },
+  {
+    "ticker": "BAUT",
+    "name": "Mitra Angkasa Sejahtera Tbk",
+    "sector": "Material & Industri / Mur, Baut & Fastener Ritel RJL"
+  },
+  {
+    "ticker": "BAYU",
+    "name": "Bayu Buana Tbk",
+    "sector": "Pariwisata & Biro Perjalanan Wisata"
+  },
+  {
+    "ticker": "BBCA",
+    "name": "Bank Central Asia Tbk",
+    "sector": "Finansial / Bank Swasta Terbesar IHSG Kapitalisasi Pasar Terbesar"
+  },
+  {
+    "ticker": "BBHI",
+    "name": "Allo Bank Indonesia Tbk",
+    "sector": "Finansial / Bank Digital CT Corp & Salim Group"
+  },
+  {
+    "ticker": "BBKP",
+    "name": "Bank KB Bukopin Tbk",
+    "sector": "Finansial / Bank Komersial KB Financial Group Korea"
+  },
+  {
+    "ticker": "BBLD",
+    "name": "Buana Finance Tbk",
+    "sector": "Finansial / Pembiayaan Alat Berat & Mobil"
+  },
+  {
+    "ticker": "BBMD",
+    "name": "Bank Mestika Dharma Tbk",
+    "sector": "Finansial / Bank Komersial Regional Sumatra"
+  },
+  {
+    "ticker": "BBNI",
+    "name": "Bank Negara Indonesia (Persero) Tbk",
+    "sector": "Finansial / Bank BUMN Transaksi Global & Korporasi"
+  },
+  {
+    "ticker": "BBRI",
+    "name": "Bank Rakyat Indonesia (Persero) Tbk",
+    "sector": "Finansial / Bank BUMN Kredit Mikro & UMKM Terbesar"
+  },
+  {
+    "ticker": "BBRM",
+    "name": "Pelayaran Nasional Bina Buana Raya Tbk",
+    "sector": "Energi / Kapal Logistik Penunjang Migas"
+  },
+  {
+    "ticker": "BBSI",
+    "name": "Krom Bank Indonesia Tbk",
+    "sector": "Finansial / Bank Digital Kredivo Group"
+  },
+  {
+    "ticker": "BBTN",
+    "name": "Bank Tabungan Negara (Persero) Tbk",
+    "sector": "Finansial / Bank BUMN Pembiayaan KPR Rumah Subsidi"
+  },
+  {
+    "ticker": "BBYB",
+    "name": "Bank Neo Commerce Tbk",
+    "sector": "Finansial / Bank Digital Aplikasi Neo+ Akulaku"
+  },
+  {
+    "ticker": "BCAP",
+    "name": "MNC Kapital Indonesia Tbk",
+    "sector": "Finansial / Holding Lembaga Jasa Keuangan MNC"
+  },
+  {
+    "ticker": "BCIC",
+    "name": "Bank JTrust Indonesia Tbk",
+    "sector": "Finansial / Bank Komersial J Trust Group Jepang"
+  },
+  {
+    "ticker": "BCIP",
+    "name": "Bumi Citra Permai Tbk",
+    "sector": "Properti / Kawasan Industri Millennium Industrial Estate"
+  },
+  {
+    "ticker": "BDIC",
+    "name": "PT BDIC Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "BDKR",
+    "name": "PT BDKR Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "BDMN",
+    "name": "Bank Danamon Indonesia Tbk",
+    "sector": "Finansial / Bank Komersial Terbesar MUFG Bank"
+  },
+  {
+    "ticker": "BEBS",
+    "name": "Berkah Beton Sadaya Tbk",
+    "sector": "Material / Produsen Beton Siap Pakai & Precast"
+  },
+  {
+    "ticker": "BEEF",
+    "name": "Estika Tata Tiara Tbk",
+    "sector": "Konsumer / Distributor Daging Sapi & Olahan Kibif"
+  },
+  {
+    "ticker": "BEER",
+    "name": "Jobi Beer Tbk",
+    "sector": "Konsumer / Minuman Bir"
+  },
+  {
+    "ticker": "BEKS",
+    "name": "Bank Pembangunan Daerah Banten Tbk",
+    "sector": "Finansial / Bank BPD Pemprov Banten"
+  },
+  {
+    "ticker": "BELI",
+    "name": "PT BELI Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "BELL",
+    "name": "Trisula Textile Industries Tbk",
+    "sector": "Tekstil & Bahan Seragam Bellini & Caterina"
+  },
+  {
+    "ticker": "BESS",
+    "name": "Batulicin Nusantara Maritim Tbk",
+    "sector": "Logistik / Pengangkutan Tongkang Batubara Kalimantan"
+  },
+  {
+    "ticker": "BEST",
+    "name": "Bekasi Fajar Industrial Estate Tbk",
+    "sector": "Properti / Kawasan Industri MM2100 Cikarang"
+  },
+  {
+    "ticker": "BFIC",
+    "name": "PT BFIC Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "BFIN",
+    "name": "BFI Finance Indonesia Tbk",
+    "sector": "Finansial / Multifinance Non-Bank Terbesar"
+  },
+  {
+    "ticker": "BGTG",
+    "name": "Bank Ganesha Tbk",
+    "sector": "Finansial / Bank Komersial Ritel"
+  },
+  {
+    "ticker": "BHAT",
+    "name": "Bhakti Multi Artha Tbk",
+    "sector": "Finansial / Jasa Finansial Terintegrasi"
+  },
+  {
+    "ticker": "BHIT",
+    "name": "MNC Asia Holding Tbk",
+    "sector": "Konglomerasi / Induk Holding MNC Group Hary Tanoe"
+  },
+  {
+    "ticker": "BIKA",
+    "name": "PT BIKA Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "BIKE",
+    "name": "Sepeda Bersama Indonesia Tbk",
+    "sector": "Konsumer / Distribusi Sepeda United Bike & Genio"
+  },
+  {
+    "ticker": "BIMA",
+    "name": "Primarindo Asia Infrastructure Tbk",
+    "sector": "Konsumer / Produsen Sepatu Olahraga Tomkins"
+  },
+  {
+    "ticker": "BINA",
+    "name": "Bank Ina Perdana Tbk",
+    "sector": "Finansial / Bank Digital Salim Group"
+  },
+  {
+    "ticker": "BINO",
+    "name": "Perma Plasindo Tbk",
+    "sector": "Konsumer / Alat Tulis Kantor Bantex & Ordner"
+  },
+  {
+    "ticker": "BIPI",
+    "name": "Astrindo Nusantara Infrastruktur Tbk",
+    "sector": "Energi / Pelabuhan & Infrastruktur Batubara Terpadu"
+  },
+  {
+    "ticker": "BIPP",
+    "name": "Bhuwanatala Indah Permai Tbk",
+    "sector": "Properti / Gedung Perkantoran & Mall Star Square"
+  },
+  {
+    "ticker": "BIRD",
+    "name": "Blue Bird Tbk",
+    "sector": "Transportasi / Taksi Terbesar & Mobilitas Penumpang"
+  },
+  {
+    "ticker": "BISI",
+    "name": "BISI International Tbk",
+    "sector": "Agribisnis / Benih Hibrida Jagung & Pupuk CP Group"
+  },
+  {
+    "ticker": "BJBR",
+    "name": "Bank Pembangunan Daerah Jawa Barat dan Banten Tbk",
+    "sector": "Finansial / Bank Pembangunan Daerah Terbesar RI"
+  },
+  {
+    "ticker": "BJTM",
+    "name": "Bank Pembangunan Daerah Jawa Timur Tbk",
+    "sector": "Finansial / Bank BPD Jawa Timur Dividen Tinggi"
+  },
+  {
+    "ticker": "BKDP",
+    "name": "Bukit Darmo Property Tbk",
+    "sector": "Properti / Kawasan Hunian & Golf Surabaya"
+  },
+  {
+    "ticker": "BKSL",
+    "name": "Sentul City Tbk",
+    "sector": "Properti / Kawasan Kota Mandiri Sentul City Bogor"
+  },
+  {
+    "ticker": "BKSW",
+    "name": "Bank QNB Indonesia Tbk",
+    "sector": "Finansial / Bank Komersial QNB Group Qatar"
+  },
+  {
+    "ticker": "BLES",
+    "name": "Superior Prima Sukses Tbk",
+    "sector": "Material / Bata Ringan Blesscon & Supercon"
+  },
+  {
+    "ticker": "BLTA",
+    "name": "Berlian Laju Tanker Tbk",
+    "sector": "Logistik / Pelayaran Tanker Kimia Cair"
+  },
+  {
+    "ticker": "BLTZ",
+    "name": "Graha Layar Prima Tbk",
+    "sector": "Media & Hiburan / Jaringan Bioskop CGV Cinemas"
+  },
+  {
+    "ticker": "BLUE",
+    "name": "Berkah Prima Pratama Tbk",
+    "sector": "Teknologi / Tinta Printer Blueprint"
+  },
+  {
+    "ticker": "BMAS",
+    "name": "Bank Maspion Indonesia Tbk",
+    "sector": "Finansial / Bank Komersial Maspion & Kasikornbank"
+  },
+  {
+    "ticker": "BMBL",
+    "name": "Lavender Bina Cendikia Tbk",
+    "sector": "Jasa Pendidikan / Bimbingan Belajar Kedokteran"
+  },
+  {
+    "ticker": "BMHS",
+    "name": "Bundamedik Tbk",
+    "sector": "Kesehatan / Jaringan Rumah Sakit Ibu & Anak RSIA Bunda"
+  },
+  {
+    "ticker": "BMRI",
+    "name": "Bank Mandiri (Persero) Tbk",
+    "sector": "Finansial / Bank BUMN Aset Terbesar Livin by Mandiri"
+  },
+  {
+    "ticker": "BMSR",
+    "name": "Bintang Mitra Semestaraya Tbk",
+    "sector": "Material / Perdagangan Minyak Sawit & Kimia"
+  },
+  {
+    "ticker": "BMTR",
+    "name": "Global Mediacom Tbk",
+    "sector": "Media / Holding Penyiaran & Hiburan MNC Group"
+  },
+  {
+    "ticker": "BNBA",
+    "name": "Bank Bumi Arta Tbk",
+    "sector": "Finansial / Bank Komersial Mitra Djarum & Sea Group"
+  },
+  {
+    "ticker": "BNBR",
+    "name": "Bakrie & Brothers Tbk",
+    "sector": "Konglomerasi / Induk Usaha Bakrie Group Manufaktur Baja"
+  },
+  {
+    "ticker": "BNGA",
+    "name": "Bank CIMB Niaga Tbk",
+    "sector": "Finansial / Bank Swasta Terbesar Kedua CIMB Niaga OCTO"
+  },
+  {
+    "ticker": "BNII",
+    "name": "Bank Maybank Indonesia Tbk",
+    "sector": "Finansial / Bank Komersial Maybank Group Malaysia"
+  },
+  {
+    "ticker": "BNLI",
+    "name": "Bank Permata Tbk",
+    "sector": "Finansial / Bank Komersial Bangkok Bank Terbesar"
+  },
+  {
+    "ticker": "BOAT",
+    "name": "PT Newport Marine Services Tbk",
+    "sector": "Logistik / Sewa Kapal Penunjang Migas"
+  },
+  {
+    "ticker": "BOBA",
+    "name": "Formosa Ingredient Factory Tbk",
+    "sector": "Konsumer / Boba Tapioka, Sirup & Jelly Minuman"
+  },
+  {
+    "ticker": "BOGA",
+    "name": "Bintang Oto Global Tbk",
+    "sector": "Otomotif / Dealer Mobil & Rental Kendaraan"
+  },
+  {
+    "ticker": "BOHI",
+    "name": "PT BOHI Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "BOLA",
+    "name": "Bali Bintang Sejahtera Tbk",
+    "sector": "Olahraga & Hiburan / Klub Sepak Bola Bali United"
+  },
+  {
+    "ticker": "BOLT",
+    "name": "Garuda Metalindo Tbk",
+    "sector": "Otomotif / Produsen Baut & Fastener Otomotif"
+  },
+  {
+    "ticker": "BOOT",
+    "name": "PT BOOT Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "BOSS",
+    "name": "Borneo Olah Sarana Sukses Tbk",
+    "sector": "Energi / Tambang Batubara Kalori Super Premium"
+  },
+  {
+    "ticker": "BPFI",
+    "name": "Batavia Prosperindo Finance Tbk",
+    "sector": "Finansial / Multifinance Woori Card Korea"
+  },
+  {
+    "ticker": "BPII",
+    "name": "Batavia Prosperindo Internasional Tbk",
+    "sector": "Finansial / Jasa Keuangan & Penasihat Investasi"
+  },
+  {
+    "ticker": "BPTR",
+    "name": "PT BPTR Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "BRAM",
+    "name": "Indo Kordsa Tbk",
+    "sector": "Material / Kain Ban & Benang Nilon Ban Mobil"
+  },
+  {
+    "ticker": "BREN",
+    "name": "Barito Renewables Tbk",
+    "sector": "Energi Terbarukan / Pembangkit Panas Bumi Star Energy Terbesar"
+  },
+  {
+    "ticker": "BRIS",
+    "name": "Bank Syariah Indonesia Tbk",
+    "sector": "Finansial / Bank Syariah Terbesar Indonesia BUMN"
+  },
+  {
+    "ticker": "BRMS",
+    "name": "Bumi Resources Minerals Tbk",
+    "sector": "Mineral / Tambang Emas Palu & Tembaga Dairi Bakrie"
+  },
+  {
+    "ticker": "BRNA",
+    "name": "Berlina Tbk",
+    "sector": "Material / Kemasan Botol Plastik Industri & Kosmetik"
+  },
+  {
+    "ticker": "BRPT",
+    "name": "Barito Pacific Tbk",
+    "sector": "Energi & Petrokimia / Induk Usaha Prajogo Pangestu"
+  },
+  {
+    "ticker": "BSBK",
+    "name": "Wulandari Bangun Laksana Tbk",
+    "sector": "Properti / Balikpapan Superblock Penunjang IKN Nusantara"
+  },
+  {
+    "ticker": "BSDE",
+    "name": "Bumi Serpong Damai Tbk",
+    "sector": "Properti / Kota Mandiri BSD City Terbesar Sinar Mas"
+  },
+  {
+    "ticker": "BSIM",
+    "name": "PT BSIM Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "BSKB",
+    "name": "PT BSKB Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "BSML",
+    "name": "Bintang Samudera Mandiri Lines Tbk",
+    "sector": "Logistik / Angkutan Laut Kargo Batubara & Tambang"
+  },
+  {
+    "ticker": "BSSR",
+    "name": "Baramulti Suksessarana Tbk",
+    "sector": "Energi / Batubara Ekspor & Dividen Yield Super Tinggi"
+  },
+  {
+    "ticker": "BSWD",
+    "name": "Bank of India Indonesia Tbk",
+    "sector": "Finansial / Bank Komersial Bank of India"
+  },
+  {
+    "ticker": "BTEK",
+    "name": "Bumi Teknokultura Unggul Tbk",
+    "sector": "Konsumer / Pengolahan Biji Kakao & Cokelat"
+  },
+  {
+    "ticker": "BTEL",
+    "name": "PT BTEL Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "BTON",
+    "name": "Betonjaya Manunggal Tbk",
+    "sector": "Material / Besi Beton & Kawat Baja Tulangan"
+  },
+  {
+    "ticker": "BTPN",
+    "name": "Bank BTPN Tbk",
+    "sector": "Finansial / Bank Komersial SMBC Jepang & Jenius"
+  },
+  {
+    "ticker": "BTPS",
+    "name": "Bank BTPN Syariah Tbk",
+    "sector": "Finansial / Pembiayaan Syariah Wanita Prasejahtera Produktif"
+  },
+  {
+    "ticker": "BUCK",
+    "name": "PT BUCK Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "BUDI",
+    "name": "PT BUDI Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "BUKA",
+    "name": "Bukalapak.com Tbk",
+    "sector": "Teknologi / Platform Mitra Bukalapak & E-Commerce"
+  },
+  {
+    "ticker": "BUKK",
+    "name": "Bukaka Teknik Utama Tbk",
+    "sector": "Industri / Garbarata Bandara, Jembatan & Konstruksi Kalla"
+  },
+  {
+    "ticker": "BULL",
+    "name": "Buana Lintas Lautan Tbk",
+    "sector": "Logistik / Angkutan Minyak Mentah Tanker Aframax"
+  },
+  {
+    "ticker": "BUMI",
+    "name": "Bumi Resources Tbk",
+    "sector": "Energi / Produsen Batubara Terbesar Nasional Bakrie & Salim"
+  },
+  {
+    "ticker": "BURK",
+    "name": "PT BURK Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "BUVA",
+    "name": "Bukit Uluwatu Villa Tbk",
+    "sector": "Pariwisata & Perhotelan / Resor Mewah Alila Bali"
+  },
+  {
+    "ticker": "BVIC",
+    "name": "Bank Victoria International Tbk",
+    "sector": "Finansial / Bank Komersial Victoria Group"
+  },
+  {
+    "ticker": "BWPT",
+    "name": "Eagle High Plantations Tbk",
+    "sector": "Perkebunan & Pabrik Minyak Kelapa Sawit Rajawali"
+  },
+  {
+    "ticker": "BYAN",
+    "name": "Bayan Resources Tbk",
+    "sector": "Energi / Tambang Batubara Tabang Low Cost Terbesar RI"
+  },
+  {
+    "ticker": "CAKK",
+    "name": "Cahayaputra Asa Keramik Tbk",
+    "sector": "Material / Keramik Lantai Kaisar Ceramic"
+  },
+  {
+    "ticker": "CAMP",
+    "name": "Campina Ice Cream Industry Tbk",
+    "sector": "Konsumer / Produsen Es Krim Campina Legendaris"
+  },
+  {
+    "ticker": "CAND",
+    "name": "PT CAND Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "CANI",
+    "name": "Capitol Nusantara Indonesia Tbk",
+    "sector": "Logistik / Jasa Kapal Tunda Tugboat & Tongkang"
+  },
+  {
+    "ticker": "CARE",
+    "name": "Metro Healthcare Indonesia Tbk",
+    "sector": "Kesehatan / Jaringan Rumah Sakit Swasta"
+  },
+  {
+    "ticker": "CARS",
+    "name": "Industri dan Perdagangan Bintraco Dharma Tbk",
+    "sector": "Otomotif / Dealer Toyota Nasmoco Jawa Tengah"
+  },
+  {
+    "ticker": "CASA",
+    "name": "Capital Financial Indonesia Tbk",
+    "sector": "Finansial / Holding Jasa Asuransi Jiwa & Investasi"
+  },
+  {
+    "ticker": "CASH",
+    "name": "Cashlez Worldwide Indonesia Tbk",
+    "sector": "Teknologi / Mesin EDC & Pembayaran Digital Cashlez"
+  },
+  {
+    "ticker": "CASS",
+    "name": "Cardig Aero Services Tbk",
+    "sector": "Infrastruktur Transportasi / Katering & Ground Handling Bandara"
+  },
+  {
+    "ticker": "CAST",
+    "name": "Catur Sentosa Adiprana Tbk",
+    "sector": "Ritel / Supermarket Bahan Bangunan Mitra10 & Atria"
+  },
+  {
+    "ticker": "CBPE",
+    "name": "Citra Borneo Utama Tbk",
+    "sector": "Perkebunan & Pengolahan Minyak Goreng Sawit"
+  },
+  {
+    "ticker": "CBRE",
+    "name": "Cakra Buana Resources Energi Tbk",
+    "sector": "Energi / Perkapalan Logistik Muatan Curah Kargo"
+  },
+  {
+    "ticker": "CBUT",
+    "name": "Cipta Perdana Lancar Tbk",
+    "sector": "Material / Stamping Otomotif Logam Presisi"
+  },
+  {
+    "ticker": "CCSI",
+    "name": "Communication Cable Systems Indonesia Tbk",
+    "sector": "Infrastruktur / Pabrik Kabel Fiber Optik Bawah Laut"
+  },
+  {
+    "ticker": "CDIA",
+    "name": "Chandra Daya Investasi Tbk",
+    "sector": "Infrastruktur & Energi Terintegrasi"
+  },
+  {
+    "ticker": "CEKA",
+    "name": "Wilmar Cahaya Indonesia Tbk",
+    "sector": "Konsumer / Minyak Goreng Sania & Lemak Nabati Wilmar"
+  },
+  {
+    "ticker": "CENT",
+    "name": "Centratama Telekomunikasi Indonesia Tbk",
+    "sector": "Infrastruktur / Menara Seluler & Jaringan In-Building"
+  },
+  {
+    "ticker": "CFIN",
+    "name": "Clipan Finance Indonesia Tbk",
+    "sector": "Finansial / Pembiayaan Kendaraan & Sewa Guna Panin"
+  },
+  {
+    "ticker": "CGAS",
+    "name": "Citra Nusantara Gemilang Tbk",
+    "sector": "Energi / Distribusi Gas Alam Terkompresi CNG Industri"
+  },
+  {
+    "ticker": "CHIP",
+    "name": "Pelita Teknologi Global Tbk",
+    "sector": "Teknologi / Smart Card Simcard Operator Seluler"
+  },
+  {
+    "ticker": "CINT",
+    "name": "Chitose Internasional Tbk",
+    "sector": "Konsumer / Mebel & Kursi Kantor Chitose"
+  },
+  {
+    "ticker": "CITA",
+    "name": "Cita Mineral Investindo Tbk",
+    "sector": "Mineral / Tambang Bauksit & Smelter Alumina Harita"
+  },
+  {
+    "ticker": "CITY",
+    "name": "Natura City Developments Tbk",
+    "sector": "Properti / Perumahan Serpong Natura City"
+  },
+  {
+    "ticker": "CLAY",
+    "name": "Citra Putra Realty Tbk",
+    "sector": "Properti / Hotel The Stones Legian Bali & Clay"
+  },
+  {
+    "ticker": "CLEO",
+    "name": "Sariguna Primatirta Tbk",
+    "sector": "Konsumer / Air Minum Murni Dalam Kemasan Cleo Tanobel"
+  },
+  {
+    "ticker": "CLPI",
+    "name": "Colorpak Indonesia Tbk",
+    "sector": "Material / Tinta Cetak Kemasan Makanan Fleksibel"
+  },
+  {
+    "ticker": "CMNP",
+    "name": "Citra Marga Nusaphala Persada Tbk",
+    "sector": "Infrastruktur / Operator Jalan Tol Layang Jakarta Jusuf Hamka"
+  },
+  {
+    "ticker": "CMNT",
+    "name": "Cemindo Gemilang Tbk",
+    "sector": "Material / Produsen Semen Merah Putih"
+  },
+  {
+    "ticker": "CMRY",
+    "name": "Cisarua Mountain Dairy Tbk",
+    "sector": "Konsumer / Susu UHT, Yogurt Cimory & Sosis Kanzler"
+  },
+  {
+    "ticker": "CMSP",
+    "name": "Centratama Menara Telekomunikasi Tbk",
+    "sector": "Infrastruktur / Menara Telekomunikasi"
+  },
+  {
+    "ticker": "CNKO",
+    "name": "Exploitasi Energi Indonesia Tbk",
+    "sector": "Energi / Penambangan & Suplai Batubara PLTU"
+  },
+  {
+    "ticker": "CNMA",
+    "name": "Nusantara Sejahtera Raya (Cinema XXI) Tbk",
+    "sector": "Media & Hiburan / Jaringan Bioskop Terbesar Cinema XXI"
+  },
+  {
+    "ticker": "CNTX",
+    "name": "PT CNTX Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "COAL",
+    "name": "Black Diamond Resources Tbk",
+    "sector": "Energi / Tambang Batubara Produksi Tinggi Kaltim"
+  },
+  {
+    "ticker": "COCO",
+    "name": "Wahana Interfood Nusantara Tbk",
+    "sector": "Konsumer / Produsen Cokelat Premium Schoko"
+  },
+  {
+    "ticker": "COIN",
+    "name": "Indo Coin Nusantara Tbk",
+    "sector": "Teknologi & Aset Kripto"
+  },
+  {
+    "ticker": "COWL",
+    "name": "PT COWL Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "CPIN",
+    "name": "Charoen Pokphand Indonesia Tbk",
+    "sector": "Agribisnis & Konsumer / Pakan Ayam, DOC & Fiesta Chicken Nugget"
+  },
+  {
+    "ticker": "CPO",
+    "name": "PT CPO Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "CPRO",
+    "name": "Central Proteina Prima Tbk",
+    "sector": "Agribisnis / Pakan Udang, Ikan & Makanan Beku Fiesta Seafood"
+  },
+  {
+    "ticker": "CRAB",
+    "name": "Toba Surimi Industries Tbk",
+    "sector": "Konsumer / Pengolahan & Ekspor Kepiting Daging Kaleng"
+  },
+  {
+    "ticker": "CRSN",
+    "name": "Carsurin Tbk",
+    "sector": "Jasa / Pengujian, Inspeksi & Sertifikasi TIC Energi/Tambang"
+  },
+  {
+    "ticker": "CSAP",
+    "name": "Catur Sentosa Adiprana Tbk",
+    "sector": "Ritel / Supermarket Bahan Bangunan Mitra10 & Distribusi"
+  },
+  {
+    "ticker": "CSIS",
+    "name": "Cahayasakti Investindo Sukses Tbk",
+    "sector": "Properti / Mebel Kayu Olympic & Perumahan"
+  },
+  {
+    "ticker": "CSMI",
+    "name": "Cipta Selera Murni Tbk",
+    "sector": "Konsumer / Restoran Texas Chicken"
+  },
+  {
+    "ticker": "CSRA",
+    "name": "Cisadane Sawit Raya Tbk",
+    "sector": "Perkebunan / Kelapa Sawit & Pabrik CPO Sumatra"
+  },
+  {
+    "ticker": "CTBN",
+    "name": "PT CTBN Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "CTRA",
+    "name": "Ciputra Development Tbk",
+    "sector": "Properti / Pengembang Residensial Terluas Seluruh Nusantara"
+  },
+  {
+    "ticker": "CTRP",
+    "name": "PT CTRP Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "CTRS",
+    "name": "PT CTRS Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "CUAN",
+    "name": "Petrindo Jaya Kreasi Tbk",
+    "sector": "Holding Energi / Tambang Batubara & Silika Prajogo Pangestu"
+  },
+  {
+    "ticker": "CYBR",
+    "name": "ITSEC Asia Tbk",
+    "sector": "Teknologi / Keamanan Siber Cyber Security Enterprise"
+  },
+  {
+    "ticker": "DAAZ",
+    "name": "Daaz Bara Lestari Tbk",
+    "sector": "Perdagangan / Logam Nikel, Batubara & BBM Kapal"
+  },
+  {
+    "ticker": "DART",
+    "name": "PT DART Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "DATA",
+    "name": "Remala Abadi Tbk",
+    "sector": "Telekomunikasi / Penyedia Jaringan Internet Broadband"
+  },
+  {
+    "ticker": "DAYA",
+    "name": "Duta Intidaya (Watsons) Tbk",
+    "sector": "Ritel / Toko Kesehatan & Kecantikan Watsons"
+  },
+  {
+    "ticker": "DCII",
+    "name": "DCI Indonesia Tbk",
+    "sector": "Teknologi / Pusat Data Center Tier IV Terbesar Ekosistem Cloud"
+  },
+  {
+    "ticker": "DEAL",
+    "name": "Dewata Freightinternational Tbk",
+    "sector": "Logistik / Freight Forwarding Project Kargo"
+  },
+  {
+    "ticker": "DEFI",
+    "name": "Danpac Pharma Tbk",
+    "sector": "Kesehatan / Alat Medis & Uji Cepat Kesehatan"
+  },
+  {
+    "ticker": "DEPO",
+    "name": "Caturkarda Depo Bangunan Tbk",
+    "sector": "Ritel / Supermarket Bahan Bangunan Depo Bangunan"
+  },
+  {
+    "ticker": "DEWA",
+    "name": "Darma Henwa Tbk",
+    "sector": "Energi / Kontraktor Tambang Batubara Terbesar Bakrie Group"
+  },
+  {
+    "ticker": "DFAM",
+    "name": "Dafam Property Indonesia Tbk",
+    "sector": "Properti / Hotel Dafam & Pengembang Residensial"
+  },
+  {
+    "ticker": "DGIK",
+    "name": "Nusa Konstruksi Enjiniring Tbk",
+    "sector": "Infrastruktur / Kontraktor Konstruksi Sipil & Gedung"
+  },
+  {
+    "ticker": "DGNS",
+    "name": "Diagnos Laboratorium Utama Tbk",
+    "sector": "Kesehatan / Laboratorium Diagnostik & Tes Genomik"
+  },
+  {
+    "ticker": "DIGI",
+    "name": "Arkadia Digital Media Tbk",
+    "sector": "Media / Portal Berita Digital Suara.com"
+  },
+  {
+    "ticker": "DILD",
+    "name": "Intiland Development Tbk",
+    "sector": "Properti / Hunian Mewah Graha Famili & Perkantoran"
+  },
+  {
+    "ticker": "DIVA",
+    "name": "Distribusi Voucher Nusantara Tbk",
+    "sector": "Teknologi / Solusi Digital Kios & Tour Travel Saldo"
+  },
+  {
+    "ticker": "DKFT",
+    "name": "Central Omega Resources Tbk",
+    "sector": "Mineral / Tambang Bijih Nikel & Smelter Feronikel"
+  },
+  {
+    "ticker": "DLTA",
+    "name": "Delta Djakarta Tbk",
+    "sector": "Konsumer / Produsen Bir Anker Beer & San Miguel"
+  },
+  {
+    "ticker": "DMAS",
+    "name": "Puradelta Lestari Tbk",
+    "sector": "Properti / Kawasan Industri Data Center Deltamas & Greenland GIIC"
+  },
+  {
+    "ticker": "DMMX",
+    "name": "Digital Mediatama Maxima Tbk",
+    "sector": "Teknologi / Platform Pemasaran Digital Cloud In-Store"
+  },
+  {
+    "ticker": "DMND",
+    "name": "Diamond Food Indonesia Tbk",
+    "sector": "Konsumer / Es Krim Diamond, Jus Jungle Juice & Keju"
+  },
+  {
+    "ticker": "DNAR",
+    "name": "Bank Oke Indonesia Tbk",
+    "sector": "Finansial / Bank Komersial OK Financial Korea"
+  },
+  {
+    "ticker": "DNET",
+    "name": "Indoritel Makmur Internasional Tbk",
+    "sector": "Investasi & Ritel / Pemegang Saham Indomaret & Fast Food"
+  },
+  {
+    "ticker": "DOID",
+    "name": "Delta Dunia Makmur Tbk",
+    "sector": "Energi / Kontraktor Pertambangan Batubara BUMA Global"
+  },
+  {
+    "ticker": "DOSS",
+    "name": "Global Sukses Digital Tbk",
+    "sector": "Ritel / Kamera & Alat Fotografi DOSS Camera"
+  },
+  {
+    "ticker": "DPNS",
+    "name": "Duta Pertiwi Nusantara Tbk",
+    "sector": "Kimia / Manufaktur Perekat Formalin Kayu"
+  },
+  {
+    "ticker": "DPUM",
+    "name": "PT DPUM Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "DRMA",
+    "name": "Dharma Polimetal Tbk",
+    "sector": "Otomotif / Manufaktur Komponen Kendaraan & Rangka EV Triputra"
+  },
+  {
+    "ticker": "DSFI",
+    "name": "Dharma Samudera Fishing Industries Tbk",
+    "sector": "Perikanan / Pengolahan & Ekspor Ikan Fillet Segar"
+  },
+  {
+    "ticker": "DSNG",
+    "name": "Dharma Satya Nusantara Tbk",
+    "sector": "Perkebunan Kelapa Sawit Berkelanjutan & Produk Kayu"
+  },
+  {
+    "ticker": "DSSA",
+    "name": "Dian Swastatika Sentosa Tbk",
+    "sector": "Energi, Holding Batubara, Pembangkit Listrik & Teknologi Sinar Mas"
+  },
+  {
+    "ticker": "DUCK",
+    "name": "Jaya Bersama Indo Tbk",
+    "sector": "Konsumer / Restoran Chinese Food The Duck King"
+  },
+  {
+    "ticker": "DUTI",
+    "name": "Duta Pertiwi Tbk",
+    "sector": "Properti / Mall ITC Mangga Dua & Ruko Sinar Mas"
+  },
+  {
+    "ticker": "DVLA",
+    "name": "Darya-Varia Laboratoria Tbk",
+    "sector": "Farmasi / Obat Enervon-C, Natur-E & Pabrik Cileungsi"
+  },
+  {
+    "ticker": "DWGL",
+    "name": "Dwi Guna Laksana Tbk",
+    "sector": "Energi / Perdagangan Batubara Suplai PLN"
+  },
+  {
+    "ticker": "DYAN",
+    "name": "Dyandra Media International Tbk",
+    "sector": "Media & Pariwisata / Penyelenggara Pameran Otomotif IIMS"
+  },
+  {
+    "ticker": "EAST",
+    "name": "Eastparc Hotel Tbk",
+    "sector": "Pariwisata & Hotel / Hotel Eastparc Bintang 5 Yogyakarta"
+  },
+  {
+    "ticker": "ECII",
+    "name": "Electronic City Indonesia Tbk",
+    "sector": "Ritel / Toko Elektronik Modern Artha Graha"
+  },
+  {
+    "ticker": "EDGE",
+    "name": "Indointernet Tbk",
+    "sector": "Teknologi / Jasa Internet Provider & Pusat Data Center EDGE"
+  },
+  {
+    "ticker": "EKAD",
+    "name": "Ekadharma International Tbk",
+    "sector": "Material / Lakban Isolasi & Pita Perekat Daimaru"
+  },
+  {
+    "ticker": "ELIT",
+    "name": "Data Sinergitama Jaya Tbk",
+    "sector": "Teknologi / Elitery Penyedia Cloud Terkelola & AI Backup"
+  },
+  {
+    "ticker": "ELPI",
+    "name": "Pelayaran Nasional Ekalya Purnamasari Tbk",
+    "sector": "Logistik / Kapal Cepat Crew Boat Lepas Pantai Migas"
+  },
+  {
+    "ticker": "ELSA",
+    "name": "Elnusa Tbk",
+    "sector": "Energi / Jasa Seismik, Pengeboran Hulu & Distribusi BBM BUMN"
+  },
+  {
+    "ticker": "ELTY",
+    "name": "Bakrieland Development Tbk",
+    "sector": "Properti / Rasuna Epicentrum & Kawasan Terpadu Bakrie"
+  },
+  {
+    "ticker": "EMAS",
+    "name": "Merdeka Gold Resources Tbk",
+    "sector": "Mineral / Tambang Emas"
+  },
+  {
+    "ticker": "EMDE",
+    "name": "PT EMDE Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "EMET",
+    "name": "PT EMET Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "EMTK",
+    "name": "Elang Mahkota Teknologi Tbk",
+    "sector": "Konglomerasi Media, Teknologi, Rumah Sakit EMC & Bukalapak"
+  },
+  {
+    "ticker": "ENAK",
+    "name": "Champ Resto Indonesia Tbk",
+    "sector": "Konsumer / Restoran Gokana Ramen, Raa Cha Suki & Monsieur Spoon"
+  },
+  {
+    "ticker": "ENRG",
+    "name": "Energi Mega Persada Tbk",
+    "sector": "Energi / Eksplorasi & Produksi Minyak Mentah dan Gas Bakrie"
+  },
+  {
+    "ticker": "ENVY",
+    "name": "Envy Technologies Indonesia Tbk",
+    "sector": "Teknologi / Keamanan Cyber & Solusi Big Data"
+  },
+  {
+    "ticker": "ENZO",
+    "name": "PT ENZO Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "EPAC",
+    "name": "Megalestari Epack Sentosaraya Tbk",
+    "sector": "Material / Kemasan Cetak Plastik Fleksibel"
+  },
+  {
+    "ticker": "EPMT",
+    "name": "PT EPMT Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "EPRT",
+    "name": "Eco Properti Indonesia Tbk",
+    "sector": "Properti / Pengembang Ramah Lingkungan"
+  },
+  {
+    "ticker": "ERAA",
+    "name": "Erajaya Swasembada Tbk",
+    "sector": "Ritel / Jaringan Toko iBox Apple, Erafone & Xiaomi Terbesar"
+  },
+  {
+    "ticker": "ERAL",
+    "name": "Sinar Eka Selaras Tbk",
+    "sector": "Ritel / Gaya Hidup Aktif, Garmin, JD Sports & ASICS"
+  },
+  {
+    "ticker": "ERTX",
+    "name": "Eratex Djaja Tbk",
+    "sector": "Tekstil & Garmen / Ekspor Celana Denim Jeans Dunia"
+  },
+  {
+    "ticker": "ESIP",
+    "name": "PT ESIP Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "ESSA",
+    "name": "ESSA Industries Indonesia Tbk",
+    "sector": "Energi / Kilang Amonia Rendah Emisi & Ekstraksi LPG"
+  },
+  {
+    "ticker": "ESTA",
+    "name": "Esta Multi Usaha Tbk",
+    "sector": "Properti / Hotel Esta & Persewaan Properti Komersial"
+  },
+  {
+    "ticker": "ESTI",
+    "name": "Ever Shine Tex Tbk",
+    "sector": "Tekstil / Kain Filamen Sintetis & Benang Nilon"
+  },
+  {
+    "ticker": "ETWA",
+    "name": "Eterindo Wahanatama Tbk",
+    "sector": "Kimia & Energi / Biodiesel & Kimia Terpadu"
+  },
+  {
+    "ticker": "EURO",
+    "name": "Estetika Tata Tiara Tbk (Alt)",
+    "sector": "Konsumer & Distribusi"
+  },
+  {
+    "ticker": "EVAN",
+    "name": "Eurokars Motor Indonesia Tbk",
+    "sector": "Otomotif / Distributor Mazda & Mobil Mewah"
+  },
+  {
+    "ticker": "EXCL",
+    "name": "XL Axiata Tbk",
+    "sector": "Telekomunikasi / Operator Jaringan Seluler XL, Axis & Fiber"
+  },
+  {
+    "ticker": "FAPA",
+    "name": "FAP Agri Tbk",
+    "sector": "Perkebunan & Pabrik Pengolahan Sawit CPO"
+  },
+  {
+    "ticker": "FAST",
+    "name": "Fast Food Indonesia Tbk",
+    "sector": "Konsumer / Waralaba Restoran Cepat Saji KFC Terbesar RI"
+  },
+  {
+    "ticker": "FASW",
+    "name": "Fajar Surya Wisesa Tbk",
+    "sector": "Material / Kertas Kemasan Industri SCG Packaging"
+  },
+  {
+    "ticker": "FILM",
+    "name": "MD Pictures Tbk",
+    "sector": "Media & Hiburan / Rumah Produksi Box Office & Serial OTT"
+  },
+  {
+    "ticker": "FIMP",
+    "name": "Fimperkasa Utama Tbk",
+    "sector": "Infrastruktur / Jasa Kontraktor Bangunan & Sipil"
+  },
+  {
+    "ticker": "FIRE",
+    "name": "Alfa Energi Investama Tbk",
+    "sector": "Energi / Tambang & Perdagangan Batubara Ekspor"
+  },
+  {
+    "ticker": "FISH",
+    "name": "FKS Multi Agro Tbk",
+    "sector": "Konsumer / Perdagangan Kedelai, Jagung & Pakan Ternak"
+  },
+  {
+    "ticker": "FITR",
+    "name": "PT FITR Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "FITT",
+    "name": "Hotel Fitra International Tbk",
+    "sector": "Pariwisata / Hotel Bintang di Majalengka BIJB Kertajati"
+  },
+  {
+    "ticker": "FLMC",
+    "name": "PT FLMC Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "FMII",
+    "name": "Fortune Mate Indonesia Tbk",
+    "sector": "Properti / Pengembang Ruko & Perumahan Surabaya"
+  },
+  {
+    "ticker": "FOOD",
+    "name": "Sentra Food Indonesia Tbk",
+    "sector": "Konsumer / Pengolahan Daging Olahan & Sosis Villa"
+  },
+  {
+    "ticker": "FORE",
+    "name": "Fore Kopi Indonesia Tbk",
+    "sector": "Konsumer / Jaringan Kedai Kopi Fore Coffee"
+  },
+  {
+    "ticker": "FORU",
+    "name": "Fortune Indonesia Tbk",
+    "sector": "Media / Agensi Iklan & Komunikasi Publik"
+  },
+  {
+    "ticker": "FPNI",
+    "name": "Lotte Chemical Titan Tbk",
+    "sector": "Material Dasar / Polietilena & Petrokimia Lotte Korea"
+  },
+  {
+    "ticker": "FREN",
+    "name": "Smartfren Telecom Tbk",
+    "sector": "Telekomunikasi / Operator Seluler 4G LTE Sinar Mas"
+  },
+  {
+    "ticker": "FUJI",
+    "name": "Fuji Finance Indonesia Tbk",
+    "sector": "Finansial / Pembiayaan Piutang & Modal Kerja"
+  },
+  {
+    "ticker": "FWCT",
+    "name": "Wijaya Cahaya Timber Tbk",
+    "sector": "Material / Pabrik Kayu Lapis Plywood Ekspor"
+  },
+  {
+    "ticker": "GAMA",
+    "name": "Aksara Global Inovasi Tbk",
+    "sector": "Media Digital & Teknologi"
+  },
+  {
+    "ticker": "GDST",
+    "name": "Gunawan Dianjaya Steel Tbk",
+    "sector": "Material / Plat Baja Rol Panas Konstruksi Kapal"
+  },
+  {
+    "ticker": "GDYR",
+    "name": "Goodyear Indonesia Tbk",
+    "sector": "Otomotif / Ban Mobil & Truk Goodyear"
+  },
+  {
+    "ticker": "GEMA",
+    "name": "Gema Grahasarana Tbk",
+    "sector": "Konsumer / Desain Interior & Furnitur Vivere"
+  },
+  {
+    "ticker": "GEMS",
+    "name": "Golden Energy Mines Tbk",
+    "sector": "Energi / Tambang Batubara Sinar Mas & Dividen Sangat Tinggi"
+  },
+  {
+    "ticker": "GGRM",
+    "name": "Gudang Garam Tbk",
+    "sector": "Konsumer / Produsen Rokok Kretek Surya Terbesar Kediri"
+  },
+  {
+    "ticker": "GGRP",
+    "name": "PT GGRP Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "GHON",
+    "name": "PT GHON Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "GIAA",
+    "name": "Garuda Indonesia (Persero) Tbk",
+    "sector": "Transportasi / Maskapai Penerbangan Nasional Flag Carrier BUMN"
+  },
+  {
+    "ticker": "GJTL",
+    "name": "Gajah Tunggal Tbk",
+    "sector": "Otomotif / Produsen Ban Mobil GT Radial & Motor IRC Terbesar"
+  },
+  {
+    "ticker": "GLOB",
+    "name": "Global Teleshop Tbk",
+    "sector": "Ritel / Distribusi Perangkat Telekomunikasi"
+  },
+  {
+    "ticker": "GLVA",
+    "name": "Galva Technologies Tbk",
+    "sector": "Teknologi / Distribusi Alat Audio Visual & Sistem Keamanan"
+  },
+  {
+    "ticker": "GMFI",
+    "name": "Garuda Maintenance Facility Aero Asia Tbk",
+    "sector": "Infrastruktur Transportasi / Bengkel Perawatan Pesawat Terbang"
+  },
+  {
+    "ticker": "GMTD",
+    "name": "Gowa Makassar Tourism Development Tbk",
+    "sector": "Properti / Kota Mandiri Tanjung Bunga Makassar Lippo"
+  },
+  {
+    "ticker": "GOLD",
+    "name": "Visi Telekomunikasi Infrastruktur Tbk",
+    "sector": "Infrastruktur / Menara Telekomunikasi Mikro Seluler"
+  },
+  {
+    "ticker": "GOLF",
+    "name": "Intra Golflink Resorts Tbk",
+    "sector": "Pariwisata & Olahraga / Lapangan Golf Tommy Soeharto"
+  },
+  {
+    "ticker": "GOOD",
+    "name": "Garudafood Putra Putri Jaya Tbk",
+    "sector": "Konsumer / Kacang Garuda, Biskuit Gery, Chocolatos & Clevo"
+  },
+  {
+    "ticker": "GOTO",
+    "name": "GoTo Gojek Tokopedia Tbk",
+    "sector": "Teknologi / Ekosistem Layanan On-Demand Gojek & Fintech GoTo Financial"
+  },
+  {
+    "ticker": "GPRA",
+    "name": "Perdana Gapuraprima Tbk",
+    "sector": "Properti / Pengembang Perumahan Bukit Cimanggu & Apartemen"
+  },
+  {
+    "ticker": "GPSO",
+    "name": "Geoprima Solusi Tbk",
+    "sector": "Teknologi & Jasa / Pemetaan Geospasial & Alat Drone"
+  },
+  {
+    "ticker": "GRIA",
+    "name": "Ingria Pratama Capitalindo Tbk",
+    "sector": "Properti / Rumah Bersubsidi & Komersial"
+  },
+  {
+    "ticker": "GRPH",
+    "name": "Graha Prima Mentari Tbk",
+    "sector": "Logistik / Distributor Resmi Minuman Coca-Cola"
+  },
+  {
+    "ticker": "GRPM",
+    "name": "PT GRPM Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "GSMF",
+    "name": "Equity Development Finance Tbk",
+    "sector": "Finansial / Multifinance Jasa Pembiayaan"
+  },
+  {
+    "ticker": "GTBO",
+    "name": "Garda Tujuh Buana Tbk",
+    "sector": "Energi / Tambang Batubara Bunyu Kaltara"
+  },
+  {
+    "ticker": "GTRA",
+    "name": "Grahaprima Suksesmandiri Tbk",
+    "sector": "Logistik / Angkutan Truk Angkutan Barang Logistik"
+  },
+  {
+    "ticker": "GTSA",
+    "name": "GTS Internasional Tbk",
+    "sector": "Logistik / Angkutan Kapal Pengangkut Gas Alam LNG"
+  },
+  {
+    "ticker": "GTSI",
+    "name": "Genting Plantations Berhad Tbk (Alt)",
+    "sector": "Perkebunan"
+  },
+  {
+    "ticker": "GULA",
+    "name": "Aman Agrindo Tbk",
+    "sector": "Konsumer / Perdagangan Gula Pasir & Pabrik Tebu"
+  },
+  {
+    "ticker": "GUNA",
+    "name": "PT GUNA Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "GWAB",
+    "name": "PT GWAB Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "GWSA",
+    "name": "Greenwood Sejahtera Tbk",
+    "sector": "Properti / Gedung Kuningan City & The City Center"
+  },
+  {
+    "ticker": "GYPS",
+    "name": "PT GYPS Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "GZCO",
+    "name": "Gozco Plantations Tbk",
+    "sector": "Perkebunan / Minyak Kelapa Sawit Sumatra & Kaltim"
+  },
+  {
+    "ticker": "HADE",
+    "name": "Humpuss Maritim Internasional Tbk (Alt)",
+    "sector": "Logistik Energi"
+  },
+  {
+    "ticker": "HAIS",
+    "name": "Hasnur Internasional Shipping Tbk",
+    "sector": "Logistik / Transportasi Kapal Tongkang Batubara Hasnur"
+  },
+  {
+    "ticker": "HALO",
+    "name": "Haloni Jane Tbk",
+    "sector": "Kesehatan / Manufaktur Sarung Tangan Medis Lateks"
+  },
+  {
+    "ticker": "HATM",
+    "name": "Habco Trans Maritima Tbk",
+    "sector": "Logistik / Kapal Kargo Muatan Curah Kering Bulk Carrier"
+  },
+  {
+    "ticker": "HBAT",
+    "name": "Minahasa Membangun Hebat Tbk",
+    "sector": "Properti / Pengembang Perumahan Manado"
+  },
+  {
+    "ticker": "HDFA",
+    "name": "Radana Bhaskara Finance Tbk",
+    "sector": "Finansial / Pembiayaan Modal Kerja & Factoring"
+  },
+  {
+    "ticker": "HDIT",
+    "name": "Hensel Davest Indonesia Tbk",
+    "sector": "Teknologi / Platform PPOB & Pembayaran Empos"
+  },
+  {
+    "ticker": "HDTX",
+    "name": "Panasia Indo Resources Tbk",
+    "sector": "Tekstil & Kimia / Benang Sintetis Poliester"
+  },
+  {
+    "ticker": "HEAL",
+    "name": "Medikaloka Hermina Tbk",
+    "sector": "Kesehatan / Jaringan Rumah Sakit Khusus Ibu Anak & Umum Hermina"
+  },
+  {
+    "ticker": "HELI",
+    "name": "Jaya Trishindo Tbk",
+    "sector": "Transportasi / Persewaan Helikopter VIP & Water Bombing"
+  },
+  {
+    "ticker": "HERO",
+    "name": "Hero Supermarket Tbk",
+    "sector": "Ritel / Supermarket Hero & Toko Kesehatan Guardian"
+  },
+  {
+    "ticker": "HEXA",
+    "name": "Hexindo Adiperkasa Tbk",
+    "sector": "Alat Berat / Distributor Ekskavator Hitachi & Dividen Jumbo"
+  },
+  {
+    "ticker": "HGIF",
+    "name": "PT HGIF Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "HITS",
+    "name": "Humpuss Intermoda Transportasi Tbk",
+    "sector": "Logistik / Transportasi Kapal LNG, Minyak & Kimia"
+  },
+  {
+    "ticker": "HKMU",
+    "name": "HK Metals Utama Tbk",
+    "sector": "Material / Fabrikasi Aluminium Ekstrusi & Baja Ringan"
+  },
+  {
+    "ticker": "HLST",
+    "name": "PT HLST Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "HMNS",
+    "name": "PT HMNS Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "HMSP",
+    "name": "H.M. Sampoerna Tbk",
+    "sector": "Konsumer / Produsen Rokok Dji Sam Soe, Sampoerna A & IQOS"
+  },
+  {
+    "ticker": "HOKI",
+    "name": "Buyung Poetra Sembada Tbk",
+    "sector": "Konsumer / Produsen Beras Kemasan Premium Topi Koki"
+  },
+  {
+    "ticker": "HOME",
+    "name": "Hotel Mandarine Regency Tbk",
+    "sector": "Pariwisata / Hotel & Resor Batam"
+  },
+  {
+    "ticker": "HOMI",
+    "name": "PT HOMI Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "HOPE",
+    "name": "Harapan Duta Pertiwi Tbk",
+    "sector": "Industri / Karoseri Truk Tangki & Dump Truck"
+  },
+  {
+    "ticker": "HOTL",
+    "name": "Saraswati Griya Prasidha Tbk",
+    "sector": "Pariwisata / Hotel Ananta Legian Bali & Yogyakarta"
+  },
+  {
+    "ticker": "HRME",
+    "name": "Menteng Heritage Realty Tbk",
+    "sector": "Pariwisata / Hotel The Hermitage Menteng Tribute Portfolio"
+  },
+  {
+    "ticker": "HRTA",
+    "name": "Hartadinata Abadi Tbk",
+    "sector": "Konsumer / Produsen Perhiasan Emas & Logam Mulia EmasKita"
+  },
+  {
+    "ticker": "HRUM",
+    "name": "Harum Energy Tbk",
+    "sector": "Energi & Mineral / Tambang Batubara, Smelter Nikel & Baterai EV"
+  },
+  {
+    "ticker": "HUMI",
+    "name": "PT HUMI Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "HYGN",
+    "name": "Ecocare Indo Pasifik Tbk",
+    "sector": "Jasa / Layanan Sanitasi Higienis & Kebersihan Ruangan"
+  },
+  {
+    "ticker": "IATA",
+    "name": "MNC Energy Investments Tbk",
+    "sector": "Energi / Tambang Batubara & Pelabuhan Muat MNC Group"
+  },
+  {
+    "ticker": "IBFN",
+    "name": "PT IBFN Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "IBOS",
+    "name": "Indo Boga Sukses Tbk",
+    "sector": "Konsumer / Restoran D'Monk & Pengolahan Makanan"
+  },
+  {
+    "ticker": "IBST",
+    "name": "Inti Bangun Sejahtera Tbk",
+    "sector": "Infrastruktur / Menara Telekomunikasi & Jaringan Fiber iForte"
+  },
+  {
+    "ticker": "ICBP",
+    "name": "Indofood CBP Sukses Makmur Tbk",
+    "sector": "Konsumer / Indomie, Pop Mie, Susu Indomilk, Chitato & Bumbu"
+  },
+  {
+    "ticker": "ICON",
+    "name": "Island Concepts Indonesia Tbk",
+    "sector": "Pariwisata & Jasa / Katering Tambang & Villa Bali"
+  },
+  {
+    "ticker": "IDEA",
+    "name": "Idea Indonesia Akademi Tbk",
+    "sector": "Pendidikan / Pelatihan Perhotelan & Kapal Pesiar"
+  },
+  {
+    "ticker": "IDPR",
+    "name": "Indonesia Pondasi Raya Tbk",
+    "sector": "Infrastruktur / Kontraktor Spesialis Fondasi Tiang Pancang Indopora"
+  },
+  {
+    "ticker": "IFII",
+    "name": "Indonesia Fibreboard Industry Tbk",
+    "sector": "Material / Papan Serat Kayu MDF Ekspor"
+  },
+  {
+    "ticker": "IFSH",
+    "name": "Ifishdeco Tbk",
+    "sector": "Mineral / Tambang Bijih Nikel Laterit Sulawesi"
+  },
+  {
+    "ticker": "IGAR",
+    "name": "Champion Pacific Indonesia Tbk",
+    "sector": "Material / Kemasan Foil Farmasi Obat-Obatan"
+  },
+  {
+    "ticker": "IIKP",
+    "name": "Inti Agri Resources Tbk",
+    "sector": "Perikanan / Penangkaran Ikan Arwana Super Red"
+  },
+  {
+    "ticker": "IKAI",
+    "name": "Intikeramik Alamasri Industri Tbk",
+    "sector": "Material & Properti / Keramik Essenza & Hotel"
+  },
+  {
+    "ticker": "IKAN",
+    "name": "Era Mandiri Cemerlang Tbk",
+    "sector": "Perikanan / Pengolahan Hasil Laut & Ikan Tuna Ekspor"
+  },
+  {
+    "ticker": "IKBI",
+    "name": "Sumi Indo Kabel Tbk",
+    "sector": "Material / Pabrik Kabel Listrik Sumitomo Jepang"
+  },
+  {
+    "ticker": "IKIP",
+    "name": "PT IKIP Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "IMAS",
+    "name": "Indomobil Sukses Internasional Tbk",
+    "sector": "Otomotif / Distributor Nissan, Kia, Citroen & Mobil Listrik EV"
+  },
+  {
+    "ticker": "IMJS",
+    "name": "Indomobil Multi Jasa Tbk",
+    "sector": "Finansial & Logistik / Rental Mobil Indorent & Kalog"
+  },
+  {
+    "ticker": "IMPC",
+    "name": "Impack Pratama Industri Tbk",
+    "sector": "Material / Atap Polikarbonat Solarflat, Alderon & Alcotuff"
+  },
+  {
+    "ticker": "INAF",
+    "name": "Indofarma Tbk",
+    "sector": "Farmasi / BUMN Obat Generik & Alat Kesehatan"
+  },
+  {
+    "ticker": "INAI",
+    "name": "Indal Aluminium Industry Tbk",
+    "sector": "Material / Produk Aluminium Ekstrusi & Tangga Maspion"
+  },
+  {
+    "ticker": "INCF",
+    "name": "Indo Komoditi Korpora Tbk",
+    "sector": "Material / Pengolahan Karet Remah Crumb Rubber"
+  },
+  {
+    "ticker": "INCI",
+    "name": "Intanwijaya Internasional Tbk",
+    "sector": "Kimia / Manufaktur Lem Formalin Kayu Lapis"
+  },
+  {
+    "ticker": "INCO",
+    "name": "Vale Indonesia Tbk",
+    "sector": "Mineral / Tambang & Pengolahan Nikel Matte Terbesar Sorowako"
+  },
+  {
+    "ticker": "INDF",
+    "name": "Indofood Sukses Makmur Tbk",
+    "sector": "Konsumer / Holding Bogasari Tepung Terigu & Salim Group"
+  },
+  {
+    "ticker": "INDO",
+    "name": "Royalindo Investa Wijaya Tbk",
+    "sector": "Properti / Perhotelan & Kos-Kosan Eksekutif Jakarta"
+  },
+  {
+    "ticker": "INDR",
+    "name": "Indorama Synthetics Tbk",
+    "sector": "Tekstil & Kimia / Benang Poliester & Kain Sintetis Indorama"
+  },
+  {
+    "ticker": "INDS",
+    "name": "Indospring Tbk",
+    "sector": "Otomotif / Produsen Per Daun & Per Keong Pegas Otomotif"
+  },
+  {
+    "ticker": "INDX",
+    "name": "Indika Energy Tbk (Alt)",
+    "sector": "Energi"
+  },
+  {
+    "ticker": "INDY",
+    "name": "Indika Energy Tbk",
+    "sector": "Energi / Tambang Kideco, Transisi EBT, Motor Listrik ALVA"
+  },
+  {
+    "ticker": "INET",
+    "name": "Sinergi Inti Andalan Prima Tbk",
+    "sector": "Telekomunikasi / Layanan Infrastruktur Pusat Data & Fiber"
+  },
+  {
+    "ticker": "INFY",
+    "name": "PT INFY Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "INKP",
+    "name": "Indah Kiat Pulp & Paper Tbk",
+    "sector": "Material / Kertas Cetak Sinar Dunia, Pulp & Kemasan Sinar Mas"
+  },
+  {
+    "ticker": "INOV",
+    "name": "Inocycle Technology Group Tbk",
+    "sector": "Material / Daur Ulang Botol PET Menjadi Serat Recycled Polyester"
+  },
+  {
+    "ticker": "INPC",
+    "name": "Bank Artha Graha Internasional Tbk",
+    "sector": "Finansial / Bank Komersial Artha Graha Network"
+  },
+  {
+    "ticker": "INPP",
+    "name": "Indonesian Paradise Property Tbk",
+    "sector": "Properti / Mall Plaza Indonesia, Beachwalk Bali & Hotel Hyatt"
+  },
+  {
+    "ticker": "INPS",
+    "name": "Indah Prakasa Sentosa Tbk",
+    "sector": "Logistik / Distribusi BBM, Pelumas Shell & SPBU"
+  },
+  {
+    "ticker": "INRU",
+    "name": "Toba Pulp Lestari Tbk",
+    "sector": "Material / Bubur Kertas Kayu Ekspor"
+  },
+  {
+    "ticker": "INTA",
+    "name": "PT INTA Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "INTD",
+    "name": "Inter Delta Tbk",
+    "sector": "Teknologi & Percetakan / Alat Fotografi & Digital Printing"
+  },
+  {
+    "ticker": "INTP",
+    "name": "Indocement Tunggal Prakarsa Tbk",
+    "sector": "Material / Semen Tiga Roda & Semen Jempol Heidelberg"
+  },
+  {
+    "ticker": "IPAC",
+    "name": "Megapower Makmur Tbk",
+    "sector": "Energi / Pembangkit Listrik Tenaga Diesel & Minihidro"
+  },
+  {
+    "ticker": "IPCC",
+    "name": "Indonesia Kendaraan Terminal Tbk",
+    "sector": "Infrastruktur / Bongkar Muat Ekspor Mobil Pelabuhan Tanjung Priok"
+  },
+  {
+    "ticker": "IPCM",
+    "name": "Jasa Armada Indonesia Tbk",
+    "sector": "Infrastruktur / Kapal Tunda & Pemanduan Pelabuhan Pelindo"
+  },
+  {
+    "ticker": "IPPE",
+    "name": "Indo Pureco Pratama Tbk",
+    "sector": "Konsumer / Minyak Kelapa Murni Virgin Coconut Oil (VCO)"
+  },
+  {
+    "ticker": "IPPI",
+    "name": "PT IPPI Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "IPSE",
+    "name": "PT IPSE Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "IPTV",
+    "name": "MNC Vision Networks Tbk",
+    "sector": "Media / TV Berlangganan K-Vision, MNC Play & Vision+"
+  },
+  {
+    "ticker": "IRRA",
+    "name": "Itama Ranoraya Tbk",
+    "sector": "Kesehatan / Distributor Alat Suntik Auto Disable Oneject"
+  },
+  {
+    "ticker": "ISAP",
+    "name": "Isra Presisi Indonesia Tbk",
+    "sector": "Industri / Dies Moulding Manufaktur Otomotif & Mesin"
+  },
+  {
+    "ticker": "ISAT",
+    "name": "Indosat Ooredoo Hutchison Tbk",
+    "sector": "Telekomunikasi / Operator Seluler IM3 & 3 (Tri) Terbesar Kedua"
+  },
+  {
+    "ticker": "ISIT",
+    "name": "PT ISIT Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "ISSP",
+    "name": "Steel Pipe Industry of Indonesia Tbk",
+    "sector": "Material / Pipa Baja Konstruksi & Otomotif Spindo"
+  },
+  {
+    "ticker": "ITIC",
+    "name": "Indonesian Tobacco Tbk",
+    "sector": "Konsumer / Tembakau Iris Olahan Linting Rokok"
+  },
+  {
+    "ticker": "ITMA",
+    "name": "Sumber Energi Andalan Tbk",
+    "sector": "Energi / Jasa Konsultasi Tambang & Energi"
+  },
+  {
+    "ticker": "ITMG",
+    "name": "Indo Tambangraya Megah Tbk",
+    "sector": "Energi / Tambang Batubara Kalori Tinggi Banpu & Dividen Sangat Besar"
+  },
+  {
+    "ticker": "JARR",
+    "name": "Jhonlin Agro Raya Tbk",
+    "sector": "Perkebunan & Energi / Pabrik Biodiesel FAME Haji Isam"
+  },
+  {
+    "ticker": "JAST",
+    "name": "Jasatama Total Solusi Tbk",
+    "sector": "Teknologi / Penyedia SMS Gateway & Komunikasi Cloud"
+  },
+  {
+    "ticker": "JATI",
+    "name": "Informasi Teknologi Indonesia Tbk",
+    "sector": "Teknologi / Layanan Pesan WhatsApp Bisnis Jatis Mobile"
+  },
+  {
+    "ticker": "JAWA",
+    "name": "PT JAWA Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "JAYA",
+    "name": "Armada Berjaya Trans Tbk",
+    "sector": "Logistik / Transportasi Truk Kontainer Pelabuhan"
+  },
+  {
+    "ticker": "JECC",
+    "name": "Jembo Cable Company Tbk",
+    "sector": "Material / Manufaktur Kabel Listrik & Kabel Telekomunikasi"
+  },
+  {
+    "ticker": "JGLE",
+    "name": "PT JGLE Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "JIHD",
+    "name": "PT JIHD Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "JKON",
+    "name": "PT JKON Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "JKSW",
+    "name": "PT JKSW Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "JMAS",
+    "name": "Asuransi Jiwa Syariah Jasa Mitra Abadi Tbk",
+    "sector": "Finansial / Asuransi Jiwa Syariah Kospin JASA"
+  },
+  {
+    "ticker": "JPFA",
+    "name": "Japfa Comfeed Indonesia Tbk",
+    "sector": "Agribisnis / Pakan Ternak, DOC Ayam & Produk Olahan So Good"
+  },
+  {
+    "ticker": "JRPT",
+    "name": "Jaya Real Property Tbk",
+    "sector": "Properti / Kota Mandiri Bintaro Jaya & Pasar Senen"
+  },
+  {
+    "ticker": "JSKY",
+    "name": "PT JSKY Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "JSMR",
+    "name": "Jasa Marga (Persero) Tbk",
+    "sector": "Infrastruktur / BUMN Operator Jalan Tol Terpanjang Indonesia"
+  },
+  {
+    "ticker": "JSPT",
+    "name": "Jakarta Setiabudi Internasional Tbk",
+    "sector": "Properti & Hotel / Setiabudi SkyGarden & Hotel Hyatt Bali"
+  },
+  {
+    "ticker": "JTPE",
+    "name": "Jasuindo Tiga Perkasa Tbk",
+    "sector": "Percetakan Keamanan / Paspor, Kartu Pembayaran & Dokumen Sekuriti"
+  },
+  {
+    "ticker": "KAEF",
+    "name": "Kimia Farma Tbk",
+    "sector": "Farmasi / Jaringan Apotek, Klinik & Pabrik Obat BUMN"
+  },
+  {
+    "ticker": "KARW",
+    "name": "ICTSI Jasa Prima Tbk",
+    "sector": "Logistik & Pelabuhan / Jasa Bongkar Muat Kontainer"
+  },
+  {
+    "ticker": "KAYU",
+    "name": "Darmi Bersaudara Tbk",
+    "sector": "Material / Perdagangan Kayu Olahan Ekspor"
+  },
+  {
+    "ticker": "KBAG",
+    "name": "Karya Bersama Anugerah Tbk",
+    "sector": "Properti / Hunian Rumah Susun Balikpapan IKN"
+  },
+  {
+    "ticker": "KBLI",
+    "name": "KMI Wire and Cable Tbk",
+    "sector": "Material / Produsen Kabel Tembaga & Aluminium KMI"
+  },
+  {
+    "ticker": "KBLM",
+    "name": "Kabelindo Murni Tbk",
+    "sector": "Material / Pabrik Kabel Listrik Industri Kabelindo"
+  },
+  {
+    "ticker": "KBLV",
+    "name": "First Media Tbk",
+    "sector": "Media & Telekomunikasi / Layanan Konten & Media Digital"
+  },
+  {
+    "ticker": "KBRI",
+    "name": "Kertas Basuki Rachmat Indonesia Tbk",
+    "sector": "Material / Manufaktur Kertas Industri"
+  },
+  {
+    "ticker": "KDSI",
+    "name": "Kedawung Setia Industrial Tbk",
+    "sector": "Konsumer / Alat Dapur Enamel Kedaung & Kotak Karton"
+  },
+  {
+    "ticker": "KDTN",
+    "name": "Puri Sentul Permai Tbk",
+    "sector": "Pariwisata / Hotel Kedaton & Hotel Rest Area Tol"
+  },
+  {
+    "ticker": "KEEN",
+    "name": "Kencana Energi Lestari Tbk",
+    "sector": "Energi Terbarukan / Pembangkit Listrik Air PLTA & PLTM"
+  },
+  {
+    "ticker": "KEJU",
+    "name": "Mulia Boga Raya Tbk",
+    "sector": "Konsumer / Produsen Keju Cheddar Prochiz & Spread"
+  },
+  {
+    "ticker": "KETR",
+    "name": "PT KETR Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "KIAS",
+    "name": "Keramika Indonesia Assosiasi Tbk",
+    "sector": "Material / Keramik Dinding & Lantai KIA"
+  },
+  {
+    "ticker": "KICI",
+    "name": "Kedaung Indah Can Tbk",
+    "sector": "Konsumer / Kaleng Kemasan & Alat Masak Enamel"
+  },
+  {
+    "ticker": "KIJA",
+    "name": "Kawasan Industri Jababeka Tbk",
+    "sector": "Properti / Kawasan Kota Jababeka Cikarang & Tanjung Lesung"
+  },
+  {
+    "ticker": "KIMS",
+    "name": "Kukuh Mandiri Lestari Tbk",
+    "sector": "Properti / PIK 2 Kawasan Residensial"
+  },
+  {
+    "ticker": "KING",
+    "name": "Hoffmen Cleanindo Tbk",
+    "sector": "Jasa / Cleaning Service, Security & Facility Management"
+  },
+  {
+    "ticker": "KINO",
+    "name": "Kino Indonesia Tbk",
+    "sector": "Konsumer / Minuman Cap Kaki Tiga, Snack Ovale & Ellips Hair"
+  },
+  {
+    "ticker": "KIOS",
+    "name": "Kioson Komersial Indonesia Tbk",
+    "sector": "Teknologi / Platform Digital Fintech Mitra Toko Kelontong"
+  },
+  {
+    "ticker": "KJEN",
+    "name": "Krida Jaringan Nusantara Tbk",
+    "sector": "Logistik / Jasa Kurir Pengiriman Dokumen & Kargo"
+  },
+  {
+    "ticker": "KKGI",
+    "name": "Resource Alam Indonesia Tbk",
+    "sector": "Energi / Tambang Batubara Kaltim & Smelter Nikel"
+  },
+  {
+    "ticker": "KLAS",
+    "name": "Pelayaran Kurnia Lautan Semesta Tbk",
+    "sector": "Logistik / Angkutan Laut Kapal Tongkang Pasir Kuarsa"
+  },
+  {
+    "ticker": "KLBF",
+    "name": "Kalbe Farma Tbk",
+    "sector": "Farmasi / Obat Resep, Promag, Mixagrip, Nutrive Benecol & Prenagen"
+  },
+  {
+    "ticker": "KLIN",
+    "name": "Wisuda Pratama Sejahtera Tbk",
+    "sector": "Jasa / Layanan Laundry Higienis & Kebersihan"
+  },
+  {
+    "ticker": "KMDS",
+    "name": "Kurniamitra Duta Sentosa Tbk",
+    "sector": "Konsumer / Distributor Sirup Monin & Bahan Minuman Kafe"
+  },
+  {
+    "ticker": "KMTR",
+    "name": "Kirana Megatara Tbk",
+    "sector": "Material / Produsen Karet Remah Karet Alam Terbesar RI Triputra"
+  },
+  {
+    "ticker": "KOBX",
+    "name": "Kobexindo Tractors Tbk",
+    "sector": "Alat Berat / Distributor Ekskavator Doosan & Forklift Jungheinrich"
+  },
+  {
+    "ticker": "KOCI",
+    "name": "Kencana Energi Lestari Tbk",
+    "sector": "Energi Terbarukan"
+  },
+  {
+    "ticker": "KOIN",
+    "name": "Kokoh Inti Arebama Tbk",
+    "sector": "Material / Distributor Keramik SCG & Bahan Bangunan"
+  },
+  {
+    "ticker": "KOKA",
+    "name": "Koka Indonesia Tbk",
+    "sector": "Infrastruktur / Kontraktor Proyek Bangunan Pabrik Asing"
+  },
+  {
+    "ticker": "KOLT",
+    "name": "PT KOLT Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "KOMI",
+    "name": "Kopitime Dot Com Tbk",
+    "sector": "Media & Konsumer"
+  },
+  {
+    "ticker": "KOPR",
+    "name": "Koperasi Simpan Pinjam Tbk",
+    "sector": "Finansial / Jasa Finansial"
+  },
+  {
+    "ticker": "KOTA",
+    "name": "DMS Propertindo Tbk",
+    "sector": "Properti / Landbank Samarinda & Hotel Zest"
+  },
+  {
+    "ticker": "KPAL",
+    "name": "Steadfast Marine Tbk",
+    "sector": "Industri / Galangan Kapal & Perbaikan Kapal Laut"
+  },
+  {
+    "ticker": "KPAS",
+    "name": "Cottonindo Ariesta Tbk",
+    "sector": "Konsumer / Produsen Kapas Kecantikan Medis"
+  },
+  {
+    "ticker": "KPIG",
+    "name": "MNC Land Tbk",
+    "sector": "Properti / KEK MNC Lido City Theme Park, Park Hyatt Jakarta"
+  },
+  {
+    "ticker": "KRAS",
+    "name": "Krakatau Steel (Persero) Tbk",
+    "sector": "Material / Produsen Baja BUMN Terbesar & Hot Rolled Coil"
+  },
+  {
+    "ticker": "KREN",
+    "name": "Quantum Clovera Investama Tbk",
+    "sector": "Teknologi & Investasi / Ventura Ekosistem Digital"
+  },
+  {
+    "ticker": "KRYA",
+    "name": "Bangun Karya Perkasa Jaya Tbk",
+    "sector": "Infrastruktur / Kontraktor Spesialis Pabrik Baja & Gedung"
+  },
+  {
+    "ticker": "KTIC",
+    "name": "Kertas Tjiwi Kimia Tbk (Alt)",
+    "sector": "Material Dasar"
+  },
+  {
+    "ticker": "KTOR",
+    "name": "PT KTOR Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "KUTI",
+    "name": "Krakatau Bandar Samudera Tbk",
+    "sector": "Infrastruktur Pelabuhan"
+  },
+  {
+    "ticker": "LABA",
+    "name": "Green Power Group Tbk",
+    "sector": "Energi Terbarukan & Ekosistem Baterai Listrik"
+  },
+  {
+    "ticker": "LABS",
+    "name": "PT LABS Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "LAJU",
+    "name": "Jasa Berdikari Logistics Tbk",
+    "sector": "Logistik / Jasa Logistik Terintegrasi Ritel Modern"
+  },
+  {
+    "ticker": "LAKE",
+    "name": "Layar Sentosa Tbk",
+    "sector": "Pariwisata & Hiburan"
+  },
+  {
+    "ticker": "LAND",
+    "name": "Trimitra Propertindo Tbk",
+    "sector": "Properti / Apartemen Parkland Avenue BSD"
+  },
+  {
+    "ticker": "LAPD",
+    "name": "Leyand International Tbk",
+    "sector": "Energi / Pembangkit Listrik Diesel PLTD"
+  },
+  {
+    "ticker": "LCGP",
+    "name": "Eureka Prima Jakarta Tbk",
+    "sector": "Properti / Kawasan Perumahan & Komersial"
+  },
+  {
+    "ticker": "LCKM",
+    "name": "LCK Global Kedaton Tbk",
+    "sector": "Infrastruktur / Jasa Pemasangan Menara Telekomunikasi"
+  },
+  {
+    "ticker": "LEAD",
+    "name": "Logindo Samudramakmur Tbk",
+    "sector": "Energi / Kapal Pendukung Operasi Lepas Pantai Migas AHTS"
+  },
+  {
+    "ticker": "LFLO",
+    "name": "PT LFLO Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "LIFE",
+    "name": "PT LIFE Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "LINK",
+    "name": "Link Net Tbk",
+    "sector": "Telekomunikasi / Jaringan Internet Fiber Optik First Media"
+  },
+  {
+    "ticker": "LION",
+    "name": "Lion Metal Works Tbk",
+    "sector": "Material / Manufaktur Lemari Besi, Rak Gudang & Pintu Besi"
+  },
+  {
+    "ticker": "LIVE",
+    "name": "Graha Mitra Asia Tbk",
+    "sector": "Properti & Residensial"
+  },
+  {
+    "ticker": "LMAS",
+    "name": "Limas Indonesia Makmur Tbk",
+    "sector": "Teknologi / Data Terminal Pasar Saham StockWatch"
+  },
+  {
+    "ticker": "LMPI",
+    "name": "Langgeng Makmur Industri Tbk",
+    "sector": "Konsumer & Material / Alat Masak Aluminium & Pipa PVC Maspion"
+  },
+  {
+    "ticker": "LMSH",
+    "name": "Lionmesh Prima Tbk",
+    "sector": "Material / Jaring Kawat Baja Las Wiremesh Konstruksi"
+  },
+  {
+    "ticker": "LPCK",
+    "name": "Lippo Cikarang Tbk",
+    "sector": "Properti / Kawasan Industri Cikarang & Hunian Meikarta"
+  },
+  {
+    "ticker": "LPGI",
+    "name": "Lippo General Insurance Tbk",
+    "sector": "Finansial / Asuransi Umum Hanwha & Lippo"
+  },
+  {
+    "ticker": "LPIN",
+    "name": "Multi Prima Sejahtera Tbk",
+    "sector": "Otomotif / Produsen Busi Mobil Champion Lippo"
+  },
+  {
+    "ticker": "LPKR",
+    "name": "Lippo Karawaci Tbk",
+    "sector": "Properti / Kota Mandiri Lippo Village, Karawaci & Holding RS Siloam"
+  },
+  {
+    "ticker": "LPPF",
+    "name": "Matahari Department Store Tbk",
+    "sector": "Ritel / Jaringan Departemen Store Pakaian Terbesar Auric Digital"
+  },
+  {
+    "ticker": "LPPS",
+    "name": "Lippo Securities Tbk",
+    "sector": "Finansial / Jasa Perusahaan Sekuritas & Manajemen Aset"
+  },
+  {
+    "ticker": "LRMS",
+    "name": "PT LRMS Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "LRNA",
+    "name": "Eka Sari Lorena Transport Tbk",
+    "sector": "Transportasi / Bus Antar Kota Lorena & Karina"
+  },
+  {
+    "ticker": "LSIP",
+    "name": "PP London Sumatra Indonesia Tbk",
+    "sector": "Perkebunan Kelapa Sawit, Karet & Bibit Unggul Lonsum"
+  },
+  {
+    "ticker": "LTLS",
+    "name": "Lautans Luas Tbk",
+    "sector": "Kimia / Manufaktur & Distributor Bahan Kimia Industri"
+  },
+  {
+    "ticker": "LUCK",
+    "name": "Sentral Mitra Informatika Tbk",
+    "sector": "Teknologi / Jasa Solusi Sewa Mesin Cetak Enterprise"
+  },
+  {
+    "ticker": "LUCY",
+    "name": "PT LUCY Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "MAAS",
+    "name": "PT MAAS Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "MABA",
+    "name": "PT MABA Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "MAGP",
+    "name": "PT MAGP Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "MAIN",
+    "name": "Malindo Feedmill Tbk",
+    "sector": "Agribisnis / Pakan Ternak Unggas & Makanan Olahan SunnyGold"
+  },
+  {
+    "ticker": "MAMI",
+    "name": "PT MAMI Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "MANG",
+    "name": "Manggung Polahraya Tbk",
+    "sector": "Infrastruktur & Jasa Konstruksi"
+  },
+  {
+    "ticker": "MAPA",
+    "name": "MAP Aktif Adiperkasa Tbk",
+    "sector": "Ritel / Sports Station, Foot Locker, Planet Sports & Kidz Station"
+  },
+  {
+    "ticker": "MAPB",
+    "name": "MAP Boga Adiperkasa Tbk",
+    "sector": "Konsumer / Starbucks Coffee, Subway, Krispy Kreme & Genki Sushi"
+  },
+  {
+    "ticker": "MAPI",
+    "name": "Mitra Adiperkasa Tbk",
+    "sector": "Ritel / Zara, Mango, Sephora, Marks & Spencer, SOGO & Kinokuniya"
+  },
+  {
+    "ticker": "MARI",
+    "name": "Mahaka Radio Integra Tbk",
+    "sector": "Media / Radio Jak FM, Gen FM, Hot FM, Most FM Mahaka"
+  },
+  {
+    "ticker": "MARK",
+    "name": "Mark Dynamics Indonesia Tbk",
+    "sector": "Material / Cetakan Sarung Tangan Keramik Hand Former Terbesar Dunia"
+  },
+  {
+    "ticker": "MASB",
+    "name": "Bank Multiarta Sentosa Tbk",
+    "sector": "Finansial / Bank Komersial Wings Group"
+  },
+  {
+    "ticker": "MAXI",
+    "name": "Maxindo Karya Anugerah Tbk",
+    "sector": "Konsumer / Snack Keripik Umbi Tropis Ekspor"
+  },
+  {
+    "ticker": "MAYA",
+    "name": "Bank Mayapada Internasional Tbk",
+    "sector": "Finansial / Bank Komersial Mayapada Group Dato Sri Tahir"
+  },
+  {
+    "ticker": "MBAP",
+    "name": "Mitrabara Adiperdana Tbk",
+    "sector": "Energi / Tambang Batubara Hijau Baramulti & Dividen Menarik"
+  },
+  {
+    "ticker": "MBMA",
+    "name": "Merdeka Battery Materials Tbk",
+    "sector": "Mineral / Hilirisasi Nikel RKEF & Ekosistem Bahan Baku Baterai EV"
+  },
+  {
+    "ticker": "MBSS",
+    "name": "Mitra Bahtera Segarasentosa Tbk",
+    "sector": "Logistik / Angkutan Kapal Tongkang & Floating Crane Batubara"
+  },
+  {
+    "ticker": "MBTO",
+    "name": "Martina Berto Tbk",
+    "sector": "Konsumer / Kosmetik Sariayu Martha Tilaar & Perawatan Tubuh"
+  },
+  {
+    "ticker": "MCAS",
+    "name": "M Cash Integrasi Tbk",
+    "sector": "Teknologi / Kios Digital, Distribusi Pulsa & Motor Listrik Volta"
+  },
+  {
+    "ticker": "MCOL",
+    "name": "Prima Andalan Mandiri Tbk",
+    "sector": "Energi / Batubara Mandiri Herindo & Kontraktor Tambang"
+  },
+  {
+    "ticker": "MCOR",
+    "name": "Bank China Construction Bank Indonesia Tbk",
+    "sector": "Finansial / Bank Komersial CCB Bank China"
+  },
+  {
+    "ticker": "MDIA",
+    "name": "Intermedia Capital Tbk",
+    "sector": "Media / Stasiun Televisi Hiburan ANTV Bakrie Group"
+  },
+  {
+    "ticker": "MDKA",
+    "name": "Merdeka Copper Gold Tbk",
+    "sector": "Mineral / Tambang Emas Tujuh Bukit, Tembaga Wetar & Proyek Pani"
+  },
+  {
+    "ticker": "MDKI",
+    "name": "Emdeki Utama Tbk",
+    "sector": "Kimia / Produsen Kalsium Karbida Utama Indonesia"
+  },
+  {
+    "ticker": "MDLN",
+    "name": "Modernland Realty Tbk",
+    "sector": "Properti / Kota Modern Tangerang & ModernCikande Industrial"
+  },
+  {
+    "ticker": "MDRN",
+    "name": "Modern Internasional Tbk",
+    "sector": "Perdagangan & Peralatan Medis / Percetakan"
+  },
+  {
+    "ticker": "MEDC",
+    "name": "Medco Energi Internasional Tbk",
+    "sector": "Energi / Eksplorasi Minyak & Gas Corridor, Tambang Amman Mineral"
+  },
+  {
+    "ticker": "MEGA",
+    "name": "Bank Mega Tbk",
+    "sector": "Finansial / Bank Komersial CT Corp Chairul Tanjung"
+  },
+  {
+    "ticker": "MEJA",
+    "name": "PT MEJA Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "MENN",
+    "name": "PT MENN Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "META",
+    "name": "Nusantara Infrastructure Tbk",
+    "sector": "Infrastruktur / Tol Makassar, Tol BSD & Pembangkit EBT Salim"
+  },
+  {
+    "ticker": "MFCO",
+    "name": "Multifiling Mitra Indonesia Tbk",
+    "sector": "Jasa / Manajemen Arsip Dokumen Iron Mountain"
+  },
+  {
+    "ticker": "MFIN",
+    "name": "Mandala Multifinance Tbk",
+    "sector": "Finansial / Pembiayaan Motor MUFG Group"
+  },
+  {
+    "ticker": "MFMI",
+    "name": "PT MFMI Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "MGNA",
+    "name": "Magna Investama Mandiri Tbk",
+    "sector": "Finansial / Investasi Jasa Keuangan"
+  },
+  {
+    "ticker": "MHKI",
+    "name": "Multi Hanna Kreasindo Tbk",
+    "sector": "Pengelolaan Limbah Industri B3 & Daur Ulang"
+  },
+  {
+    "ticker": "MICE",
+    "name": "Multi Indocitra Tbk",
+    "sector": "Konsumer / Perlengkapan Bayi Pigeon & Kosmetik"
+  },
+  {
+    "ticker": "MIDI",
+    "name": "Midi Utama Indonesia Tbk",
+    "sector": "Ritel / Jaringan Supermarket Alfamidi & Lawson"
+  },
+  {
+    "ticker": "MIKA",
+    "name": "Mitra Keluarga Karyasehat Tbk",
+    "sector": "Kesehatan / Jaringan Rumah Sakit Swasta Terbesar Kasih Group"
+  },
+  {
+    "ticker": "MINA",
+    "name": "Sanur Hasta Mitra Tbk",
+    "sector": "Properti / Resor & Perhotelan Sanur Bali"
+  },
+  {
+    "ticker": "MIRA",
+    "name": "Mitra Rajasa Tbk",
+    "sector": "Logistik / Jasa Transportasi Darat Minyak Sawit"
+  },
+  {
+    "ticker": "MITI",
+    "name": "Mitra Investindo Tbk",
+    "sector": "Energi & Logistik / Jasa Pelayaran Penunjang Migas"
+  },
+  {
+    "ticker": "MKAP",
+    "name": "Mitra Komunikasi Nusantara Tbk",
+    "sector": "Teknologi & Ritel"
+  },
+  {
+    "ticker": "MKNT",
+    "name": "PT MKNT Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "MKPI",
+    "name": "Metropolitan Kentjana Tbk",
+    "sector": "Properti / Kawasan Mewah Pondok Indah Mall & Real Estate"
+  },
+  {
+    "ticker": "MKTR",
+    "name": "Menthobi Karyatama Raya Tbk",
+    "sector": "Perkebunan / Kelapa Sawit & Pabrik Pengolahan Pupuk"
+  },
+  {
+    "ticker": "MLBI",
+    "name": "Multi Bintang Indonesia Tbk",
+    "sector": "Konsumer / Produsen Bir Bintang & Heineken Indonesia"
+  },
+  {
+    "ticker": "MLIA",
+    "name": "Mulia Industrindo Tbk",
+    "sector": "Material / Botol Kaca Kemasan, Kaca Lembaran & Keramik Mulia"
+  },
+  {
+    "ticker": "MLPL",
+    "name": "Multipolar Tbk",
+    "sector": "Investasi & Teknologi / Induk Usaha Lippo Group FMCG"
+  },
+  {
+    "ticker": "MLPT",
+    "name": "Multipolar Technology Tbk",
+    "sector": "Teknologi / Integrator Sistem IT, Hardware & Layanan Cloud Perbankan"
+  },
+  {
+    "ticker": "MMET",
+    "name": "PT MMET Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "MMIX",
+    "name": "PT MMIX Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "MMKI",
+    "name": "PT MMKI Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "MMTC",
+    "name": "Mega Manunggal Property Tbk",
+    "sector": "Properti / Kompleks Pergudangan Logistik Modern Unilever/Lazada"
+  },
+  {
+    "ticker": "MNCN",
+    "name": "Media Nusantara Citra Tbk",
+    "sector": "Media / Jaringan TV Free-to-Air Terbesar RCTI, MNCTV, GTV & iNews"
+  },
+  {
+    "ticker": "MOLI",
+    "name": "Madusari Murni Indah Tbk",
+    "sector": "Kimia / Produsen Etanol Terbesar Molindo & Spiritus"
+  },
+  {
+    "ticker": "MORA",
+    "name": "Mora Telematika Indonesia Tbk",
+    "sector": "Telekomunikasi / Jaringan Backbone Fiber Optik Moratelindo"
+  },
+  {
+    "ticker": "MPAP",
+    "name": "PT MPAP Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "MPMX",
+    "name": "PT MPMX Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "MPOW",
+    "name": "PT MPOW Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "MPPA",
+    "name": "Matahari Putra Prima Tbk",
+    "sector": "Ritel / Supermarket Hypermart, Foodmart & Primo Lippo Group"
+  },
+  {
+    "ticker": "MPXL",
+    "name": "MPX Logistics International Tbk",
+    "sector": "Logistik & Material / Truk Angkutan Semen IKN Nusantara"
+  },
+  {
+    "ticker": "MREI",
+    "name": "PT MREI Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "MSIN",
+    "name": "MNC Digital Entertainment Tbk",
+    "sector": "Media & Hiburan / Produksi Sinetron, Portal RCTI+ & Game Digital"
+  },
+  {
+    "ticker": "MSJA",
+    "name": "Multi Spunindo Jaya Tbk",
+    "sector": "Material / Kain Bukan Tenun Nonwoven"
+  },
+  {
+    "ticker": "MSKY",
+    "name": "MNC Sky Vision Tbk",
+    "sector": "Media / TV Satelit Berbayar MNC Vision"
+  },
+  {
+    "ticker": "MSTI",
+    "name": "Mastersystem Infotama Tbk",
+    "sector": "Teknologi / Integrator Sistem IT Korporat & Data Center Cisco Gold"
+  },
+  {
+    "ticker": "MTAL",
+    "name": "PT MTAL Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "MTDL",
+    "name": "Metrodata Electronics Tbk",
+    "sector": "Teknologi / Distributor Resmi IT Terbesar (HP, Dell, Lenovo, Asus)"
+  },
+  {
+    "ticker": "MTEL",
+    "name": "Dayamitra Telekomunikasi (Mitratel) Tbk",
+    "sector": "Infrastruktur / Pemilik Menara Telekomunikasi Terbanyak ASEAN Telkom"
+  },
+  {
+    "ticker": "MTFN",
+    "name": "PT MTFN Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "MTLA",
+    "name": "Metropolitan Land Tbk",
+    "sector": "Properti / Grand Metland, Hotel Horison & Mall Metland"
+  },
+  {
+    "ticker": "MTPS",
+    "name": "PT MTPS Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "MTRA",
+    "name": "PT MTRA Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "MTSM",
+    "name": "PT MTSM Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "MUTU",
+    "name": "PT MUTU Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "MYOH",
+    "name": "Samindo Resources Tbk",
+    "sector": "Energi / Jasa Kontraktor Pemindahan Tanah Overburden Tambang"
+  },
+  {
+    "ticker": "MYOR",
+    "name": "Mayora Indah Tbk",
+    "sector": "Konsumer / Biskuit Roma, Kopiko, Danisa, Torabika & Beng-Beng"
+  },
+  {
+    "ticker": "MYRX",
+    "name": "Hanson International Tbk",
+    "sector": "Properti / Landbank Maja"
+  },
+  {
+    "ticker": "MYTX",
+    "name": "PT MYTX Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "NANO",
+    "name": "PT NANO Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "NASA",
+    "name": "PT NASA Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "NASI",
+    "name": "Wahana Inti Makmur Tbk",
+    "sector": "Konsumer / Produsen Beras Kemasan Dua Tani"
+  },
+  {
+    "ticker": "NATO",
+    "name": "Surya Permata Andalan Tbk",
+    "sector": "Properti / Hotel & Resor Pariwisata"
+  },
+  {
+    "ticker": "NAYZ",
+    "name": "Hassana Boga Sejahtera Tbk",
+    "sector": "Konsumer / Makanan Pendamping ASI Bubur Organik Nayz"
+  },
+  {
+    "ticker": "NCKL",
+    "name": "Trimegah Bangun Persada Tbk",
+    "sector": "Mineral / Tambang & Smelter Nikel HPAL Bahan Baku Baterai EV Harita"
+  },
+  {
+    "ticker": "NDIN",
+    "name": "PT NDIN Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "NELY",
+    "name": "Pelayaran Nelly Dwi Putri Tbk",
+    "sector": "Logistik / Jasa Kapal Tunda Tugboat & Tongkang Kayu/Batubara"
+  },
+  {
+    "ticker": "NEST",
+    "name": "Esta Indonesia Tbk",
+    "sector": "Konsumer / Sarang Burung Walet Ekspor"
+  },
+  {
+    "ticker": "NETV",
+    "name": "Net Visi Media Tbk",
+    "sector": "Media / Stasiun Televisi Kreatif NET TV & Konten MD Entertainment"
+  },
+  {
+    "ticker": "NFCX",
+    "name": "PT NFCX Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "NICE",
+    "name": "Adhi Kartiko Pratama Tbk",
+    "sector": "Mineral / Tambang Bijih Nikel Laterit Kolaka"
+  },
+  {
+    "ticker": "NICK",
+    "name": "Charnic Capital Tbk",
+    "sector": "Finansial / Perusahaan Investasi Ekuitas"
+  },
+  {
+    "ticker": "NICL",
+    "name": "PAM Mineral Tbk",
+    "sector": "Mineral / Tambang Nikel Kadar Tinggi Morowali"
+  },
+  {
+    "ticker": "NIKL",
+    "name": "PT NIKL Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "NINE",
+    "name": "PT NINE Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "NIPS",
+    "name": "PT NIPS Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "NISP",
+    "name": "Bank OCBC NISP Tbk",
+    "sector": "Finansial / Bank Komersial OCBC Group Singapura Terbesar"
+  },
+  {
+    "ticker": "NOBU",
+    "name": "Bank Nationalnobu Tbk",
+    "sector": "Finansial / Bank Digital & Komersial Nobu Bank Lippo Group"
+  },
+  {
+    "ticker": "NPGF",
+    "name": "Nusa Palapa Gemilang Tbk",
+    "sector": "Material / Pabrik Pupuk NPK Non-Subsidi"
+  },
+  {
+    "ticker": "NRCA",
+    "name": "Nusa Raya Cipta Tbk",
+    "sector": "Infrastruktur / Kontraktor Konstruksi Hotel & Pabrik Surya Semesta"
+  },
+  {
+    "ticker": "NSSS",
+    "name": "Nusantara Sawit Sejahtera Tbk",
+    "sector": "Perkebunan / Minyak Kelapa Sawit Kalteng"
+  },
+  {
+    "ticker": "NTBK",
+    "name": "PT NTBK Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "NUSA",
+    "name": "PT NUSA Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "NZIA",
+    "name": "PT NZIA Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "OASA",
+    "name": "PT OASA Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "OBMD",
+    "name": "PT OBMD Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "OCBC",
+    "name": "PT OCBC Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "OILS",
+    "name": "PT OILS Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "OKAS",
+    "name": "Ancora Indonesia Resources Tbk",
+    "sector": "Energi & Industri / Bahan Peledak Tambang Multi Nitrotama Kimia"
+  },
+  {
+    "ticker": "OLIV",
+    "name": "PT OLIV Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "OMRE",
+    "name": "Indonesia Prima Property Tbk",
+    "sector": "Properti / Wisma Sudirman & Apartemen Puri Casablanca"
+  },
+  {
+    "ticker": "OPMS",
+    "name": "PT OPMS Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "OPTI",
+    "name": "PT OPTI Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "PACK",
+    "name": "Solusi Kemasan Digital Tbk",
+    "sector": "Material & Kemasan Fleksibel Flexypack"
+  },
+  {
+    "ticker": "PADA",
+    "name": "Padma Energi Internasional Tbk",
+    "sector": "Energi / Jasa Pengeboran & Konstruksi"
+  },
+  {
+    "ticker": "PADI",
+    "name": "PT PADI Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "PALM",
+    "name": "PT PALM Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "PAMG",
+    "name": "PT PAMG Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "PANI",
+    "name": "Pantai Indah Kapuk Dua Tbk",
+    "sector": "Properti / Mega Proyek Kota Baru PIK 2 Aguan & Salim Group"
+  },
+  {
+    "ticker": "PANR",
+    "name": "Panorama Sentrawisata Tbk",
+    "sector": "Pariwisata / Biro Perjalanan Wisata Panorama JTB & Bus White Horse"
+  },
+  {
+    "ticker": "PANS",
+    "name": "Panin Sekuritas Tbk",
+    "sector": "Finansial / Perusahaan Sekuritas & Broker Saham Panin"
+  },
+  {
+    "ticker": "PART",
+    "name": "PT PART Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "PBID",
+    "name": "Panca Budi Idaman Tbk",
+    "sector": "Material / Produsen Kantong Plastik Terbesar Merk Wayang & Klip"
+  },
+  {
+    "ticker": "PBRX",
+    "name": "Pan Brothers Tbk",
+    "sector": "Tekstil & Garmen / Manufaktur Pakaian Jadi Merek Dunia (Uniqlo, Adidas)"
+  },
+  {
+    "ticker": "PBSA",
+    "name": "Paramita Bangun Sarana Tbk",
+    "sector": "Infrastruktur / Kontraktor Bangunan Pabrik Kelapa Sawit CPO"
+  },
+  {
+    "ticker": "PCAR",
+    "name": "PT PCAR Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "PDES",
+    "name": "PT PDES Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "PEGE",
+    "name": "PT PEGE Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "PEHA",
+    "name": "Phapros Tbk",
+    "sector": "Farmasi / Obat Anti Mabuk Perjalanan Antimo & Dextamine BUMN"
+  },
+  {
+    "ticker": "PENI",
+    "name": "PT PENI Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "PEVE",
+    "name": "PT PEVE Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "PGAS",
+    "name": "Perusahaan Gas Negara Tbk",
+    "sector": "Energi / BUMN Transmisi & Jargas Distribusi Gas Bumi Terbesar"
+  },
+  {
+    "ticker": "PGEO",
+    "name": "Pertamina Geothermal Energy Tbk",
+    "sector": "Energi Terbarukan / Pembangkit Listrik Panas Bumi Terbesar BUMN Pertamina"
+  },
+  {
+    "ticker": "PGLI",
+    "name": "Pembangunan Graha Lestari Indah Tbk",
+    "sector": "Properti / Hotel Le Polonia Medan"
+  },
+  {
+    "ticker": "PGUN",
+    "name": "PT PGUN Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "PHAP",
+    "name": "Phapros Tbk (Alt)",
+    "sector": "Farmasi"
+  },
+  {
+    "ticker": "PICO",
+    "name": "PT PICO Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "PJAA",
+    "name": "Pembangunan Jaya Ancol Tbk",
+    "sector": "Pariwisata & Rekreasi / Taman Impian Jaya Ancol, Dufan & SeaWorld"
+  },
+  {
+    "ticker": "PKPK",
+    "name": "PT PKPK Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "PLIN",
+    "name": "Plaza Indonesia Realty Tbk",
+    "sector": "Properti / Mall Mewah Plaza Indonesia, Hotel Grand Hyatt Jakarta"
+  },
+  {
+    "ticker": "PLPE",
+    "name": "PT PLPE Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "PMJS",
+    "name": "PT PMJS Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "PMMP",
+    "name": "Panca Mitra Multiperdana Tbk",
+    "sector": "Konsumer / Eksportir Udang Olahan Beku Terbesar ke Amerika"
+  },
+  {
+    "ticker": "PNBN",
+    "name": "Bank Pan Indonesia Tbk",
+    "sector": "Finansial / Bank Panin Komersial & Modal Kuat"
+  },
+  {
+    "ticker": "PNBS",
+    "name": "Bank Panin Dubai Syariah Tbk",
+    "sector": "Finansial / Bank Syariah Panin & Dubai Islamic Bank"
+  },
+  {
+    "ticker": "PNGO",
+    "name": "Pinago Utama Tbk",
+    "sector": "Perkebunan / Minyak Sawit CPO & Karet Alam Sumatra Selatan"
+  },
+  {
+    "ticker": "PNIN",
+    "name": "Paninvest Tbk",
+    "sector": "Finansial / Holding Asuransi Jiwa & Investasi Panin Group"
+  },
+  {
+    "ticker": "PNLF",
+    "name": "Panin Financial Tbk",
+    "sector": "Finansial / Holding Finansial Jasa Keuangan Panin"
+  },
+  {
+    "ticker": "PNSE",
+    "name": "PT PNSE Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "POLA",
+    "name": "PT POLA Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "POLI",
+    "name": "PT POLI Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "POLL",
+    "name": "Pollux Properties Indonesia Tbk",
+    "sector": "Properti / Superblok Pollux Habibie Batam & Chadstone"
+  },
+  {
+    "ticker": "POLU",
+    "name": "PT POLU Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "POLY",
+    "name": "Asia Pacific Fibers Tbk",
+    "sector": "Material & Kimia / Serat Poliester & Benang Industri"
+  },
+  {
+    "ticker": "POOL",
+    "name": "PT POOL Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "PORT",
+    "name": "Nusantara Pelabuhan Handal Tbk",
+    "sector": "Infrastruktur / Jasa Operator Bongkar Muat Petikemas Pelabuhan"
+  },
+  {
+    "ticker": "POWR",
+    "name": "Cikarang Listrindo Tbk",
+    "sector": "Energi / Pembangkit Listrik Swasta Kawasan Industri Cikarang"
+  },
+  {
+    "ticker": "PPGL",
+    "name": "PT PPGL Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "PPRE",
+    "name": "PP Presisi Tbk",
+    "sector": "Infrastruktur / Jasa Konstruksi Sipil Fondasi & Tambang Nikel PTPP"
+  },
+  {
+    "ticker": "PPRO",
+    "name": "PP Properti Tbk",
+    "sector": "Properti / Apartemen Grand Shamaya, Grand Kamala Lagoon"
+  },
+  {
+    "ticker": "PRAS",
+    "name": "PT PRAS Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "PRDA",
+    "name": "Prodia Widyahusada Tbk",
+    "sector": "Kesehatan / Jaringan Laboratorium Medis & Uji Kesehatan Terbesar RI"
+  },
+  {
+    "ticker": "PRIM",
+    "name": "Royal Prima Tbk",
+    "sector": "Kesehatan / Rumah Sakit Royal Prima Medan"
+  },
+  {
+    "ticker": "PRNA",
+    "name": "PT PRNA Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "PSAB",
+    "name": "J Resources Asia Pasifik Tbk",
+    "sector": "Mineral / Tambang Emas Bakan, Lanut & Penjom"
+  },
+  {
+    "ticker": "PSAT",
+    "name": "PT PSAT Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "PSDN",
+    "name": "Prasidha Aneka Niaga Tbk",
+    "sector": "Konsumer / Pengolahan Kopi Bubuk & Karet Remah"
+  },
+  {
+    "ticker": "PSGO",
+    "name": "Palma Serasih Tbk",
+    "sector": "Perkebunan / Kelapa Sawit & Pabrik Minyak Sawit Kaltim"
+  },
+  {
+    "ticker": "PSKT",
+    "name": "PT PSKT Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "PSSI",
+    "name": "PT PSSI Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "PTBA",
+    "name": "Bukit Asam Tbk",
+    "sector": "Energi / Tambang Batubara BUMN Tanjung Enim & Dividen Payout 100%"
+  },
+  {
+    "ticker": "PTDU",
+    "name": "PT PTDU Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "PTIS",
+    "name": "Indo Straits Tbk",
+    "sector": "Logistik & Infrastruktur / Jasa Rekayasa Kelautan Lepas Pantai"
+  },
+  {
+    "ticker": "PTPP",
+    "name": "PP (Persero) Tbk",
+    "sector": "Infrastruktur / BUMN Karya Konstruksi Gedung, Pelabuhan & Tol"
+  },
+  {
+    "ticker": "PTPS",
+    "name": "PT PTPS Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "PTPW",
+    "name": "PT PTPW Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "PTRO",
+    "name": "Petrosea Tbk",
+    "sector": "Energi & Infrastruktur / Kontraktor Rekayasa Tambang & EPC Prajogo Pangestu"
+  },
+  {
+    "ticker": "PTSN",
+    "name": "Sat Nusapersada Tbk",
+    "sector": "Teknologi / Pabrik Manufaktur Elektronik Smartphone Batam (Asus, Xiaomi)"
+  },
+  {
+    "ticker": "PUDP",
+    "name": "PT PUDP Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "PURE",
+    "name": "PT PURE Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "PURI",
+    "name": "PT PURI Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "PWON",
+    "name": "Pakuwon Jati Tbk",
+    "sector": "Properti / Raja Mall Kasablanka, Gandaria City, Tunjungan Plaza & Pakuwon Mall"
+  },
+  {
+    "ticker": "PYFA",
+    "name": "Pyridam Farma Tbk",
+    "sector": "Farmasi / Obat Resep, Suplemen Kesehatan & Kosmetik"
+  },
+  {
+    "ticker": "PZZA",
+    "name": "Sarimelati Kencana Tbk",
+    "sector": "Konsumer / Restoran Pizza Hut & PHD Terbesar Indonesia"
+  },
+  {
+    "ticker": "RAAM",
+    "name": "Tripar Multivision Plus Tbk",
+    "sector": "Media & Hiburan / Produksi Film MVP Raam Punjabi & Bioskop Platinum"
+  },
+  {
+    "ticker": "RAFI",
+    "name": "Sari Kreasi Boga Tbk",
+    "sector": "Konsumer / Waralaba Kebab Baba Rafi & Restoran"
+  },
+  {
+    "ticker": "RAJA",
+    "name": "Rukun Raharja Tbk",
+    "sector": "Energi / Transmisi Pipa Gas Rokan, Distribusi Gas Alam & CNG"
+  },
+  {
+    "ticker": "RALS",
+    "name": "Ramayana Lestari Sentosa Tbk",
+    "sector": "Ritel / Jaringan Toserba Pakaian Ramayana & Robinson"
+  },
+  {
+    "ticker": "RANC",
+    "name": "Supra Boga Lestari Tbk",
+    "sector": "Ritel / Supermarket Premium 99 Ranch Market & Farmers Market Blibli"
+  },
+  {
+    "ticker": "RBMS",
+    "name": "Ristia Bintang Mahkotasejati Tbk",
+    "sector": "Properti / Perumahan Sederhana Bintang Metropole"
+  },
+  {
+    "ticker": "RCCC",
+    "name": "PT RCCC Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "RDTX",
+    "name": "Roda Vivatex Tbk",
+    "sector": "Properti / Gedung Perkantoran Menara Standard Chartered Jakarta"
+  },
+  {
+    "ticker": "REAL",
+    "name": "Repower Asia Indonesia Tbk",
+    "sector": "Properti / Pengembang Perumahan Real Estate"
+  },
+  {
+    "ticker": "RELI",
+    "name": "Reliance Sekuritas Indonesia Tbk",
+    "sector": "Finansial / Jasa Sekuritas & Asuransi Reliance"
+  },
+  {
+    "ticker": "RGAS",
+    "name": "Kian Santang Muliatama Tbk",
+    "sector": "Infrastruktur / Jasa Penunjang Distribusi Gas & Jargas"
+  },
+  {
+    "ticker": "RICY",
+    "name": "Ricky Putra Globalindo Tbk",
+    "sector": "Tekstil / Pakaian Dalam Pria GT Man & Busana Rajut"
+  },
+  {
+    "ticker": "RIGS",
+    "name": "Rig Tenders Indonesia Tbk",
+    "sector": "Energi & Logistik / Kapal Suplai Pengeboran Lepas Pantai"
+  },
+  {
+    "ticker": "RIMO",
+    "name": "PT RIMO Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "RISE",
+    "name": "Jaya Sukses Makmur Sentosa Tbk",
+    "sector": "Properti / Tanrise City, Apartemen Voza & Hotel Vasa Surabaya"
+  },
+  {
+    "ticker": "RMKE",
+    "name": "RMK Energy Tbk",
+    "sector": "Energi / Pelabuhan & Jasa Logistik Batubara Terintegrasi Stasiun Kereta"
+  },
+  {
+    "ticker": "RMKO",
+    "name": "PT RMKO Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "ROCK",
+    "name": "PT ROCK Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "RODA",
+    "name": "Pikko Land Development Tbk",
+    "sector": "Properti / Apartemen Signature Park & Sahid Sudirman"
+  },
+  {
+    "ticker": "ROFI",
+    "name": "PT ROFI Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "ROPI",
+    "name": "PT ROPI Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "ROTI",
+    "name": "Nippon Indosari Corpindo Tbk",
+    "sector": "Konsumer / Produsen Roti Tawar & Manis Terbesar Sari Roti Salim"
+  },
+  {
+    "ticker": "RSCH",
+    "name": "Charlie Hospital Semarang Tbk",
+    "sector": "Kesehatan / Rumah Sakit Charlie Hospital Kendal"
+  },
+  {
+    "ticker": "RUIS",
+    "name": "Radiant Utama Interinsco Tbk",
+    "sector": "Energi / Jasa Inspeksi Teknis & Pengujian Lapangan Migas"
+  },
+  {
+    "ticker": "RUNS",
+    "name": "Global Sukses Solusi Tbk",
+    "sector": "Teknologi / Penyedia Software ERP Enterprise RUN System"
+  },
+  {
+    "ticker": "SAFE",
+    "name": "PT SAFE Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "SAGE",
+    "name": "Saptausaha Gemilangindah Tbk",
+    "sector": "Properti / Kawasan Residensial Cibinong New City"
+  },
+  {
+    "ticker": "SAME",
+    "name": "Sarana Meditama Metropolitan Tbk",
+    "sector": "Kesehatan / Jaringan Rumah Sakit EMC Healthcare Emtek"
+  },
+  {
+    "ticker": "SAMF",
+    "name": "Saraswanti Anugerah Makmur Tbk",
+    "sector": "Material / Pupuk NPK Khusus Perkebunan Kelapa Sawit"
+  },
+  {
+    "ticker": "SAPX",
+    "name": "Satria Antaran Prima Tbk",
+    "sector": "Logistik / Jasa Kurir Pengiriman Paket SAP Express"
+  },
+  {
+    "ticker": "SATU",
+    "name": "PT SATU Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "SBAT",
+    "name": "PT SBAT Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "SBMA",
+    "name": "Surya Biru Murni Acetylene Tbk",
+    "sector": "Material & Kimia / Gas Industri Oksigen & Asetilen Balikpapan IKN"
+  },
+  {
+    "ticker": "SCCO",
+    "name": "Supreme Cable Manufacturing & Commerce Tbk",
+    "sector": "Material / Produsen Kabel Listrik Standar PLN Sucaco"
+  },
+  {
+    "ticker": "SCMA",
+    "name": "Surya Citra Media Tbk",
+    "sector": "Media / TV Nasional SCTV, Indosiar & Platform Streaming Vidio Emtek"
+  },
+  {
+    "ticker": "SCMS",
+    "name": "PT SCMS Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "SCNP",
+    "name": "Selaras Citra Nusantara Perkasa Tbk",
+    "sector": "Konsumer / Manufaktur Alat Rumah Tangga Philips & Blender"
+  },
+  {
+    "ticker": "SCPI",
+    "name": "PT SCPI Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "SDPC",
+    "name": "Millennium Pharmacon International Tbk",
+    "sector": "Kesehatan / Distribusi Obat Farmasi & Alat Medis"
+  },
+  {
+    "ticker": "SDRA",
+    "name": "Bank Woori Saudara Indonesia 1906 Tbk",
+    "sector": "Finansial / Bank Komersial Woori Bank Korea"
+  },
+  {
+    "ticker": "SEMA",
+    "name": "Semacom Integrated Tbk",
+    "sector": "Infrastruktur / Panel Listrik & Perakitan Baterai EV"
+  },
+  {
+    "ticker": "SFAN",
+    "name": "PT SFAN Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "SGER",
+    "name": "Sumber Global Energy Tbk",
+    "sector": "Energi / Perdagangan Batubara, Nikel & Pasir Silika Ekspor"
+  },
+  {
+    "ticker": "SGRO",
+    "name": "Sampoerna Agro Tbk",
+    "sector": "Perkebunan / Minyak Kelapa Sawit CPO & Bibit Unggul DxP Sriwijaya"
+  },
+  {
+    "ticker": "SHID",
+    "name": "Hotel Sahid Jaya International Tbk",
+    "sector": "Pariwisata / Hotel Grand Sahid Jaya Sudirman Jakarta"
+  },
+  {
+    "ticker": "SHIP",
+    "name": "Sillo Maritime Perdana Tbk",
+    "sector": "Energi & Logistik / Kapal Penunjang Eksplorasi FSO/FPSO Migas"
+  },
+  {
+    "ticker": "SICO",
+    "name": "Sigma Energy Compressindo Tbk",
+    "sector": "Energi / Jasa Kompresor Gas Pemulihan Uap Suar"
+  },
+  {
+    "ticker": "SIDO",
+    "name": "Industri Jamu dan Farmasi Sido Muncul Tbk",
+    "sector": "Farmasi Herbal / Tolak Angin, Kuku Bima Energi & Permen Herbal"
+  },
+  {
+    "ticker": "SILO",
+    "name": "Siloam International Hospitals Tbk",
+    "sector": "Kesehatan / Jaringan Rumah Sakit Swasta Terbanyak Siloam Hospitals"
+  },
+  {
+    "ticker": "SIMA",
+    "name": "PT SIMA Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "SIMP",
+    "name": "Salim Ivomas Pratama Tbk",
+    "sector": "Agribisnis / Minyak Goreng Bimoli, Palmia & Margarin Indofood"
+  },
+  {
+    "ticker": "SIPD",
+    "name": "Sreeya Sewu Indonesia Tbk",
+    "sector": "Agribisnis / Pakan Ayam Belfoods & Daging Unggas Gunung Sewu"
+  },
+  {
+    "ticker": "SKBM",
+    "name": "Sekar Bumi Tbk",
+    "sector": "Konsumer / Makanan Beku Olahan Hasil Laut Finna & SK Food"
+  },
+  {
+    "ticker": "SKLT",
+    "name": "Sekar Laut Tbk",
+    "sector": "Konsumer / Kerupuk Udang Finna & Sambal Uleg Kemasan"
+  },
+  {
+    "ticker": "SKRN",
+    "name": "Superkrane Mitra Utama Tbk",
+    "sector": "Infrastruktur / Jasa Sewa Mobile Crane Berat Konstruksi"
+  },
+  {
+    "ticker": "SLIS",
+    "name": "Gaya Abadi Sempurna Tbk",
+    "sector": "Otomotif / Sepeda Listrik & Motor Listrik Selis"
+  },
+  {
+    "ticker": "SMAR",
+    "name": "Smart Tbk",
+    "sector": "Perkebunan / Minyak Goreng Filma, Kunci Mas & CPO Sinar Mas Agribusiness"
+  },
+  {
+    "ticker": "SMDM",
+    "name": "Suryamas Dutamakmur Tbk",
+    "sector": "Properti / Rancamaya Golf Estate & Royal Tajur Bogor"
+  },
+  {
+    "ticker": "SMDR",
+    "name": "Samudera Indonesia Tbk",
+    "sector": "Logistik / Pelayaran Petikemas Domestik & Internasional Terbesar"
+  },
+  {
+    "ticker": "SMGA",
+    "name": "Sumber Mineral Global Abadi Tbk",
+    "sector": "Mineral & Logam Mulia"
+  },
+  {
+    "ticker": "SMGR",
+    "name": "Semen Indonesia (Persero) Tbk",
+    "sector": "Material / BUMN Produsen Semen Terbesar Semen Gresik & Padang"
+  },
+  {
+    "ticker": "SMIL",
+    "name": "Sarana Mitra Luas Tbk",
+    "sector": "Logistik & Industri / Jasa Rental Forklift Elektrik Pabrik"
+  },
+  {
+    "ticker": "SMKL",
+    "name": "Cipta Perdana Lancar Tbk",
+    "sector": "Material / Manufaktur Stamping Logam & Suku Cadang Mesin"
+  },
+  {
+    "ticker": "SMKM",
+    "name": "PT SMKM Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "SMLE",
+    "name": "Sinergi Multi Lestarindo Tbk",
+    "sector": "Kimia / Distributor Bahan Baku Makanan & Kosmetik"
+  },
+  {
+    "ticker": "SMMA",
+    "name": "Sinar Mas Multiartha Tbk",
+    "sector": "Finansial / Induk Usaha Jasa Finansial Sinar Mas Simas"
+  },
+  {
+    "ticker": "SMMT",
+    "name": "PT SMMT Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "SMRA",
+    "name": "Summarecon Agung Tbk",
+    "sector": "Properti / Kota Mandiri Kelapa Gading, Serpong, Bekasi & Bandung"
+  },
+  {
+    "ticker": "SMRT",
+    "name": "PT SMRT Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "SMSM",
+    "name": "Selamat Sempurna Tbk",
+    "sector": "Otomotif / Filter Udara Sakura, Radiator ADR & Ekspor Dunia"
+  },
+  {
+    "ticker": "SNLK",
+    "name": "Sunter Lakeside Hotel Tbk",
+    "sector": "Pariwisata / Hotel Sunlake Waterfront Resort Jakarta"
+  },
+  {
+    "ticker": "SOCHI",
+    "name": "Soechi Lines Tbk",
+    "sector": "Logistik / Pelayaran Tanker Minyak Mentah Pertamina & Galangan"
+  },
+  {
+    "ticker": "SOHO",
+    "name": "SOHO Global Health Tbk",
+    "sector": "Farmasi / Suplemen Imboost, Curcuma Plus & Fitkom"
+  },
+  {
+    "ticker": "SOLA",
+    "name": "Xolare Reka Sejahtera Tbk",
+    "sector": "Konstruksi & Aspal Industri"
+  },
+  {
+    "ticker": "SONA",
+    "name": "Sona Topas Tourism Industry Tbk",
+    "sector": "Pariwisata / Toko Bebas Bea Duty Free Shoppers (DFS) Bali"
+  },
+  {
+    "ticker": "SOSS",
+    "name": "PT SOSS Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "SOTS",
+    "name": "PT SOTS Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "SOUL",
+    "name": "PT SOUL Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "SPMA",
+    "name": "Suparma Tbk",
+    "sector": "Material / Kertas Tisu See-U, Plenty & Kertas Bungkus Cokelat"
+  },
+  {
+    "ticker": "SPTO",
+    "name": "Surya Pertiwi Tbk",
+    "sector": "Material & Perlengkapan / Distributor Tunggal Sanitari TOTO"
+  },
+  {
+    "ticker": "SQMI",
+    "name": "Wilton Makmur Indonesia Tbk",
+    "sector": "Mineral / Tambang & Pengolahan Bijih Emas Ciemas"
+  },
+  {
+    "ticker": "SRAJ",
+    "name": "Sejahteraraya Anugrahjaya Tbk",
+    "sector": "Kesehatan / Jaringan Rumah Sakit Mayapada Hospital Tahir"
+  },
+  {
+    "ticker": "SRIC",
+    "name": "PT SRIC Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "SRIL",
+    "name": "PT SRIL Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "SRTG",
+    "name": "Saratoga Investama Sedaya Tbk",
+    "sector": "Finansial / Perusahaan Investasi Sandiaga Uno & Edwin Soeryadjaya"
+  },
+  {
+    "ticker": "SSIA",
+    "name": "Surya Semesta Internusa Tbk",
+    "sector": "Properti & Konstruksi / Kota Industri Subang Smartpolitan & Tol Cipali"
+  },
+  {
+    "ticker": "SSMS",
+    "name": "Sawit Sumbermas Sarana Tbk",
+    "sector": "Perkebunan / Minyak Kelapa Sawit CPO Citra Borneo Pangkalan Bun"
+  },
+  {
+    "ticker": "SSTM",
+    "name": "PT SSTM Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "STAA",
+    "name": "Sumber Tani Agung Resources Tbk",
+    "sector": "Perkebunan / Minyak Kelapa Sawit Sumatra Terintegrasi"
+  },
+  {
+    "ticker": "STAR",
+    "name": "Buana Artha Anugerah Tbk",
+    "sector": "Finansial / Jasa Konsultasi Keuangan"
+  },
+  {
+    "ticker": "STRK",
+    "name": "Triniti Dinamik Tbk",
+    "sector": "Properti / Apartemen The Smith Alam Sutera"
+  },
+  {
+    "ticker": "STTP",
+    "name": "Siantar Top Tbk",
+    "sector": "Konsumer / Biskuit Goriorio, French Fries & Mie Spikers"
+  },
+  {
+    "ticker": "SUGI",
+    "name": "PT SUGI Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "SULI",
+    "name": "PT SULI Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "SUNI",
+    "name": "PT SUNI Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "SUPR",
+    "name": "PT SUPR Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "SURE",
+    "name": "PT SURE Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "SWAT",
+    "name": "PT SWAT Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "SWID",
+    "name": "Saraswanti Indoland Development Tbk",
+    "sector": "Properti / Mataram City & Yudhistira Tower Yogyakarta"
+  },
+  {
+    "ticker": "TAIS",
+    "name": "PT TAIS Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "TALF",
+    "name": "Tunas Alfin Tbk",
+    "sector": "Material / Kemasan Cetak Plastik & Aluminium Foil"
+  },
+  {
+    "ticker": "TAMA",
+    "name": "Lancartama Sejati Tbk",
+    "sector": "Infrastruktur / Kontraktor Konstruksi Jalan & Jembatan"
+  },
+  {
+    "ticker": "TAMU",
+    "name": "PT TAMU Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "TAPG",
+    "name": "Triputra Agro Persada Tbk",
+    "sector": "Perkebunan / Kelapa Sawit Produktivitas Tinggi Triputra Group"
+  },
+  {
+    "ticker": "TARA",
+    "name": "Agung Semesta Sejahtera Tbk",
+    "sector": "Properti / Pengembang Perumahan & Villa"
+  },
+  {
+    "ticker": "TAXI",
+    "name": "Express Transindo Utama Tbk",
+    "sector": "Transportasi / Taksi Express"
+  },
+  {
+    "ticker": "TAYS",
+    "name": "Jaya Swarasa Agung Tbk",
+    "sector": "Konsumer / Snack Biskuit Tricks Potato Crisps"
+  },
+  {
+    "ticker": "TBIG",
+    "name": "Tower Bersama Infrastructure Tbk",
+    "sector": "Infrastruktur / Menara Telekomunikasi Terbesar Saratoga & Bersama"
+  },
+  {
+    "ticker": "TBLA",
+    "name": "Tunas Baru Lampung Tbk",
+    "sector": "Perkebunan / Minyak Goreng Rose Brand, Gula Pasir & CPO Sungai Budi"
+  },
+  {
+    "ticker": "TBMS",
+    "name": "PT TBMS Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "TCID",
+    "name": "Mandom Indonesia Tbk",
+    "sector": "Konsumer / Produk Gatsby, Pixy, Pucelle & Bifesta"
+  },
+  {
+    "ticker": "TCPI",
+    "name": "Transcoal Pacific Tbk",
+    "sector": "Logistik / Transportasi Batubara Tongkang & Kapal Tunda"
+  },
+  {
+    "ticker": "TDPM",
+    "name": "PT TDPM Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "TEBE",
+    "name": "Dana Brata Luhur Tbk",
+    "sector": "Energi / Pelabuhan Muat Batubara & Fasilitas Conveyor"
+  },
+  {
+    "ticker": "TECH",
+    "name": "Indosterling Technomedia Tbk",
+    "sector": "Teknologi / Ekosistem Solusi IT Hyperlocal & Edukasi"
+  },
+  {
+    "ticker": "TELE",
+    "name": "Tiphone Mobile Indonesia Tbk",
+    "sector": "Teknologi / Distribusi Voucher Pulsa & Gadget"
+  },
+  {
+    "ticker": "TFAS",
+    "name": "Telefast Indonesia Tbk",
+    "sector": "Teknologi / Jasa Manajemen SDM Digital & Logistik Fastpay"
+  },
+  {
+    "ticker": "TFCO",
+    "name": "PT TFCO Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "TGKA",
+    "name": "Tigaraksa Satria Tbk",
+    "sector": "Konsumer / Distributor Susu Bayi SGM, Wyeth & Buku Edukasi"
+  },
+  {
+    "ticker": "TGLD",
+    "name": "PT TGLD Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "TGRA",
+    "name": "Terregra Asia Energy Tbk",
+    "sector": "Energi Terbarukan / Pembangkit Listrik Tenaga Surya & Minihidro"
+  },
+  {
+    "ticker": "TGUK",
+    "name": "Platinum Wahab Nusantara Tbk",
+    "sector": "Konsumer / Jaringan Minuman Teguk Indonesia & New York"
+  },
+  {
+    "ticker": "TIFA",
+    "name": "KDB Tifa Finance Tbk",
+    "sector": "Finansial / Pembiayaan Alat Berat Korea Development Bank"
+  },
+  {
+    "ticker": "TINS",
+    "name": "Timah Tbk",
+    "sector": "Mineral / BUMN Produsen Logam Timah Murni Terbesar Dunia MIND ID"
+  },
+  {
+    "ticker": "TIRA",
+    "name": "Tira Austenite Tbk",
+    "sector": "Material & Kimia / Perdagangan Baja Khusus & Gas Industri"
+  },
+  {
+    "ticker": "TIRT",
+    "name": "PT TIRT Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "TKIM",
+    "name": "Pabrik Kertas Tjiwi Kimia Tbk",
+    "sector": "Material / Kertas Tulis, Percetakan, Buku Paperline Sinar Mas"
+  },
+  {
+    "ticker": "TLDN",
+    "name": "Teladan Prima Agro Tbk",
+    "sector": "Perkebunan / Kelapa Sawit Berkelanjutan Kaltim"
+  },
+  {
+    "ticker": "TLKM",
+    "name": "Telkom Indonesia (Persero) Tbk",
+    "sector": "Telekomunikasi / BUMN Telekomunikasi Telkomsel, Indibiz & Data Center"
+  },
+  {
+    "ticker": "TMAS",
+    "name": "Temas Tbk",
+    "sector": "Logistik / Pelayaran Petikemas Angkutan Tol Laut Nusantara"
+  },
+  {
+    "ticker": "TMPO",
+    "name": "Tempo Inti Media Tbk",
+    "sector": "Media / Majalah Tempo, Koran Tempo & Tempo.co"
+  },
+  {
+    "ticker": "TNCA",
+    "name": "Trimuda Nuansa Citra Tbk",
+    "sector": "Logistik / Jasa Kurir Pengiriman Paket GDPS Cargo"
+  },
+  {
+    "ticker": "TOBA",
+    "name": "TBS Energi Utama Tbk",
+    "sector": "Energi / Transisi Hijau, PLTU, Motor Listrik Electrum & Pengolahan Sampah"
+  },
+  {
+    "ticker": "TOOL",
+    "name": "Panca Teknik Perkasa Tbk",
+    "sector": "Industri / Perkakas Mesin & Alat Pertukangan"
+  },
+  {
+    "ticker": "TOPP",
+    "name": "PT TOPP Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "TOSK",
+    "name": "Topindo Solusi Komunika Tbk",
+    "sector": "Teknologi / Aplikasi Topindoku Agen PPOB Mitra Warung"
+  },
+  {
+    "ticker": "TOTO",
+    "name": "PT TOTO Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "TOWR",
+    "name": "Sarana Menara Nusantara Tbk",
+    "sector": "Infrastruktur / Pemilik Menara Seluler Terbesar Protelindo Djarum"
+  },
+  {
+    "ticker": "TOYS",
+    "name": "Sunindo Adipersada Tbk",
+    "sector": "Konsumer / Produsen Boneka & Mainan Lunak Ekspor Global"
+  },
+  {
+    "ticker": "TPIA",
+    "name": "Chandra Asri Pacific Tbk",
+    "sector": "Petrokimia & Infrastruktur / Kompleks Olefin Terbesar Prajogo Pangestu"
+  },
+  {
+    "ticker": "TPMA",
+    "name": "Trans Power Marine Tbk",
+    "sector": "Logistik / Kapal Tongkang Angkutan Batubara & Kayu Pasir"
+  },
+  {
+    "ticker": "TRAM",
+    "name": "PT TRAM Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "TRGU",
+    "name": "Cerestar Indonesia Tbk",
+    "sector": "Konsumer / Produsen Tepung Terigu Segitiga Emas & Pakan Ternak"
+  },
+  {
+    "ticker": "TRIL",
+    "name": "PT TRIL Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "TRIM",
+    "name": "Trimegah Sekuritas Indonesia Tbk",
+    "sector": "Finansial / Broker Saham & Penjamin Emisi Garibaldi Thohir"
+  },
+  {
+    "ticker": "TRIN",
+    "name": "Perintis Triniti Properti Tbk",
+    "sector": "Properti / Apartemen Collins Boulevard Serpong & Lampung"
+  },
+  {
+    "ticker": "TRIO",
+    "name": "PT TRIO Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "TRIS",
+    "name": "Trisula International Tbk",
+    "sector": "Tekstil & Pakaian Jadi / Baju Kerja Tailored & Seragam"
+  },
+  {
+    "ticker": "TRJA",
+    "name": "Transkon Jaya Tbk",
+    "sector": "Logistik & Transportasi / Sewa Mobil 4x4 Tambang Batubara Balikpapan"
+  },
+  {
+    "ticker": "TRON",
+    "name": "Teknologi Karya Digital Nusa Tbk",
+    "sector": "Teknologi / Sistem IoT Smart City & Kamera Monitoring Busway"
+  },
+  {
+    "ticker": "TRST",
+    "name": "Trias Sentosa Tbk",
+    "sector": "Material / Plastik Kemasan BOPP & PET Film Ekspor"
+  },
+  {
+    "ticker": "TRUE",
+    "name": "Triniti Dinamik Tbk",
+    "sector": "Properti / Pengembang Gedung Apartemen"
+  },
+  {
+    "ticker": "TRUK",
+    "name": "Guna Timur Raya Tbk",
+    "sector": "Logistik / Transportasi Truk Tronton Angkutan Kargo"
+  },
+  {
+    "ticker": "TRUR",
+    "name": "PT TRUR Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "TRUS",
+    "name": "Trust Finance Indonesia Tbk",
+    "sector": "Finansial / Pembiayaan Sewa Guna Modal"
+  },
+  {
+    "ticker": "TRYA",
+    "name": "Trimitra Propertindo Tbk (Alt)",
+    "sector": "Properti"
+  },
+  {
+    "ticker": "TSPC",
+    "name": "Tempo Scan Pacific Tbk",
+    "sector": "Farmasi & Konsumer / Bodrex, Hemaviton, Bodrexin, Marina & Vidoran"
+  },
+  {
+    "ticker": "TUGU",
+    "name": "Asuransi Tugu Pratama Indonesia Tbk",
+    "sector": "Finansial / Asuransi Kerugian BUMN Pertamina & Dividen Jumbo"
+  },
+  {
+    "ticker": "TYRE",
+    "name": "King Tire Indonesia Tbk",
+    "sector": "Otomotif / Produsen Ban Motor Kingland"
+  },
+  {
+    "ticker": "UANG",
+    "name": "Pakuan Tbk",
+    "sector": "Properti / Resor Sawangan Golf & Shila at Sawangan Vasanta"
+  },
+  {
+    "ticker": "UCID",
+    "name": "Uni-Charm Indonesia Tbk",
+    "sector": "Konsumer / Popok Bayi MamyPoko, Charm Pembalut & Lifree"
+  },
+  {
+    "ticker": "UDNG",
+    "name": "Agro Bahari Nusantara Tbk",
+    "sector": "Perikanan / Budidaya Tambak Udang Vaname Bangka"
+  },
+  {
+    "ticker": "UFOE",
+    "name": "PT UFOE Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "ULTJ",
+    "name": "Ultra Jaya Milk Industry Tbk",
+    "sector": "Konsumer / Susu UHT Ultra Milk & Minuman Teh Kotak Legendaris"
+  },
+  {
+    "ticker": "ULTRA",
+    "name": "Ultra Mandiri Tbk",
+    "sector": "Konsumer"
+  },
+  {
+    "ticker": "UNIC",
+    "name": "Unggul Indah Cahaya Tbk",
+    "sector": "Kimia / Produsen Tunggal Alkylbenzene Bahan Baku Deterjen"
+  },
+  {
+    "ticker": "UNIQ",
+    "name": "Ulima Nitra Tbk",
+    "sector": "Energi / Jasa Kontraktor Tambang Batubara & Rental Alat Berat"
+  },
+  {
+    "ticker": "UNIT",
+    "name": "PT UNIT Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "UNSP",
+    "name": "Bakrie Sumatra Plantations Tbk",
+    "sector": "Perkebunan / Minyak Kelapa Sawit & Karet Bakrie"
+  },
+  {
+    "ticker": "UNTD",
+    "name": "Terang Dunia Abadi Tbk",
+    "sector": "Konsumer / Sepeda United Bike & Motor Listrik Avand"
+  },
+  {
+    "ticker": "UNTR",
+    "name": "United Tractors Tbk",
+    "sector": "Alat Berat Komatsu, Kontraktor Tambang Pama, Emas Martabe & Nikel"
+  },
+  {
+    "ticker": "UNTX",
+    "name": "PT UNTX Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "UNVR",
+    "name": "Unilever Indonesia Tbk",
+    "sector": "Konsumer / Lifebuoy, Pepsodent, Sunsilk, Bango, Royco, Rinso & Dove"
+  },
+  {
+    "ticker": "URBN",
+    "name": "Urban Jakarta Propertindo Tbk",
+    "sector": "Properti / Apartemen Transit Oriented Development TOD LRT"
+  },
+  {
+    "ticker": "UVCR",
+    "name": "Trimegah Karya Pratama Tbk",
+    "sector": "Teknologi / Platform Aplikasi Voucher Diskon Ultra Voucher"
+  },
+  {
+    "ticker": "VAIS",
+    "name": "Visi Aksara Inovasi Tbk",
+    "sector": "Teknologi & Pendidikan"
+  },
+  {
+    "ticker": "VAST",
+    "name": "Vastland Indonesia Tbk",
+    "sector": "Properti / Pengembang Kompleks Pergudangan Logistik"
+  },
+  {
+    "ticker": "VERN",
+    "name": "Verena Multi Finance Tbk (Alt)",
+    "sector": "Finansial"
+  },
+  {
+    "ticker": "VICI",
+    "name": "Victoria Care Indonesia Tbk",
+    "sector": "Konsumer / Produk Perawatan Tubuh Herborist, Miranda & CBD"
+  },
+  {
+    "ticker": "VICO",
+    "name": "PT VICO Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "VICR",
+    "name": "Victory Chingluh Tbk",
+    "sector": "Konsumer / Sepatu Olahraga"
+  },
+  {
+    "ticker": "VINS",
+    "name": "Victoria Investama Tbk",
+    "sector": "Finansial / Holding Jasa Keuangan Victoria Group"
+  },
+  {
+    "ticker": "VIPR",
+    "name": "PT VIPR Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "VISI",
+    "name": "PT VISI Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "VIVA",
+    "name": "PT VIVA Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "VKTR",
+    "name": "VKTR Teknologi Mobilitas Tbk",
+    "sector": "Otomotif / Elektrifikasi Kendaraan Komersial Bus & Truk EV Bakrie"
+  },
+  {
+    "ticker": "VOKS",
+    "name": "Voksel Electric Tbk",
+    "sector": "Material / Produsen Kabel Tegangan Tinggi Tembaga & Fiber Optik"
+  },
+  {
+    "ticker": "VRNA",
+    "name": "Mizuho Balimor Finance Tbk",
+    "sector": "Finansial / Pembiayaan Kendaraan Bermotor Mizuho Jepang"
+  },
+  {
+    "ticker": "VTNY",
+    "name": "PT VTNY Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "WAPO",
+    "name": "Wahana Pronatural Tbk",
+    "sector": "Perdagangan / Komoditas Hasil Bumi & Logam"
+  },
+  {
+    "ticker": "WEGE",
+    "name": "Wijaya Karya Bangunan Gedung Tbk",
+    "sector": "Infrastruktur / Kontraktor Gedung Modular & Presisi BUMN WIKA"
+  },
+  {
+    "ticker": "WEHA",
+    "name": "WEHA Transportasi Indonesia Tbk",
+    "sector": "Transportasi / Armada Bus Pariwisata Mewah White Horse"
+  },
+  {
+    "ticker": "WGSH",
+    "name": "Wira Global Solusi Tbk",
+    "sector": "Teknologi / Pabrik Software Venture Builder & Inkubator Startup"
+  },
+  {
+    "ticker": "WICO",
+    "name": "Wicaksana Overseas International Tbk",
+    "sector": "Konsumer / Distribusi Produk Konsumsi DKSH Group"
+  },
+  {
+    "ticker": "WIDI",
+    "name": "Widiant Jaya Krenindo Tbk",
+    "sector": "Industri & Alat Berat / Sewa Alat Berat Excavator & Crane"
+  },
+  {
+    "ticker": "WIFI",
+    "name": "Solusi Sinergi Digital Tbk",
+    "sector": "Teknologi / Jaringan WiFi Publik Surge & Ekosistem Kereta Api"
+  },
+  {
+    "ticker": "WIIM",
+    "name": "PT WIIM Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "WIKA",
+    "name": "Wijaya Karya (Persero) Tbk",
+    "sector": "Infrastruktur / BUMN Karya Konstruksi Kereta Cepat Whoosh & Tol"
+  },
+  {
+    "ticker": "WINE",
+    "name": "Hatten Bali Tbk",
+    "sector": "Konsumer / Produsen Minuman Anggur Wine Asli Bali"
+  },
+  {
+    "ticker": "WINR",
+    "name": "PT WINR Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "WINS",
+    "name": "Wintermar Offshore Marine Tbk",
+    "sector": "Energi & Logistik / Kapal Canggih Penunjang Tambang Migas Lepas Pantai"
+  },
+  {
+    "ticker": "WIRG",
+    "name": "WIR Asia Tbk",
+    "sector": "Teknologi / Pengembang Teknologi Realitas Tertambah Augmented Reality (AR)"
+  },
+  {
+    "ticker": "WMPP",
+    "name": "Widodo Makmur Perkasa Tbk",
+    "sector": "Konsumer / Peternakan Sapi, Ayam & Rumah Potong Hewan"
+  },
+  {
+    "ticker": "WMUU",
+    "name": "Widodo Makmur Unggas Tbk",
+    "sector": "Konsumer / Rumah Potong Ayam Terintegrasi"
+  },
+  {
+    "ticker": "WOMF",
+    "name": "Wahana Ottomitra Multiartha Tbk",
+    "sector": "Finansial / Pembiayaan Sepeda Motor Honda WOM Finance Maybank"
+  },
+  {
+    "ticker": "WOOD",
+    "name": "Integra Indocabinet Tbk",
+    "sector": "Material & Konsumer / Manufaktur Mebel Kayu Ekspor Terbesar AS"
+  },
+  {
+    "ticker": "WOWS",
+    "name": "Ginting Jaya Energi Tbk",
+    "sector": "Energi / Jasa Rig Perawatan Sumur Minyak Workover"
+  },
+  {
+    "ticker": "WPOW",
+    "name": "PT WPOW Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "WSBP",
+    "name": "Waskita Beton Precast Tbk",
+    "sector": "Material / Produsen Beton Pracetak & Readymix Waskita BUMN"
+  },
+  {
+    "ticker": "WSKT",
+    "name": "Waskita Karya (Persero) Tbk",
+    "sector": "Infrastruktur / BUMN Karya Kontraktor Tol Trans Jawa & Sumatra"
+  },
+  {
+    "ticker": "WTON",
+    "name": "Wijaya Karya Beton Tbk",
+    "sector": "Material / Produsen Beton Pracetak Terbesar BUMN WIKA Beton"
+  },
+  {
+    "ticker": "YATA",
+    "name": "PT YATA Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "YELO",
+    "name": "Yelooo Integra Datanet Tbk",
+    "sector": "Teknologi / Modem Travel Roaming Passpod & Fiber Optik"
+  },
+  {
+    "ticker": "YPAS",
+    "name": "Yanaprima Hastapersada Tbk",
+    "sector": "Material / Karung Plastik Industri Semen & Pupuk"
+  },
+  {
+    "ticker": "YULE",
+    "name": "Yulie Sekuritas Indonesia Tbk",
+    "sector": "Finansial / Perantara Pedagang Efek & Penjamin Emisi"
+  },
+  {
+    "ticker": "ZATA",
+    "name": "Bersama Zatta Jaya Tbk",
+    "sector": "Konsumer / Busana Muslim Elzatta Hijab & Dauky"
+  },
+  {
+    "ticker": "ZBRA",
+    "name": "Dosni Roha Indonesia Tbk",
+    "sector": "Logistik / Distribusi Rantai Pasok Medis & Farmasi DNR"
+  },
+  {
+    "ticker": "ZINC",
+    "name": "Kapuas Prima Coal Tbk",
+    "sector": "Mineral / Tambang Seng, Timbal & Perak Kalimantan"
+  },
+  {
+    "ticker": "ZONE",
+    "name": "PT ZONE Tbk",
+    "sector": "Emiten Terdaftar BEI / IHSG"
+  },
+  {
+    "ticker": "ZYRX",
+    "name": "Zyrexindo Mandiri Buana Tbk",
+    "sector": "Teknologi / Produsen Laptop & Komputer Asli Indonesia Zyrex"
+  }
+]
