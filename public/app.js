@@ -1921,6 +1921,16 @@ function pdfTimestamp() {
     return new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'medium', timeStyle: 'short' }) + ' WIB';
 }
 
+// jsPDF's built-in Helvetica font cannot render emoji reliably. Keep the
+// report text readable by removing pictographs only at PDF export time.
+function sanitizePdfText(value) {
+    return String(value ?? '')
+        .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2300}-\u{23FF}\u{FE0F}\u{200D}\u{20E3}]/gu, '')
+        .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+}
+
 function pdfSetLoading(button, loading) {
     if (!button) return;
     button.disabled = loading;
@@ -1938,7 +1948,7 @@ function screenerPdfSections() {
     ];
     return definitions.map(([key, title, columns, map]) => {
         const rows = filterScreenerList(lastScreenerData?.[key] || []);
-        return rows.length ? { title, columns, rows: rows.map(map) } : null;
+        return rows.length ? { title: sanitizePdfText(title), columns: columns.map(sanitizePdfText), rows: rows.map(row => map(row).map(sanitizePdfText)) } : null;
     }).filter(Boolean);
 }
 
