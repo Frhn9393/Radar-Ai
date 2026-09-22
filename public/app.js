@@ -3204,7 +3204,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof getAudioContext === 'function') {
             const ctx = getAudioContext();
             if (ctx && ctx.state === 'suspended') {
-                ctx.resume().catch(() => {});
+                ctx.resume().catch(() => { });
             }
         }
         window.removeEventListener('click', unlockAudio);
