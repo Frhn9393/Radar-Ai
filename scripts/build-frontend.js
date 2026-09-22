@@ -15,6 +15,7 @@ const moduleOrder = [
     'screener.js',
     'foreignFlow.js',
     'watchlist.js',
+    'portfolio.js',
     'indices.js',
     'controls.js',
     'backtest.js',

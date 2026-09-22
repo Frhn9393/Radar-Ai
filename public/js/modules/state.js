@@ -87,10 +87,12 @@ const fmtNum = new Intl.NumberFormat('id-ID');
 // Navigation Tabs
 const tabDeals = document.getElementById('tab-deals');
 const tabScreener = document.getElementById('tab-screener');
+const tabPortfolio = document.getElementById('tab-portfolio');
 const tabForeign = document.getElementById('tab-foreign');
 const tabBacktest = document.getElementById('tab-backtest');
 const secDeals = document.getElementById('section-deals');
 const secScreener = document.getElementById('section-screener');
+const secPortfolio = document.getElementById('section-portfolio');
 const secForeign = document.getElementById('section-foreign');
 const secBacktest = document.getElementById('section-backtest');
 const btnMobileNav = document.getElementById('btn-mobile-nav');

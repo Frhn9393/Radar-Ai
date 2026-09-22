@@ -13,6 +13,7 @@ function switchMainTab(tabName) {
     const tabs = [
         { btn: tabDeals, sec: secDeals, name: 'deals' },
         { btn: tabScreener, sec: secScreener, name: 'screener' },
+        { btn: tabPortfolio, sec: secPortfolio, name: 'portfolio' },
         { btn: tabForeign, sec: secForeign, name: 'foreign' },
         { btn: tabBacktest, sec: secBacktest, name: 'backtest' }
     ];
@@ -65,6 +66,7 @@ function switchMainTab(tabName) {
 
 tabDeals?.addEventListener('click', () => switchMainTab('deals'));
 tabScreener?.addEventListener('click', () => switchMainTab('screener'));
+tabPortfolio?.addEventListener('click', () => switchMainTab('portfolio'));
 tabForeign?.addEventListener('click', () => switchMainTab('foreign'));
 tabBacktest?.addEventListener('click', () => switchMainTab('backtest'));
 

@@ -134,6 +134,10 @@
                     </svg>
                     <span>Rekomendasi Teknikal, BSJP & BPJP</span>
                 </button>
+                <button id="tab-portfolio"
+                    class="nav-tab text-slate-400 hover:text-slate-200 hover:bg-[#0c121e] font-medium px-4 py-1.5 rounded-full text-xs sm:text-sm flex items-center gap-2 transition cursor-pointer">
+                    <span class="text-emerald-400">◈</span><span>Smart Portfolio</span>
+                </button>
                 <button id="tab-foreign"
                     class="nav-tab text-slate-400 hover:text-slate-200 hover:bg-[#0c121e] font-medium px-4 py-1.5 rounded-full text-xs sm:text-sm flex items-center gap-2 transition cursor-pointer">
                     <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -498,6 +502,30 @@
                 </div>
             </div>
 
+        </section>
+
+        <!-- ================= SMART PORTFOLIO ================= -->
+        <section id="section-portfolio" class="hidden space-y-6">
+            <div class="bg-[#0b101a] rounded-2xl p-5 sm:p-6 shadow-xl">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-5">
+                    <div><h2 class="text-xl font-black text-white">Smart Portfolio</h2><p class="text-xs text-slate-400 mt-1">Pantau nilai, P/L, exposure, dan risiko portofolio secara realtime.</p></div>
+                    <div class="flex items-center gap-2"><span id="portfolio-status" class="text-xs text-slate-400">Belum ada posisi</span><button id="portfolio-refresh" class="bg-cyan-500/15 text-cyan-300 px-3 py-2 rounded-lg text-xs font-bold">Refresh</button></div>
+                </div>
+                <form id="portfolio-form" class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-6">
+                    <input name="ticker" required maxlength="5" placeholder="Kode (BBCA)" class="bg-[#070b13] rounded-lg px-3 py-2.5 text-sm font-mono uppercase" />
+                    <input name="quantity" required type="number" min="1" step="1" placeholder="Jumlah lot" class="bg-[#070b13] rounded-lg px-3 py-2.5 text-sm" />
+                    <input name="avgPrice" required type="number" min="1" step="1" placeholder="Harga rata-rata" class="bg-[#070b13] rounded-lg px-3 py-2.5 text-sm" />
+                    <button class="bg-emerald-500 text-black rounded-lg px-4 py-2.5 text-sm font-black">Tambah / Update Posisi</button>
+                </form>
+                <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+                    <div class="bg-[#0e1626] rounded-xl p-3"><span class="text-[10px] text-slate-400 block">Total Nilai</span><strong id="portfolio-total-value" class="font-mono text-white">Rp 0</strong></div>
+                    <div class="bg-[#0e1626] rounded-xl p-3"><span class="text-[10px] text-slate-400 block">Unrealized P/L</span><strong id="portfolio-total-pnl" class="font-mono text-slate-300">Rp 0 (0.00%)</strong></div>
+                    <div class="bg-[#0e1626] rounded-xl p-3"><span class="text-[10px] text-slate-400 block">VaR 95% / Hari</span><strong id="portfolio-var" class="font-mono text-amber-300">Rp 0</strong></div>
+                    <div class="bg-[#0e1626] rounded-xl p-3"><span class="text-[10px] text-slate-400 block">Diversifikasi</span><strong id="portfolio-diversification" class="text-white text-xs">-</strong></div>
+                    <div class="bg-[#0e1626] rounded-xl p-3"><span class="text-[10px] text-slate-400 block">Sektor Terbesar</span><strong id="portfolio-sector-exposure" class="text-cyan-300 text-xs">-</strong></div>
+                </div>
+                <div class="screener-table-scroll"><table class="w-full min-w-[900px] text-left text-xs"><thead class="text-slate-400 uppercase bg-[#070b13]"><tr><th class="p-3">Saham</th><th class="p-3">Lot</th><th class="p-3">Avg Price</th><th class="p-3">Last Price</th><th class="p-3">Nilai Pasar</th><th class="p-3">Unrealized P/L</th><th class="p-3">Trailing Stop</th><th class="p-3">Aksi</th></tr></thead><tbody id="portfolio-rows"></tbody></table></div>
+            </div>
         </section>
 
         <!-- ================= TAB 2: REKOMENDASI TEKNIKAL, BSJP & BPJP ================= -->
@@ -2059,6 +2087,9 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
             </svg>
             <span>Screener</span>
+        </button>
+        <button class="mobile-nav-btn flex-1 flex flex-col items-center justify-center py-1.5 px-1 text-[10px] font-bold rounded-xl transition min-h-[48px] text-slate-400 hover:text-slate-200 cursor-pointer" data-tab="portfolio">
+            <span class="text-base leading-none mb-0.5">◈</span><span>Portfolio</span>
         </button>
 
         <!-- Tab 3: Asing (Foreign Flow) -->

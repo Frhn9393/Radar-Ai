@@ -3,8 +3,10 @@ const router = express.Router();
 const {
     analyzeStock,
     fetch_corporate_news,
-    search_stocks
+    search_stocks,
+    get_stock_price
 } = require('../services/stockService');
+const { ALL_IDX_STOCKS } = require('../services/searchService');
 
 // API: Search / Autocomplete suggestions
 router.get('/search-suggest', (req, res) => {
@@ -15,6 +17,28 @@ router.get('/search-suggest', (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message || 'Gagal mencari emiten', suggestions: [] });
     }
+});
+
+// Batch realtime quotes for the Smart Portfolio panel.
+router.get('/portfolio/quotes', async (req, res) => {
+    const tickers = String(req.query.tickers || '').split(',')
+        .map(t => t.trim().toUpperCase().replace(/\.JK$/i, ''))
+        .filter(Boolean)
+        .filter((ticker, index, list) => list.indexOf(ticker) === index)
+        .slice(0, 30);
+    if (!tickers.length) return res.json({ quotes: [], timestamp: new Date().toISOString() });
+
+    const sectorMap = new Map((ALL_IDX_STOCKS || []).map(stock => [stock.ticker, stock.sector || 'Emiten BEI']));
+    const results = await Promise.allSettled(tickers.map(async ticker => ({
+        ticker,
+        sector: sectorMap.get(ticker) || 'Emiten BEI',
+        quote: await get_stock_price(ticker)
+    })));
+    res.json({
+        quotes: results.filter(result => result.status === 'fulfilled').map(result => result.value),
+        errors: results.filter(result => result.status === 'rejected').length,
+        timestamp: new Date().toISOString()
+    });
 });
 
 // API: Analyze specific stock
