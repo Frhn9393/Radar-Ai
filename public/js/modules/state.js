@@ -18,19 +18,55 @@ let soundEnabled = true;
 let streamInterval = null;
 let lastScreenerData = null;
 let activeScalpSession = 'sesi1';
-let savedWatchlist = ['BBRI', 'FILM', 'EXCL', 'BREN', 'GOTO', 'TPIA', 'ASII', 'MEDC', 'BRIS', 'AUTO'];
-try {
-    const local = localStorage.getItem('stockradar_watchlist');
-    if (local) {
-        const parsed = JSON.parse(local);
-        if (Array.isArray(parsed) && parsed.length > 0) savedWatchlist = parsed;
-    }
-} catch (e) { }
+const DEFAULT_WATCHLIST = ['BBRI', 'FILM', 'EXCL', 'BREN', 'GOTO', 'TPIA', 'ASII', 'MEDC', 'BRIS', 'AUTO'];
 
-function saveWatchlistToStorage() {
+function loadPersistedList(key, fallback = []) {
+    try {
+        const raw = localStorage.getItem(key);
+        if (raw === null) return [...fallback];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? [...new Set(parsed.filter(Boolean))] : [...fallback];
+    } catch (e) {
+        return [...fallback];
+    }
+}
+
+// Lazy initialization: read the cache once when the frontend state is created.
+let savedWatchlist = loadPersistedList('stockradar_watchlist', DEFAULT_WATCHLIST);
+let savedBookmarks = {
+    news: loadPersistedList('stockradar_bookmarks_news'),
+    stocks: loadPersistedList('stockradar_bookmarks_stocks'),
+    screener: loadPersistedList('stockradar_bookmarks_screener')
+};
+
+function persistBookmarkState() {
     try {
         localStorage.setItem('stockradar_watchlist', JSON.stringify(savedWatchlist));
-    } catch (e) { }
+        localStorage.setItem('stockradar_bookmarks_news', JSON.stringify(savedBookmarks.news));
+        localStorage.setItem('stockradar_bookmarks_stocks', JSON.stringify(savedBookmarks.stocks));
+        localStorage.setItem('stockradar_bookmarks_screener', JSON.stringify(savedBookmarks.screener));
+    } catch (e) {
+        // Storage may be disabled or full; the in-memory state remains usable.
+    }
+}
+
+function isBookmarked(type, id) {
+    return Array.isArray(savedBookmarks[type]) && savedBookmarks[type].includes(String(id));
+}
+
+function toggleBookmark(type, id) {
+    if (!Object.prototype.hasOwnProperty.call(savedBookmarks, type) || id === null || id === undefined) return false;
+    const value = String(id);
+    const list = savedBookmarks[type];
+    const index = list.indexOf(value);
+    if (index >= 0) list.splice(index, 1);
+    else list.unshift(value);
+    persistBookmarkState();
+    return index < 0;
+}
+
+function saveWatchlistToStorage() {
+    persistBookmarkState();
     updateWatchlistBadge();
 }
 

@@ -9,7 +9,11 @@
 function confCell(confidence, label) {
     const color = confidence >= 75 ? 'text-emerald-400' : confidence >= 55 ? 'text-amber-400' : 'text-orange-400';
     const barColor = confidence >= 75 ? 'bg-emerald-400' : confidence >= 55 ? 'bg-amber-400' : 'bg-orange-400';
-    const badgeBg = confidence >= 75 ? 'bg-emerald-500/20 text-emerald-400 shadow-sm' : confidence >= 55 ? 'bg-amber-500/20 text-amber-400 shadow-sm' : 'bg-orange-500/20 text-orange-400 shadow-sm';
+    const isCounterTrend = /rebound|oversold/i.test(label || '');
+    const badgeBg = isCounterTrend
+        ? 'bg-orange-500/20 text-orange-300 ring-1 ring-orange-400/30 shadow-sm'
+        : confidence >= 75 ? 'bg-emerald-500/20 text-emerald-400 shadow-sm' : confidence >= 55 ? 'bg-amber-500/20 text-amber-400 shadow-sm' : 'bg-orange-500/20 text-orange-400 shadow-sm';
+    const statusIcon = isCounterTrend ? '↗ ' : '';
     return `
         <td class="p-3">
             <div class="flex items-center gap-2">
@@ -20,7 +24,7 @@ function confCell(confidence, label) {
             </div>
         </td>
         <td class="p-3">
-            <span class="text-[10px] px-2 py-0.5 rounded font-semibold shadow-sm ${badgeBg}">${label}</span>
+            <span class="text-[10px] px-2 py-0.5 rounded font-semibold ${badgeBg}" title="${isCounterTrend ? 'Counter-trend: rebound dari kondisi oversold, bukan tren bullish utama' : 'Status momentum/tren teknikal'}">${statusIcon}${escapeHtml(label)}</span>
         </td>
     `;
 }
@@ -367,8 +371,8 @@ function renderScreenerResults(data) {
                         <td class="p-3 font-mono font-semibold text-amber-400">${row.rsi}</td>
                         <td class="p-3 font-mono text-slate-300">${fmtRp.format(row.ema200)}</td>
                         <td class="p-3 font-mono text-slate-400">${fmtRp.format(row.support)}</td>
-                        <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetKonservatif)}</td>
-                        <td class="p-3 font-mono font-extrabold text-emerald-300">${fmtRp.format(row.targetAgresif)}</td>
+                        <td class="p-3 font-mono font-semibold text-emerald-400">${formatPrice(row.targetKonservatif)}</td>
+                        <td class="p-3 font-mono font-extrabold text-emerald-300">${formatPrice(row.targetAgresif)}</td>
                         <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.cutLoss)}</td>
                         ${confCell(row.confidence, row.label)}
                     </tr>

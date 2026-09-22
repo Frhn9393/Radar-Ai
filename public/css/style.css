@@ -30,6 +30,7 @@ body {
     width: max-content;
     animation: marqueeScroll 45s linear infinite;
     will-change: transform;
+    gap: 0;
 }
 
 .marquee-track:hover {
@@ -51,6 +52,7 @@ body {
     width: max-content;
     animation: marqueeNewsScroll 55s linear infinite;
     will-change: transform;
+    gap: 0;
 }
 
 .marquee-news-track:hover {
@@ -71,6 +73,11 @@ body {
 .ticker-mask {
     mask-image: linear-gradient(to right, transparent, black 40px, black calc(100% - 40px), transparent);
     -webkit-mask-image: linear-gradient(to right, transparent, black 40px, black calc(100% - 40px), transparent);
+}
+
+.marquee-group {
+    flex: 0 0 auto;
+    padding-right: 2rem;
 }
 
 .screener-table-scroll {

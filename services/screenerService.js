@@ -46,6 +46,13 @@ const WATCHLIST_UNIVERSE = [
 
 const UNIQUE_WATCHLIST = Array.from(new Set(WATCHLIST_UNIVERSE));
 
+function roundToTick(value) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return 0;
+    const tick = getTickSize(numeric);
+    return Math.round(numeric / tick) * tick;
+}
+
 function calculateSwingRiskReward(areaBuyLow, areaBuyHigh, targetPrice1, cutLoss) {
     const low = Number(areaBuyLow);
     const high = Number(areaBuyHigh);
@@ -374,9 +381,9 @@ async function runScreener() {
                     rsi: rsi.toFixed(1),
                     ema200: ema200.toFixed(0),
                     support: (ema200 * 0.98).toFixed(0),
-                    targetKonservatif: (price * 1.20).toFixed(0),
-                    targetAgresif: (price * 1.40).toFixed(0),
-                    cutLoss: (ema200 * 0.93).toFixed(0),
+                    targetKonservatif: roundToTick(price * 1.20),
+                    targetAgresif: roundToTick(price * 1.40),
+                    cutLoss: roundToTick(ema200 * 0.93),
                     horizon: '6-12 Bulan',
                     sinyalEntri: isSupertrendBullish ? 'Golden Alignment + ST ✓' : 'Trend Support Rebound',
                     supertrendBadge, confidence, label,
@@ -448,6 +455,7 @@ module.exports = {
     runScreener,
     calculateSwingRiskReward,
     getTechnicalStatus,
+    roundToTick,
     WATCHLIST_UNIVERSE,
     UNIQUE_WATCHLIST
 };

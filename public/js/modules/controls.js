@@ -6,6 +6,7 @@
 // ============================================================
 //  8. CONTROLS: STREAM, SOUND, EXPORT, REFRESH
 // ============================================================
+let streamRefreshInFlight = false;
 btnToggleStream?.addEventListener('click', () => {
     autoStreamActive = !autoStreamActive;
     if (autoStreamActive) {
@@ -24,12 +25,16 @@ btnToggleStream?.addEventListener('click', () => {
 function startAutoStream() {
     stopAutoStream();
     streamInterval = setInterval(() => {
-        if (typeof loadMarketNews === 'function') loadMarketNews();
-        if (typeof loadDeals === 'function') loadDeals();
-        if (typeof loadMarketIndices === 'function') loadMarketIndices();
+        if (streamRefreshInFlight || !autoStreamActive) return;
+        streamRefreshInFlight = true;
+        const tasks = [];
+        if (typeof loadMarketNews === 'function') tasks.push(loadMarketNews());
+        if (typeof loadDeals === 'function') tasks.push(loadDeals());
+        if (typeof loadMarketIndices === 'function') tasks.push(loadMarketIndices());
         if (typeof allForeignData !== 'undefined' && allForeignData && typeof loadForeignFlowData === 'function') {
-            loadForeignFlowData();
+            tasks.push(loadForeignFlowData());
         }
+        Promise.allSettled(tasks).finally(() => { streamRefreshInFlight = false; });
     }, NEWS_AUTO_REFRESH_MS);
 }
 
@@ -39,6 +44,11 @@ function stopAutoStream() {
         streamInterval = null;
     }
 }
+
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stopAutoStream();
+    else if (autoStreamActive) startAutoStream();
+});
 
 btnToggleSound?.addEventListener('click', () => {
     soundEnabled = !soundEnabled;

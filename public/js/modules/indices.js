@@ -25,8 +25,8 @@ async function loadMarketIndices() {
 
         // Duplicate set for seamless infinite marquee scroll
         track.innerHTML = `
-            <div class="flex items-center gap-8">${htmlSet}</div>
-            <div class="flex items-center gap-8">${htmlSet}</div>
+            <div class="marquee-group flex items-center gap-8">${htmlSet}</div>
+            <div class="marquee-group flex items-center gap-8" aria-hidden="true">${htmlSet}</div>
         `;
     } catch (err) {
         console.warn('Market indices update skipped:', err);

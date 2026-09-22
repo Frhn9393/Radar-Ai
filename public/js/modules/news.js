@@ -42,10 +42,10 @@ function renderCorporateNewsTicker() {
     const items = [sourceItems, sourceItems];
     items.forEach(group => {
         const groupEl = document.createElement('div');
-        groupEl.className = 'flex items-center gap-6 shrink-0';
+        groupEl.className = 'marquee-group flex items-center gap-6 shrink-0';
         group.forEach(news => {
         const item = document.createElement('div');
-        item.className = 'inline-flex items-center gap-2 mr-6 text-slate-300 whitespace-nowrap cursor-pointer hover:text-white transition';
+        item.className = 'inline-flex items-center gap-2 text-slate-300 whitespace-nowrap cursor-pointer hover:text-white transition';
 
         let tag = 'IDX';
         if (news.category) tag = news.category.toUpperCase().substring(0, 5);

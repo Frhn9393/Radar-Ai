@@ -24,19 +24,55 @@ let soundEnabled = true;
 let streamInterval = null;
 let lastScreenerData = null;
 let activeScalpSession = 'sesi1';
-let savedWatchlist = ['BBRI', 'FILM', 'EXCL', 'BREN', 'GOTO', 'TPIA', 'ASII', 'MEDC', 'BRIS', 'AUTO'];
-try {
-    const local = localStorage.getItem('stockradar_watchlist');
-    if (local) {
-        const parsed = JSON.parse(local);
-        if (Array.isArray(parsed) && parsed.length > 0) savedWatchlist = parsed;
-    }
-} catch (e) { }
+const DEFAULT_WATCHLIST = ['BBRI', 'FILM', 'EXCL', 'BREN', 'GOTO', 'TPIA', 'ASII', 'MEDC', 'BRIS', 'AUTO'];
 
-function saveWatchlistToStorage() {
+function loadPersistedList(key, fallback = []) {
+    try {
+        const raw = localStorage.getItem(key);
+        if (raw === null) return [...fallback];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? [...new Set(parsed.filter(Boolean))] : [...fallback];
+    } catch (e) {
+        return [...fallback];
+    }
+}
+
+// Lazy initialization: read the cache once when the frontend state is created.
+let savedWatchlist = loadPersistedList('stockradar_watchlist', DEFAULT_WATCHLIST);
+let savedBookmarks = {
+    news: loadPersistedList('stockradar_bookmarks_news'),
+    stocks: loadPersistedList('stockradar_bookmarks_stocks'),
+    screener: loadPersistedList('stockradar_bookmarks_screener')
+};
+
+function persistBookmarkState() {
     try {
         localStorage.setItem('stockradar_watchlist', JSON.stringify(savedWatchlist));
-    } catch (e) { }
+        localStorage.setItem('stockradar_bookmarks_news', JSON.stringify(savedBookmarks.news));
+        localStorage.setItem('stockradar_bookmarks_stocks', JSON.stringify(savedBookmarks.stocks));
+        localStorage.setItem('stockradar_bookmarks_screener', JSON.stringify(savedBookmarks.screener));
+    } catch (e) {
+        // Storage may be disabled or full; the in-memory state remains usable.
+    }
+}
+
+function isBookmarked(type, id) {
+    return Array.isArray(savedBookmarks[type]) && savedBookmarks[type].includes(String(id));
+}
+
+function toggleBookmark(type, id) {
+    if (!Object.prototype.hasOwnProperty.call(savedBookmarks, type) || id === null || id === undefined) return false;
+    const value = String(id);
+    const list = savedBookmarks[type];
+    const index = list.indexOf(value);
+    if (index >= 0) list.splice(index, 1);
+    else list.unshift(value);
+    persistBookmarkState();
+    return index < 0;
+}
+
+function saveWatchlistToStorage() {
+    persistBookmarkState();
     updateWatchlistBadge();
 }
 
@@ -609,10 +645,10 @@ function renderCorporateNewsTicker() {
     const items = [sourceItems, sourceItems];
     items.forEach(group => {
         const groupEl = document.createElement('div');
-        groupEl.className = 'flex items-center gap-6 shrink-0';
+        groupEl.className = 'marquee-group flex items-center gap-6 shrink-0';
         group.forEach(news => {
         const item = document.createElement('div');
-        item.className = 'inline-flex items-center gap-2 mr-6 text-slate-300 whitespace-nowrap cursor-pointer hover:text-white transition';
+        item.className = 'inline-flex items-center gap-2 text-slate-300 whitespace-nowrap cursor-pointer hover:text-white transition';
 
         let tag = 'IDX';
         if (news.category) tag = news.category.toUpperCase().substring(0, 5);
@@ -1443,7 +1479,11 @@ btnClearSearch.addEventListener('click', () => {
 function confCell(confidence, label) {
     const color = confidence >= 75 ? 'text-emerald-400' : confidence >= 55 ? 'text-amber-400' : 'text-orange-400';
     const barColor = confidence >= 75 ? 'bg-emerald-400' : confidence >= 55 ? 'bg-amber-400' : 'bg-orange-400';
-    const badgeBg = confidence >= 75 ? 'bg-emerald-500/20 text-emerald-400 shadow-sm' : confidence >= 55 ? 'bg-amber-500/20 text-amber-400 shadow-sm' : 'bg-orange-500/20 text-orange-400 shadow-sm';
+    const isCounterTrend = /rebound|oversold/i.test(label || '');
+    const badgeBg = isCounterTrend
+        ? 'bg-orange-500/20 text-orange-300 ring-1 ring-orange-400/30 shadow-sm'
+        : confidence >= 75 ? 'bg-emerald-500/20 text-emerald-400 shadow-sm' : confidence >= 55 ? 'bg-amber-500/20 text-amber-400 shadow-sm' : 'bg-orange-500/20 text-orange-400 shadow-sm';
+    const statusIcon = isCounterTrend ? '↗ ' : '';
     return `
         <td class="p-3">
             <div class="flex items-center gap-2">
@@ -1454,7 +1494,7 @@ function confCell(confidence, label) {
             </div>
         </td>
         <td class="p-3">
-            <span class="text-[10px] px-2 py-0.5 rounded font-semibold shadow-sm ${badgeBg}">${label}</span>
+            <span class="text-[10px] px-2 py-0.5 rounded font-semibold ${badgeBg}" title="${isCounterTrend ? 'Counter-trend: rebound dari kondisi oversold, bukan tren bullish utama' : 'Status momentum/tren teknikal'}">${statusIcon}${escapeHtml(label)}</span>
         </td>
     `;
 }
@@ -1801,8 +1841,8 @@ function renderScreenerResults(data) {
                         <td class="p-3 font-mono font-semibold text-amber-400">${row.rsi}</td>
                         <td class="p-3 font-mono text-slate-300">${fmtRp.format(row.ema200)}</td>
                         <td class="p-3 font-mono text-slate-400">${fmtRp.format(row.support)}</td>
-                        <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetKonservatif)}</td>
-                        <td class="p-3 font-mono font-extrabold text-emerald-300">${fmtRp.format(row.targetAgresif)}</td>
+                        <td class="p-3 font-mono font-semibold text-emerald-400">${formatPrice(row.targetKonservatif)}</td>
+                        <td class="p-3 font-mono font-extrabold text-emerald-300">${formatPrice(row.targetAgresif)}</td>
                         <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.cutLoss)}</td>
                         ${confCell(row.confidence, row.label)}
                     </tr>
@@ -2424,8 +2464,8 @@ async function loadMarketIndices() {
 
         // Duplicate set for seamless infinite marquee scroll
         track.innerHTML = `
-            <div class="flex items-center gap-8">${htmlSet}</div>
-            <div class="flex items-center gap-8">${htmlSet}</div>
+            <div class="marquee-group flex items-center gap-8">${htmlSet}</div>
+            <div class="marquee-group flex items-center gap-8" aria-hidden="true">${htmlSet}</div>
         `;
     } catch (err) {
         console.warn('Market indices update skipped:', err);
@@ -2443,6 +2483,7 @@ async function loadMarketIndices() {
 // ============================================================
 //  8. CONTROLS: STREAM, SOUND, EXPORT, REFRESH
 // ============================================================
+let streamRefreshInFlight = false;
 btnToggleStream?.addEventListener('click', () => {
     autoStreamActive = !autoStreamActive;
     if (autoStreamActive) {
@@ -2461,12 +2502,16 @@ btnToggleStream?.addEventListener('click', () => {
 function startAutoStream() {
     stopAutoStream();
     streamInterval = setInterval(() => {
-        if (typeof loadMarketNews === 'function') loadMarketNews();
-        if (typeof loadDeals === 'function') loadDeals();
-        if (typeof loadMarketIndices === 'function') loadMarketIndices();
+        if (streamRefreshInFlight || !autoStreamActive) return;
+        streamRefreshInFlight = true;
+        const tasks = [];
+        if (typeof loadMarketNews === 'function') tasks.push(loadMarketNews());
+        if (typeof loadDeals === 'function') tasks.push(loadDeals());
+        if (typeof loadMarketIndices === 'function') tasks.push(loadMarketIndices());
         if (typeof allForeignData !== 'undefined' && allForeignData && typeof loadForeignFlowData === 'function') {
-            loadForeignFlowData();
+            tasks.push(loadForeignFlowData());
         }
+        Promise.allSettled(tasks).finally(() => { streamRefreshInFlight = false; });
     }, NEWS_AUTO_REFRESH_MS);
 }
 
@@ -2476,6 +2521,11 @@ function stopAutoStream() {
         streamInterval = null;
     }
 }
+
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stopAutoStream();
+    else if (autoStreamActive) startAutoStream();
+});
 
 btnToggleSound?.addEventListener('click', () => {
     soundEnabled = !soundEnabled;
