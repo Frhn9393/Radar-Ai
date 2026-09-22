@@ -176,6 +176,25 @@ const audioAlert = document.getElementById('audio-alert');
 // ============================================================
 //  UTILITY: Relative Time Formatter
 // ============================================================
+function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[char]));
+}
+
+function safeExternalUrl(value, fallback = '#') {
+    try {
+        const url = new URL(String(value || ''), window.location.origin);
+        return ['http:', 'https:'].includes(url.protocol) ? url.href : fallback;
+    } catch {
+        return fallback;
+    }
+}
+
 function timeAgo(dateStr) {
     if (!dateStr) return 'Baru saja';
     const now = new Date();
@@ -426,13 +445,13 @@ function renderDeals() {
 
         // Emiten tags
         const tagsHtml = (deal.tickers || []).map(t => {
-            return `<span class="ticker-pill bg-[#062430] hover:bg-cyan-500/20 shadow-sm text-cyan-300 text-xs font-mono font-bold px-2.5 py-0.5 rounded cursor-pointer transition" data-ticker="${t}">$${t}</span>`;
+            return `<span class="ticker-pill bg-[#062430] hover:bg-cyan-500/20 shadow-sm text-cyan-300 text-xs font-mono font-bold px-2.5 py-0.5 rounded cursor-pointer transition" data-ticker="${escapeHtml(t)}">$${escapeHtml(t)}</span>`;
         }).join(' ');
 
         // Primary ticker to analyze on click
         const primaryTicker = (deal.tickers && deal.tickers[0]) || 'BBRI';
         // Direct news link (falls back to Google search if not available)
-        const newsLink = deal.link || `https://news.google.com/search?q=${encodeURIComponent(deal.title)}&hl=id&gl=ID&ceid=ID:id`;
+        const newsLink = safeExternalUrl(deal.link || `https://news.google.com/search?q=${encodeURIComponent(deal.title)}&hl=id&gl=ID&ceid=ID:id`);
 
         card.innerHTML = `
             <div>
@@ -440,10 +459,10 @@ function renderDeals() {
                 <div class="flex items-center justify-between gap-2 mb-2.5">
                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-extrabold ${typeBadgeClass} uppercase tracking-wide truncate">
                         <span>${typeIcon}</span>
-                        <span class="truncate">${deal.typeLabel}</span>
+                        <span class="truncate">${escapeHtml(deal.typeLabel)}</span>
                     </span>
                     <span class="bg-amber-950/40 text-amber-400 text-[11px] font-bold px-2 py-0.5 rounded-md font-mono shadow-sm shrink-0">
-                        ${deal.accuracy}% Akurasi
+                        ${escapeHtml(deal.accuracy)}% Akurasi
                     </span>
                 </div>
 
@@ -453,19 +472,19 @@ function renderDeals() {
                         ${tagsHtml}
                     </div>
                     <div class="flex items-center gap-1.5 text-right shrink-0">
-                        <span class="text-xs text-slate-400 font-medium truncate max-w-[100px]">${deal.source}</span>
+                        <span class="text-xs text-slate-400 font-medium truncate max-w-[100px]">${escapeHtml(deal.source)}</span>
                         <span class="text-slate-600 text-xs">•</span>
                         <span class="inline-flex items-center gap-1 text-[11px] text-emerald-400/90 font-mono font-bold bg-[#071d22] shadow-sm px-1.5 py-0.5 rounded" title="Waktu Tayang: ${deal.timeStr} (${deal.dateStr})">
                             <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2"/></svg>
-                            <span>${deal.timeAgo || 'Baru saja'}</span>
-                            <span class="text-slate-400 font-normal hidden sm:inline">(${deal.timeStr})</span>
+                            <span>${escapeHtml(deal.timeAgo || 'Baru saja')}</span>
+                            <span class="text-slate-400 font-normal hidden sm:inline">(${escapeHtml(deal.timeStr)})</span>
                         </span>
                     </div>
                 </div>
 
                 <!-- Headline -->
                 <h3 class="text-sm font-bold text-white leading-snug my-2.5 group-hover:text-amber-300 transition-colors line-clamp-2 break-words">
-                    ${deal.title}
+                    ${escapeHtml(deal.title)}
                 </h3>
             </div>
 
@@ -475,13 +494,13 @@ function renderDeals() {
                     <span class="text-amber-400/90 text-xs font-semibold flex items-center gap-1 shrink-0">
                         <span class="text-amber-400 font-bold">$</span> Estimasi Nilai Deal:
                     </span>
-                    <span class="text-amber-400 font-bold text-xs font-mono text-left xs:text-right break-words leading-tight">${deal.dealValue}</span>
+                    <span class="text-amber-400 font-bold text-xs font-mono text-left xs:text-right break-words leading-tight">${escapeHtml(deal.dealValue)}</span>
                 </div>
 
                 <!-- Footer Row: Impact, Baca Berita & Lihat Analisis -->
                 <div class="flex flex-wrap items-center justify-between gap-2 pt-2">
                     <span class="text-[10px] sm:text-[11px] font-extrabold text-slate-300 tracking-wider uppercase truncate max-w-[130px] sm:max-w-none">
-                        ${deal.impact}
+                        ${escapeHtml(deal.impact)}
                     </span>
                     <div class="flex items-center gap-2 shrink-0 ml-auto">
                         <!-- Direct news link button -->
@@ -597,7 +616,7 @@ function renderCorporateNewsTicker() {
         item.innerHTML = `
             <span class="bg-[#101929] text-cyan-400 text-[10px] font-bold px-1.5 py-0.5 rounded font-mono shadow-sm">[${tag}]</span>
             <span class="bg-emerald-950/70 text-emerald-400 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded shadow-sm">${news.timeStr || news.timeAgo}</span>
-            <span class="font-medium text-xs">${news.title}</span>
+            <span class="font-medium text-xs">${escapeHtml(news.title)}</span>
             <span class="text-emerald-400 font-bold text-xs ml-1">↗</span>
             <span class="text-slate-700 ml-3">•</span>
         `;
@@ -631,7 +650,7 @@ function renderMarketNews() {
 
     visible.forEach(news => {
         const card = document.createElement('a');
-        card.href = news.link;
+        card.href = safeExternalUrl(news.link);
         card.target = '_blank';
         card.rel = 'noopener noreferrer';
         card.className = 'bg-[#0d1424] hover:bg-[#111a2e] rounded-xl p-3.5 sm:p-4 flex flex-col justify-between transition-all duration-200 group block shadow-md hover:shadow-xl overflow-hidden w-full';
@@ -640,20 +659,20 @@ function renderMarketNews() {
             <div>
                 <div class="flex items-center justify-between gap-2 mb-2">
                     <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-[#101a2c] text-cyan-400 shadow-sm shrink-0">
-                        ${news.category || 'Market'}
+                        ${escapeHtml(news.category || 'Market')}
                     </span>
                     <span class="inline-flex items-center gap-1 text-[11px] text-emerald-400/90 font-mono font-semibold bg-[#071d22] shadow-sm px-2 py-0.5 rounded shrink-0">
                         <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2"/></svg>
-                        <span>${news.timeAgo || timeAgo(news.pubDate)}</span>
-                        <span class="text-slate-400 font-normal hidden sm:inline">(${news.timeStr})</span>
+                        <span>${escapeHtml(news.timeAgo || timeAgo(news.pubDate))}</span>
+                        <span class="text-slate-400 font-normal hidden sm:inline">(${escapeHtml(news.timeStr)})</span>
                     </span>
                 </div>
                 <h4 class="text-xs sm:text-sm font-semibold text-slate-200 group-hover:text-amber-300 leading-snug line-clamp-2 mb-3 break-words">
-                    ${news.title}
+                    ${escapeHtml(news.title)}
                 </h4>
             </div>
             <div class="flex items-center justify-between text-[11px] text-slate-400 pt-2 gap-2">
-                <span class="truncate max-w-[120px] sm:max-w-[180px] font-medium">${news.source}</span>
+                <span class="truncate max-w-[120px] sm:max-w-[180px] font-medium">${escapeHtml(news.source)}</span>
                 <span class="inline-flex items-center gap-1 text-[11px] font-bold text-sky-400 bg-sky-950/60 hover:bg-sky-900/80 shadow-sm px-2 py-0.5 rounded transition shrink-0">
                     <span>Baca Berita</span>
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
@@ -1284,7 +1303,7 @@ async function showSearchSuggestions(query) {
             if (matches.length === 0) {
                 searchSuggestDropdown.innerHTML = `
                     <div class="p-3 text-center text-slate-300 hover:text-white hover:bg-[#131e33] text-xs cursor-pointer transition select-none" id="suggest-fallback-action">
-                        🔍 Analisa langsung emiten "<strong class="text-amber-400 font-mono">${q.toUpperCase()}</strong>" (Klik atau Tekan Enter)
+                        🔍 Analisa langsung emiten "<strong class="text-amber-400 font-mono">${escapeHtml(q.toUpperCase())}</strong>" (Klik atau Tekan Enter)
                     </div>
                 `;
                 searchSuggestDropdown.classList.remove('hidden');
@@ -1301,10 +1320,10 @@ async function showSearchSuggestions(query) {
             searchSuggestDropdown.innerHTML = matches.map((item, idx) => `
                 <div class="suggest-item flex items-center justify-between p-2.5 hover:bg-[#131e33]   cursor-pointer transition select-none ${idx === activeSuggestIndex ? 'bg-[#142036]' : ''}" data-ticker="${item.ticker}">
                     <div class="flex items-center gap-2.5">
-                        <span class="bg-cyan-500/20 text-cyan-400 shadow-sm text-xs font-mono font-bold px-2 py-0.5 rounded shadow-sm">$${item.ticker}</span>
+                        <span class="bg-cyan-500/20 text-cyan-400 shadow-sm text-xs font-mono font-bold px-2 py-0.5 rounded shadow-sm">$${escapeHtml(item.ticker)}</span>
                         <div class="flex flex-col text-left">
-                            <span class="text-xs font-bold text-white leading-tight">${item.name}</span>
-                            <span class="text-[10px] text-slate-400 leading-tight">${item.sector}</span>
+                            <span class="text-xs font-bold text-white leading-tight">${escapeHtml(item.name)}</span>
+                            <span class="text-[10px] text-slate-400 leading-tight">${escapeHtml(item.sector)}</span>
                         </div>
                     </div>
                     <span class="text-[10px] text-emerald-400 font-mono font-semibold bg-emerald-950/40 px-1.5 py-0.5 rounded shadow-sm flex items-center gap-1">

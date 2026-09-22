@@ -31,7 +31,7 @@ async function showSearchSuggestions(query) {
             if (matches.length === 0) {
                 searchSuggestDropdown.innerHTML = `
                     <div class="p-3 text-center text-slate-300 hover:text-white hover:bg-[#131e33] text-xs cursor-pointer transition select-none" id="suggest-fallback-action">
-                        🔍 Analisa langsung emiten "<strong class="text-amber-400 font-mono">${q.toUpperCase()}</strong>" (Klik atau Tekan Enter)
+                        🔍 Analisa langsung emiten "<strong class="text-amber-400 font-mono">${escapeHtml(q.toUpperCase())}</strong>" (Klik atau Tekan Enter)
                     </div>
                 `;
                 searchSuggestDropdown.classList.remove('hidden');
@@ -48,10 +48,10 @@ async function showSearchSuggestions(query) {
             searchSuggestDropdown.innerHTML = matches.map((item, idx) => `
                 <div class="suggest-item flex items-center justify-between p-2.5 hover:bg-[#131e33]   cursor-pointer transition select-none ${idx === activeSuggestIndex ? 'bg-[#142036]' : ''}" data-ticker="${item.ticker}">
                     <div class="flex items-center gap-2.5">
-                        <span class="bg-cyan-500/20 text-cyan-400 shadow-sm text-xs font-mono font-bold px-2 py-0.5 rounded shadow-sm">$${item.ticker}</span>
+                        <span class="bg-cyan-500/20 text-cyan-400 shadow-sm text-xs font-mono font-bold px-2 py-0.5 rounded shadow-sm">$${escapeHtml(item.ticker)}</span>
                         <div class="flex flex-col text-left">
-                            <span class="text-xs font-bold text-white leading-tight">${item.name}</span>
-                            <span class="text-[10px] text-slate-400 leading-tight">${item.sector}</span>
+                            <span class="text-xs font-bold text-white leading-tight">${escapeHtml(item.name)}</span>
+                            <span class="text-[10px] text-slate-400 leading-tight">${escapeHtml(item.sector)}</span>
                         </div>
                     </div>
                     <span class="text-[10px] text-emerald-400 font-mono font-semibold bg-emerald-950/40 px-1.5 py-0.5 rounded shadow-sm flex items-center gap-1">

@@ -6,6 +6,25 @@
 // ============================================================
 //  UTILITY: Relative Time Formatter
 // ============================================================
+function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[char]));
+}
+
+function safeExternalUrl(value, fallback = '#') {
+    try {
+        const url = new URL(String(value || ''), window.location.origin);
+        return ['http:', 'https:'].includes(url.protocol) ? url.href : fallback;
+    } catch {
+        return fallback;
+    }
+}
+
 function timeAgo(dateStr) {
     if (!dateStr) return 'Baru saja';
     const now = new Date();
