@@ -9,19 +9,23 @@
 async function loadMarketNews() {
     try {
         const res = await fetch('/api/market-news');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (data.news && data.news.length > 0) {
             allMarketNews = data.news;
 
             // Update stats
-            statTotalNews.textContent = `${allMarketNews.length + allDeals.length} Total Berita Terkumpul`;
-            if (data.lastUpdated) {
+            if (statTotalNews) {
+                const dealsLen = typeof allDeals !== 'undefined' && Array.isArray(allDeals) ? allDeals.length : 0;
+                statTotalNews.textContent = `${allMarketNews.length + dealsLen} Total Berita Terkumpul`;
+            }
+            if (data.lastUpdated && statLastUpdate) {
                 statLastUpdate.textContent = data.lastUpdated;
             }
 
             renderMarketNews();
             renderCorporateNewsTicker();
-            playSoundChime();
+            if (typeof playSoundChime === 'function') playSoundChime();
         }
     } catch (err) {
         console.error('Gagal memuat berita pasar:', err);
@@ -29,6 +33,7 @@ async function loadMarketNews() {
 }
 
 function renderCorporateNewsTicker() {
+    if (!corporateNewsTicker) return;
     corporateNewsTicker.innerHTML = '';
     if (!allMarketNews.length) return;
 
@@ -56,7 +61,8 @@ function renderCorporateNewsTicker() {
 }
 
 function renderMarketNews() {
-    const selectedCategory = newsCategorySelect.value;
+    if (!generalNewsGrid) return;
+    const selectedCategory = newsCategorySelect?.value || 'all';
     let filtered = allMarketNews;
     if (selectedCategory !== 'all') {
         filtered = allMarketNews.filter(n => n.category === selectedCategory);
@@ -111,26 +117,31 @@ function renderMarketNews() {
     });
 
     // Update toggle button text
-    if (filtered.length > 6) {
-        btnToggleNewsMore.parentElement.classList.remove('hidden');
-        btnToggleNewsMore.querySelector('span').textContent = newsExpanded
-            ? 'Tampilkan Lebih Sedikit'
-            : `Tampilkan Lebih Banyak (${filtered.length - 6} lainnya)`;
-    } else {
-        btnToggleNewsMore.parentElement.classList.add('hidden');
+    if (btnToggleNewsMore && btnToggleNewsMore.parentElement) {
+        if (filtered.length > 6) {
+            btnToggleNewsMore.parentElement.classList.remove('hidden');
+            const span = btnToggleNewsMore.querySelector('span');
+            if (span) {
+                span.textContent = newsExpanded
+                    ? 'Tampilkan Lebih Sedikit'
+                    : `Tampilkan Lebih Banyak (${filtered.length - 6} lainnya)`;
+            }
+        } else {
+            btnToggleNewsMore.parentElement.classList.add('hidden');
+        }
     }
 }
 
-newsCategorySelect.addEventListener('change', () => {
+newsCategorySelect?.addEventListener('change', () => {
     newsExpanded = false;
     renderMarketNews();
 });
 
-btnRefreshFeed.addEventListener('click', () => {
+btnRefreshFeed?.addEventListener('click', () => {
     loadMarketNews();
 });
 
-btnToggleNewsMore.addEventListener('click', () => {
+btnToggleNewsMore?.addEventListener('click', () => {
     newsExpanded = !newsExpanded;
     renderMarketNews();
 });

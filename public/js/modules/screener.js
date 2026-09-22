@@ -4,6 +4,49 @@
 // ============================================================
 
 // ============================================================
+//  SHARED SCREENER HELPERS
+// ============================================================
+function confCell(confidence, label) {
+    const color = confidence >= 75 ? 'text-emerald-400' : confidence >= 55 ? 'text-amber-400' : 'text-orange-400';
+    const barColor = confidence >= 75 ? 'bg-emerald-400' : confidence >= 55 ? 'bg-amber-400' : 'bg-orange-400';
+    const badgeBg = confidence >= 75 ? 'bg-emerald-500/20 text-emerald-400 shadow-sm' : confidence >= 55 ? 'bg-amber-500/20 text-amber-400 shadow-sm' : 'bg-orange-500/20 text-orange-400 shadow-sm';
+    return `
+        <td class="p-3">
+            <div class="flex items-center gap-2">
+                <span class="${color} font-bold font-mono text-xs">${confidence}%</span>
+                <div class="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                    <div class="${barColor} h-full rounded-full" style="width:${confidence}%"></div>
+                </div>
+            </div>
+        </td>
+        <td class="p-3">
+            <span class="text-[10px] px-2 py-0.5 rounded font-semibold shadow-sm ${badgeBg}">${label}</span>
+        </td>
+    `;
+}
+
+function getRankBadge(row) {
+    if (row.rank === 1) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold tracking-tight shadow-sm">🥇 #1</span>`;
+    if (row.rank === 2) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-slate-400/20 text-slate-200 font-bold tracking-tight shadow-sm">🥈 #2</span>`;
+    if (row.rank === 3) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-700/20 text-amber-400 font-bold tracking-tight shadow-sm">🥉 #3</span>`;
+    return '';
+}
+
+function filterScreenerList(items) {
+    if (!Array.isArray(items)) return [];
+    let result = items;
+    const selectedSector = (typeof screenerSectorSelect !== 'undefined' && screenerSectorSelect?.value) || 'all';
+    if (selectedSector !== 'all') {
+        result = result.filter(item => (item.sector || '').toLowerCase().includes(selectedSector.toLowerCase()));
+    }
+    const limit = typeof screenerViewLimit !== 'undefined' ? screenerViewLimit : 'all';
+    if (limit === 'top3') {
+        result = result.slice(0, 3);
+    }
+    return result;
+}
+
+// ============================================================
 //  5. SCREENER EXECUTION & RENDERING
 // ============================================================
 
@@ -25,54 +68,28 @@ function renderScalpingTable(session = 'sesi1') {
     }
 
     if (!tbodyScalp) return;
-    tbodyScalp.innerHTML = '';
 
-    const list = session === 'sesi1'
+    const rawList = session === 'sesi1'
         ? (lastScreenerData?.scalpingSesi1 || lastScreenerData?.scalping || [])
         : (lastScreenerData?.scalpingSesi2 || lastScreenerData?.scalping || []);
+
+    const list = filterScreenerList(rawList);
 
     if (!list || list.length === 0) {
         tbodyScalp.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500 italic">Tidak ada saham lolos filter scalping ${session === 'sesi1' ? 'Sesi 1' : 'Sesi 2'} saat ini.</td></tr>`;
         return;
     }
 
-    list.forEach(row => {
+    tbodyScalp.innerHTML = list.map(row => {
         const tick = (row.price < 200 ? 1 : row.price < 500 ? 2 : row.price < 2000 ? 5 : row.price < 5000 ? 10 : 25);
         const antrean = row.antreanBeli || (session === 'sesi1' ? `Antre Bid Rp ${fmtRp.format(row.price - tick)} - Rp ${fmtRp.format(row.price)} (Bid 1-2)` : `Antre Bid Rp ${fmtRp.format(row.price - 2 * tick)} - Rp ${fmtRp.format(row.price - tick)} (Bid 2-3)`);
         const jam = row.jamEksekusi || (session === 'sesi1' ? '09:00 - 09:30 WIB' : '13:30 - 14:15 WIB');
-
-        function confCell(confidence, label) {
-            const color = confidence >= 75 ? 'text-emerald-400' : confidence >= 55 ? 'text-amber-400' : 'text-orange-400';
-            const barColor = confidence >= 75 ? 'bg-emerald-400' : confidence >= 55 ? 'bg-amber-400' : 'bg-orange-400';
-            const badgeBg = confidence >= 75 ? 'bg-emerald-500/20 text-emerald-400 shadow-sm' : confidence >= 55 ? 'bg-amber-500/20 text-amber-400 shadow-sm' : 'bg-orange-500/20 text-orange-400 shadow-sm';
-            return `
-                <td class="p-3">
-                    <div class="flex items-center gap-2">
-                        <span class="${color} font-bold font-mono text-xs">${confidence}%</span>
-                        <div class="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                            <div class="${barColor} h-full rounded-full" style="width:${confidence}%"></div>
-                        </div>
-                    </div>
-                </td>
-                <td class="p-3">
-                    <span class="text-[10px] px-2 py-0.5 rounded font-semibold shadow-sm ${badgeBg}">${label}</span>
-                </td>
-            `;
-        }
-
-        function getRankBadge(row) {
-            if (row.rank === 1) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold tracking-tight shadow-sm">🥇 #1</span>`;
-            if (row.rank === 2) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-slate-400/20 text-slate-200 font-bold tracking-tight shadow-sm">🥈 #2</span>`;
-            if (row.rank === 3) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-700/20 text-amber-400 font-bold tracking-tight shadow-sm">🥉 #3</span>`;
-            return '';
-        }
-
         const rankBadge = getRankBadge(row);
         const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
         const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${row.rvolBadge}</span>` : '';
 
-        tbodyScalp.innerHTML += `
-            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
+        return `
+            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
                 <td class="p-3 font-mono">
                     <div class="flex items-center gap-1.5">
                         <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
@@ -90,7 +107,7 @@ function renderScalpingTable(session = 'sesi1') {
                 ${confCell(row.confidence, row.label)}
             </tr>
         `;
-    });
+    }).join('');
 }
 
 // Bind Sesi 1 & Sesi 2 buttons
@@ -101,11 +118,11 @@ document.getElementById('btn-scalp-sesi2')?.addEventListener('click', () => {
     renderScalpingTable('sesi2');
 });
 
-btnTriggerScreener.addEventListener('click', async () => {
-    btnTriggerScreener.disabled = true;
-    screenerLoading.classList.remove('hidden');
-    screenerResultsWrapper.classList.add('hidden');
-    screenerBtnIcon.classList.add('animate-spin');
+btnTriggerScreener?.addEventListener('click', async () => {
+    if (btnTriggerScreener) btnTriggerScreener.disabled = true;
+    screenerLoading?.classList.remove('hidden');
+    screenerResultsWrapper?.classList.add('hidden');
+    screenerBtnIcon?.classList.add('animate-spin');
 
     // ── Live Elapsed Timer & Progress ──────────────────────────
     const timerEl = document.getElementById('screener-timer');
@@ -147,8 +164,9 @@ btnTriggerScreener.addEventListener('click', async () => {
 
     try {
         const res = await fetch('/api/screener');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Gagal menjalankan screener');
+        if (data.error) throw new Error(data.error);
 
         // Complete the progress bar
         if (progressBar) progressBar.style.width = '100%';
@@ -160,191 +178,192 @@ btnTriggerScreener.addEventListener('click', async () => {
 
         // Short delay to show 100% completion
         await new Promise(r => setTimeout(r, 500));
-        screenerResultsWrapper.classList.remove('hidden');
+        screenerResultsWrapper?.classList.remove('hidden');
     } catch (err) {
         alert('Kendala Screener: ' + err.message);
     } finally {
         clearInterval(timerInterval);
-        screenerLoading.classList.add('hidden');
-        btnTriggerScreener.disabled = false;
-        screenerBtnIcon.classList.remove('animate-spin');
+        screenerLoading?.classList.add('hidden');
+        if (btnTriggerScreener) btnTriggerScreener.disabled = false;
+        screenerBtnIcon?.classList.remove('animate-spin');
     }
 });
 
 function renderScreenerResults(data) {
-    function confCell(confidence, label) {
-        const color = confidence >= 75 ? 'text-emerald-400' : confidence >= 55 ? 'text-amber-400' : 'text-orange-400';
-        const barColor = confidence >= 75 ? 'bg-emerald-400' : confidence >= 55 ? 'bg-amber-400' : 'bg-orange-400';
-        const badgeBg = confidence >= 75 ? 'bg-emerald-500/20 text-emerald-400 shadow-sm' : confidence >= 55 ? 'bg-amber-500/20 text-amber-400 shadow-sm' : 'bg-orange-500/20 text-orange-400 shadow-sm';
-        return `
-            <td class="p-3">
-                <div class="flex items-center gap-2">
-                    <span class="${color} font-bold font-mono text-xs">${confidence}%</span>
-                    <div class="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                        <div class="${barColor} h-full rounded-full" style="width:${confidence}%"></div>
-                    </div>
-                </div>
-            </td>
-            <td class="p-3">
-                <span class="text-[10px] px-2 py-0.5 rounded font-semibold shadow-sm ${badgeBg}">${label}</span>
-            </td>
-        `;
-    }
-
-    function getRankBadge(row) {
-        if (row.rank === 1) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold tracking-tight shadow-sm">🥇 #1</span>`;
-        if (row.rank === 2) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-slate-400/20 text-slate-200 font-bold tracking-tight shadow-sm">🥈 #2</span>`;
-        if (row.rank === 3) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-700/20 text-amber-400 font-bold tracking-tight shadow-sm">🥉 #3</span>`;
-        return '';
-    }
+    if (!data) return;
 
     // 1. Scalping (rendered with session support)
     renderScalpingTable(activeScalpSession || 'sesi1');
 
     // 2. Daytrade
     const tbodyDay = document.getElementById('tbody-daytrade');
-    tbodyDay.innerHTML = '';
-    (data.daytrade || []).forEach(row => {
-        const rankBadge = getRankBadge(row);
-        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
-        const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${row.rvolBadge}</span>` : '';
+    if (tbodyDay) {
+        const dayList = filterScreenerList(data.daytrade || []);
+        if (dayList.length === 0) {
+            tbodyDay.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-slate-500 italic">Tidak ada saham lolos filter daytrade ketat saat ini.</td></tr>`;
+        } else {
+            tbodyDay.innerHTML = dayList.map(row => {
+                const rankBadge = getRankBadge(row);
+                const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
+                const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${row.rvolBadge}</span>` : '';
 
-        tbodyDay.innerHTML += `
-            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
-                <td class="p-3 font-mono">
-                    <div class="flex items-center gap-1.5">
-                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
-                        ${rankBadge}
-                    </div>
-                    <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
-                </td>
-                <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
-                <td class="p-3 font-mono font-bold ${parseFloat(row.changePct) >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${parseFloat(row.changePct) >= 0 ? '+' : ''}${row.changePct}%</td>
-                <td class="p-3 font-mono text-slate-300">${row.entryZone}</td>
-                <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetProfit)}</td>
-                <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.stopLoss)}</td>
-                ${confCell(row.confidence, row.label)}
-            </tr>
-        `;
-    });
-    if (!data.daytrade?.length) tbodyDay.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-slate-500 italic">Tidak ada saham lolos filter daytrade ketat saat ini.</td></tr>`;
+                return `
+                    <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+                        <td class="p-3 font-mono">
+                            <div class="flex items-center gap-1.5">
+                                <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                                ${rankBadge}
+                            </div>
+                            <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
+                        </td>
+                        <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
+                        <td class="p-3 font-mono font-bold ${parseFloat(row.changePct) >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${parseFloat(row.changePct) >= 0 ? '+' : ''}${row.changePct}%</td>
+                        <td class="p-3 font-mono text-slate-300">${row.entryZone}</td>
+                        <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetProfit)}</td>
+                        <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.stopLoss)}</td>
+                        ${confCell(row.confidence, row.label)}
+                    </tr>
+                `;
+            }).join('');
+        }
+    }
 
     // 3. Swing
     const tbodySwing = document.getElementById('tbody-swing');
-    tbodySwing.innerHTML = '';
-    (data.swing || []).forEach(row => {
-        const rankBadge = getRankBadge(row);
-        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
-        const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${row.rvolBadge}</span>` : '';
+    if (tbodySwing) {
+        const swingList = filterScreenerList(data.swing || []);
+        if (swingList.length === 0) {
+            tbodySwing.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-slate-500 italic">Tidak ada saham lolos filter swing ketat saat ini.</td></tr>`;
+        } else {
+            tbodySwing.innerHTML = swingList.map(row => {
+                const rankBadge = getRankBadge(row);
+                const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
+                const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${row.rvolBadge}</span>` : '';
 
-        tbodySwing.innerHTML += `
-            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
-                <td class="p-3 font-mono">
-                    <div class="flex items-center gap-1.5">
-                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
-                        ${rankBadge}
-                    </div>
-                    <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
-                </td>
-                <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
-                <td class="p-3 font-mono text-slate-300">${row.areaBuy}</td>
-                <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetPrice1)}</td>
-                <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetPrice2)}</td>
-                <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.cutLoss)}</td>
-                <td class="p-3 font-mono font-bold text-purple-400">${row.riskReward}</td>
-                ${confCell(row.confidence, row.label)}
-            </tr>
-        `;
-    });
-    if (!data.swing?.length) tbodySwing.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-slate-500 italic">Tidak ada saham lolos filter swing ketat saat ini.</td></tr>`;
+                return `
+                    <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+                        <td class="p-3 font-mono">
+                            <div class="flex items-center gap-1.5">
+                                <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                                ${rankBadge}
+                            </div>
+                            <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
+                        </td>
+                        <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
+                        <td class="p-3 font-mono text-slate-300">${row.areaBuy}</td>
+                        <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetPrice1)}</td>
+                        <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetPrice2)}</td>
+                        <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.cutLoss)}</td>
+                        <td class="p-3 font-mono font-bold text-purple-400">${row.riskReward}</td>
+                        ${confCell(row.confidence, row.label)}
+                    </tr>
+                `;
+            }).join('');
+        }
+    }
 
     // 4. BSJP
     const tbodyBsjp = document.getElementById('tbody-bsjp');
-    tbodyBsjp.innerHTML = '';
-    (data.bsjp || []).forEach(row => {
-        const rankBadge = getRankBadge(row);
-        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
-        const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${row.rvolBadge}</span>` : '';
+    if (tbodyBsjp) {
+        const bsjpList = filterScreenerList(data.bsjp || []);
+        if (bsjpList.length === 0) {
+            tbodyBsjp.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-slate-500 italic">Tidak ada saham lolos filter BSJP ketat saat ini.</td></tr>`;
+        } else {
+            tbodyBsjp.innerHTML = bsjpList.map(row => {
+                const rankBadge = getRankBadge(row);
+                const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
+                const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${row.rvolBadge}</span>` : '';
 
-        tbodyBsjp.innerHTML += `
-            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
-                <td class="p-3 font-mono">
-                    <div class="flex items-center gap-1.5">
-                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
-                        ${rankBadge}
-                    </div>
-                    <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
-                </td>
-                <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
-                <td class="p-3 font-mono font-semibold ${parseFloat(row.rsi) > 60 ? 'text-amber-400' : 'text-emerald-400'}">${row.rsi}</td>
-                <td class="p-3 font-mono text-slate-300">${row.pullbackFromHigh}%</td>
-                <td class="p-3 text-amber-400 text-xs">${row.beliSore}</td>
-                <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetPagi)}</td>
-                <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.stopLoss)}</td>
-                ${confCell(row.confidence, row.label)}
-            </tr>
-        `;
-    });
-    if (!data.bsjp?.length) tbodyBsjp.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-slate-500 italic">Tidak ada saham lolos filter BSJP ketat saat ini.</td></tr>`;
+                return `
+                    <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+                        <td class="p-3 font-mono">
+                            <div class="flex items-center gap-1.5">
+                                <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                                ${rankBadge}
+                            </div>
+                            <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
+                        </td>
+                        <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
+                        <td class="p-3 font-mono font-semibold ${parseFloat(row.rsi) > 60 ? 'text-amber-400' : 'text-emerald-400'}">${row.rsi}</td>
+                        <td class="p-3 font-mono text-slate-300">${row.pullbackFromHigh}%</td>
+                        <td class="p-3 text-amber-400 text-xs">${row.beliSore}</td>
+                        <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetPagi)}</td>
+                        <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.stopLoss)}</td>
+                        ${confCell(row.confidence, row.label)}
+                    </tr>
+                `;
+            }).join('');
+        }
+    }
 
     // 5. BPJP
     const tbodyBpjp = document.getElementById('tbody-bpjp');
-    tbodyBpjp.innerHTML = '';
-    (data.bpjp || []).forEach(row => {
-        const rankBadge = getRankBadge(row);
-        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
-        const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${row.rvolBadge}</span>` : '';
+    if (tbodyBpjp) {
+        const bpjpList = filterScreenerList(data.bpjp || []);
+        if (bpjpList.length === 0) {
+            tbodyBpjp.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500 italic">Tidak ada saham lolos filter BPJP oversold saat ini.</td></tr>`;
+        } else {
+            tbodyBpjp.innerHTML = bpjpList.map(row => {
+                const rankBadge = getRankBadge(row);
+                const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
+                const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${row.rvolBadge}</span>` : '';
 
-        tbodyBpjp.innerHTML += `
-            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
-                <td class="p-3 font-mono">
-                    <div class="flex items-center gap-1.5">
-                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
-                        ${rankBadge}
-                    </div>
-                    <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
-                </td>
-                <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
-                <td class="p-3 font-mono font-semibold text-emerald-400">${row.rsi} <span class="text-[10px] text-cyan-300 font-sans">(${row.rsiStatus || 'Bounce'})</span></td>
-                <td class="p-3 font-mono text-purple-400">${row.adx}</td>
-                <td class="p-3 font-mono text-slate-300">${row.macd}</td>
-                <td class="p-3 text-pink-400 text-xs">${row.entryPagi}</td>
-                <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.target)}</td>
-                <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.stopLoss)}</td>
-                ${confCell(row.confidence, row.label)}
-            </tr>
-        `;
-    });
-    if (!data.bpjp?.length) tbodyBpjp.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500 italic">Tidak ada saham lolos filter BPJP oversold saat ini.</td></tr>`;
+                return `
+                    <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+                        <td class="p-3 font-mono">
+                            <div class="flex items-center gap-1.5">
+                                <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                                ${rankBadge}
+                            </div>
+                            <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
+                        </td>
+                        <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
+                        <td class="p-3 font-mono font-semibold text-emerald-400">${row.rsi} <span class="text-[10px] text-cyan-300 font-sans">(${row.rsiStatus || 'Bounce'})</span></td>
+                        <td class="p-3 font-mono text-purple-400">${row.adx}</td>
+                        <td class="p-3 font-mono text-slate-300">${row.macd}</td>
+                        <td class="p-3 text-pink-400 text-xs">${row.entryPagi}</td>
+                        <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.target)}</td>
+                        <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.stopLoss)}</td>
+                        ${confCell(row.confidence, row.label)}
+                    </tr>
+                `;
+            }).join('');
+        }
+    }
 
     // 6. Jangka Panjang
     const tbodyLong = document.getElementById('tbody-longterm');
-    tbodyLong.innerHTML = '';
-    (data.longterm || []).forEach(row => {
-        const rankBadge = getRankBadge(row);
-        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
+    if (tbodyLong) {
+        const longList = filterScreenerList(data.longterm || []);
+        if (longList.length === 0) {
+            tbodyLong.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500 italic">Tidak ada saham lolos filter jangka panjang saat ini.</td></tr>`;
+        } else {
+            tbodyLong.innerHTML = longList.map(row => {
+                const rankBadge = getRankBadge(row);
+                const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
 
-        tbodyLong.innerHTML += `
-            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}" onclick="executeStockAnalysis('${row.ticker}')">
-                <td class="p-3 font-mono">
-                    <div class="flex items-center gap-1.5">
-                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
-                        ${rankBadge}
-                    </div>
-                    <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge}</div>
-                </td>
-                <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
-                <td class="p-3 font-mono font-semibold text-amber-400">${row.rsi}</td>
-                <td class="p-3 font-mono text-slate-300">${fmtRp.format(row.ema200)}</td>
-                <td class="p-3 font-mono text-slate-400">${fmtRp.format(row.support)}</td>
-                <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetKonservatif)}</td>
-                <td class="p-3 font-mono font-extrabold text-emerald-300">${fmtRp.format(row.targetAgresif)}</td>
-                <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.cutLoss)}</td>
-                ${confCell(row.confidence, row.label)}
-            </tr>
-        `;
-    });
-    if (!data.longterm?.length) tbodyLong.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500 italic">Tidak ada saham lolos filter jangka panjang saat ini.</td></tr>`;
+                return `
+                    <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+                        <td class="p-3 font-mono">
+                            <div class="flex items-center gap-1.5">
+                                <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                                ${rankBadge}
+                            </div>
+                            <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge}</div>
+                        </td>
+                        <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
+                        <td class="p-3 font-mono font-semibold text-amber-400">${row.rsi}</td>
+                        <td class="p-3 font-mono text-slate-300">${fmtRp.format(row.ema200)}</td>
+                        <td class="p-3 font-mono text-slate-400">${fmtRp.format(row.support)}</td>
+                        <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetKonservatif)}</td>
+                        <td class="p-3 font-mono font-extrabold text-emerald-300">${fmtRp.format(row.targetAgresif)}</td>
+                        <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.cutLoss)}</td>
+                        ${confCell(row.confidence, row.label)}
+                    </tr>
+                `;
+            }).join('');
+        }
+    }
 }
 
 // Delegated click handler for all screener tables (guarantees clickability regardless of scope)

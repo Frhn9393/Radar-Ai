@@ -25,10 +25,35 @@ function timeAgo(dateStr) {
     return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
 }
 
+// ============================================================
+//  UTILITY: Audio Synthesizer Chime (Singleton AudioContext)
+// ============================================================
+let _sharedAudioCtx = null;
+
+function getAudioContext() {
+    if (typeof window === 'undefined') return null;
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return null;
+
+    if (!_sharedAudioCtx) {
+        try {
+            _sharedAudioCtx = new AudioCtx();
+        } catch (e) {
+            return null;
+        }
+    }
+    if (_sharedAudioCtx && _sharedAudioCtx.state === 'suspended') {
+        _sharedAudioCtx.resume().catch(() => {});
+    }
+    return _sharedAudioCtx;
+}
+
 function playSoundChime() {
-    if (!soundEnabled) return;
+    if (typeof soundEnabled !== 'undefined' && !soundEnabled) return;
     try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const ctx = getAudioContext();
+        if (!ctx) return;
+
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.connect(gain);

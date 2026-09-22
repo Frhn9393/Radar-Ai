@@ -9,12 +9,13 @@
 async function loadDeals() {
     try {
         const res = await fetch('/api/deals');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (data.deals && data.deals.length > 0) {
             allDeals = data.deals;
-            badgeTotalDeals.textContent = `${allDeals.length} DEAL TERDETEKSI`;
-            countFilterAll.textContent = allDeals.length;
-            if (data.lastUpdated) {
+            if (badgeTotalDeals) badgeTotalDeals.textContent = `${allDeals.length} DEAL TERDETEKSI`;
+            if (countFilterAll) countFilterAll.textContent = allDeals.length;
+            if (data.lastUpdated && statLastUpdate) {
                 statLastUpdate.textContent = data.lastUpdated;
             }
             renderDeals();
@@ -25,6 +26,7 @@ async function loadDeals() {
 }
 
 function renderDeals() {
+    if (!dealsGrid) return;
     dealsGrid.innerHTML = '';
 
     let filtered = allDeals;
@@ -33,10 +35,10 @@ function renderDeals() {
     }
 
     if (filtered.length === 0) {
-        dealsEmpty.classList.remove('hidden');
+        dealsEmpty?.classList.remove('hidden');
         return;
     }
-    dealsEmpty.classList.add('hidden');
+    dealsEmpty?.classList.add('hidden');
 
     filtered.forEach(deal => {
         const card = document.createElement('div');
@@ -57,12 +59,12 @@ function renderDeals() {
         }
 
         // Emiten tags
-        const tagsHtml = deal.tickers.map(t => {
+        const tagsHtml = (deal.tickers || []).map(t => {
             return `<span class="ticker-pill bg-[#062430] hover:bg-cyan-500/20 shadow-sm text-cyan-300 text-xs font-mono font-bold px-2.5 py-0.5 rounded cursor-pointer transition" data-ticker="${t}">$${t}</span>`;
         }).join(' ');
 
         // Primary ticker to analyze on click
-        const primaryTicker = deal.tickers[0] || 'BBRI';
+        const primaryTicker = (deal.tickers && deal.tickers[0]) || 'BBRI';
         // Direct news link (falls back to Google search if not available)
         const newsLink = deal.link || `https://news.google.com/search?q=${encodeURIComponent(deal.title)}&hl=id&gl=ID&ceid=ID:id`;
 
@@ -161,7 +163,7 @@ function attachDealCardListeners() {
 }
 
 // Category filter buttons
-filterBtns.forEach(btn => {
+filterBtns?.forEach(btn => {
     btn.addEventListener('click', () => {
         filterBtns.forEach(b => {
             b.classList.remove('active', 'bg-amber-500', 'text-black', 'shadow-md');

@@ -6,17 +6,17 @@
 // ============================================================
 //  8. CONTROLS: STREAM, SOUND, EXPORT, REFRESH
 // ============================================================
-btnToggleStream.addEventListener('click', () => {
+btnToggleStream?.addEventListener('click', () => {
     autoStreamActive = !autoStreamActive;
     if (autoStreamActive) {
-        textStreamStatus.textContent = 'Jeda Auto-Stream';
-        iconStreamStatus.classList.remove('text-slate-500');
-        iconStreamStatus.classList.add('text-amber-400');
+        if (textStreamStatus) textStreamStatus.textContent = 'Jeda Auto-Stream';
+        iconStreamStatus?.classList.remove('text-slate-500');
+        iconStreamStatus?.classList.add('text-amber-400');
         startAutoStream();
     } else {
-        textStreamStatus.textContent = 'Lanjutkan Auto-Stream';
-        iconStreamStatus.classList.remove('text-amber-400');
-        iconStreamStatus.classList.add('text-slate-500');
+        if (textStreamStatus) textStreamStatus.textContent = 'Lanjutkan Auto-Stream';
+        iconStreamStatus?.classList.remove('text-amber-400');
+        iconStreamStatus?.classList.add('text-slate-500');
         stopAutoStream();
     }
 });
@@ -24,40 +24,51 @@ btnToggleStream.addEventListener('click', () => {
 function startAutoStream() {
     stopAutoStream();
     streamInterval = setInterval(() => {
-        loadMarketNews();
-        loadDeals();
-        loadMarketIndices();
-        if (allForeignData) loadForeignFlowData();
+        if (typeof loadMarketNews === 'function') loadMarketNews();
+        if (typeof loadDeals === 'function') loadDeals();
+        if (typeof loadMarketIndices === 'function') loadMarketIndices();
+        if (typeof allForeignData !== 'undefined' && allForeignData && typeof loadForeignFlowData === 'function') {
+            loadForeignFlowData();
+        }
     }, NEWS_AUTO_REFRESH_MS);
 }
 
 function stopAutoStream() {
-    if (streamInterval) clearInterval(streamInterval);
+    if (streamInterval) {
+        clearInterval(streamInterval);
+        streamInterval = null;
+    }
 }
 
-btnToggleSound.addEventListener('click', () => {
+btnToggleSound?.addEventListener('click', () => {
     soundEnabled = !soundEnabled;
     if (soundEnabled) {
-        iconSound.classList.remove('text-slate-500');
-        iconSound.classList.add('text-emerald-400');
-        btnToggleSound.title = 'Notifikasi Suara: Aktif';
+        iconSound?.classList.remove('text-slate-500');
+        iconSound?.classList.add('text-emerald-400');
+        if (btnToggleSound) btnToggleSound.title = 'Notifikasi Suara: Aktif';
         playSoundChime();
     } else {
-        iconSound.classList.remove('text-emerald-400');
-        iconSound.classList.add('text-slate-500');
-        btnToggleSound.title = 'Notifikasi Suara: Nonaktif';
+        iconSound?.classList.remove('text-emerald-400');
+        iconSound?.classList.add('text-slate-500');
+        if (btnToggleSound) btnToggleSound.title = 'Notifikasi Suara: Nonaktif';
     }
 });
 
-btnRefreshAll.addEventListener('click', () => {
+btnRefreshAll?.addEventListener('click', () => {
     const icon = document.getElementById('icon-refresh');
-    icon.classList.add('animate-spin');
-    Promise.all([loadDeals(), loadMarketNews(), loadMarketIndices(), loadForeignFlowData(true)]).finally(() => {
-        setTimeout(() => icon.classList.remove('animate-spin'), 600);
+    icon?.classList.add('animate-spin');
+    const tasks = [];
+    if (typeof loadDeals === 'function') tasks.push(loadDeals());
+    if (typeof loadMarketNews === 'function') tasks.push(loadMarketNews());
+    if (typeof loadMarketIndices === 'function') tasks.push(loadMarketIndices());
+    if (typeof loadForeignFlowData === 'function') tasks.push(loadForeignFlowData(true));
+
+    Promise.all(tasks).finally(() => {
+        setTimeout(() => icon?.classList.remove('animate-spin'), 600);
     });
 });
 
-btnExportData.addEventListener('click', () => {
+btnExportData?.addEventListener('click', () => {
     const todayStr = new Date().toISOString().slice(0, 10);
 
     if (currentActiveMainTab === 'foreign') {
@@ -136,7 +147,7 @@ btnExportData.addEventListener('click', () => {
     }
 
     // Default / Tab 1: Export M&A Deals to CSV
-    if (!allDeals.length) {
+    if (!allDeals || !allDeals.length) {
         alert('Data deal belum siap untuk diekspor.');
         return;
     }

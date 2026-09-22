@@ -71,8 +71,8 @@ foreignSectorSelect?.addEventListener('change', () => renderForeignTables());
 btnRefreshForeign?.addEventListener('click', () => loadForeignFlowData(true));
 
 async function loadForeignFlowData(forceRefresh = false) {
-    if (foreignLoading) foreignLoading.classList.remove('hidden');
-    if (iconRefreshForeign) iconRefreshForeign.classList.add('animate-spin');
+    foreignLoading?.classList.remove('hidden');
+    iconRefreshForeign?.classList.add('animate-spin');
 
     try {
         const url = forceRefresh ? '/api/foreign-flow?force=true' : '/api/foreign-flow';
@@ -108,8 +108,8 @@ async function loadForeignFlowData(forceRefresh = false) {
     } catch (err) {
         console.error('Error loadForeignFlowData:', err);
     } finally {
-        if (foreignLoading) foreignLoading.classList.add('hidden');
-        if (iconRefreshForeign) iconRefreshForeign.classList.remove('animate-spin');
+        foreignLoading?.classList.add('hidden');
+        iconRefreshForeign?.classList.remove('animate-spin');
     }
 }
 
@@ -140,12 +140,11 @@ function renderForeignDailyTables() {
     // 1. Top Buy
     const rawBuys = allForeignData.daily.topBuy || [];
     const filteredBuys = filterForeignList(rawBuys);
-    tbodyForeignDailyBuy.innerHTML = '';
 
     if (filteredBuys.length === 0) {
         tbodyForeignDailyBuy.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-500 italic">Tidak ada data akumulasi harian sesuai kriteria filter.</td></tr>`;
     } else {
-        filteredBuys.forEach((row, idx) => {
+        tbodyForeignDailyBuy.innerHTML = filteredBuys.map((row, idx) => {
             const chg = parseFloat(row.changePct || 0);
             const chgColor = chg >= 0 ? 'text-emerald-400' : 'text-rose-400';
             const sign = chg >= 0 ? '+' : '';
@@ -156,7 +155,7 @@ function renderForeignDailyTables() {
             const buyVal = row.foreignBuyVal ? fmtRpMiliar(row.foreignBuyVal) : null;
             const sellVal = row.foreignSellVal ? fmtRpMiliar(row.foreignSellVal) : null;
 
-            tbodyForeignDailyBuy.innerHTML += `
+            return `
                 <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
                     <td class="p-3 font-mono">
                         <div class="flex items-center gap-2">
@@ -190,18 +189,17 @@ function renderForeignDailyTables() {
                     </td>
                 </tr>
             `;
-        });
+        }).join('');
     }
 
     // 2. Top Sell
     const rawSells = allForeignData.daily.topSell || [];
     const filteredSells = filterForeignList(rawSells);
-    tbodyForeignDailySell.innerHTML = '';
 
     if (filteredSells.length === 0) {
         tbodyForeignDailySell.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-500 italic">Tidak ada data distribusi harian sesuai kriteria filter.</td></tr>`;
     } else {
-        filteredSells.forEach((row, idx) => {
+        tbodyForeignDailySell.innerHTML = filteredSells.map((row, idx) => {
             const chg = parseFloat(row.changePct || 0);
             const chgColor = chg >= 0 ? 'text-emerald-400' : 'text-rose-400';
             const sign = chg >= 0 ? '+' : '';
@@ -212,7 +210,7 @@ function renderForeignDailyTables() {
             const buyVal = row.foreignBuyVal ? fmtRpMiliar(row.foreignBuyVal) : null;
             const sellVal = row.foreignSellVal ? fmtRpMiliar(row.foreignSellVal) : null;
 
-            tbodyForeignDailySell.innerHTML += `
+            return `
                 <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
                     <td class="p-3 font-mono">
                         <div class="flex items-center gap-2">
@@ -246,7 +244,7 @@ function renderForeignDailyTables() {
                     </td>
                 </tr>
             `;
-        });
+        }).join('');
     }
 }
 
@@ -255,14 +253,13 @@ function renderForeignWeeklyTable() {
 
     const rawList = allForeignData.weekly.topBuy || allForeignData.weekly.all || [];
     const filteredList = filterForeignList(rawList);
-    tbodyForeignWeekly.innerHTML = '';
 
     if (filteredList.length === 0) {
         tbodyForeignWeekly.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-slate-500 italic">Tidak ada data akumulasi mingguan (5D) sesuai kriteria filter.</td></tr>`;
         return;
     }
 
-    filteredList.forEach((row, idx) => {
+    tbodyForeignWeekly.innerHTML = filteredList.map((row, idx) => {
         const ret = parseFloat(row.weeklyPriceChgPct || row.weeklyReturnPct || 0);
         const retColor = ret >= 0 ? 'text-emerald-400' : 'text-rose-400';
         const sign = ret >= 0 ? '+' : '';
@@ -290,7 +287,7 @@ function renderForeignWeeklyTable() {
             phaseBadge = '<span class="bg-rose-950/80 shadow-sm text-rose-400 text-[10px] px-2 py-0.5 rounded font-bold">Distribution ⚠️</span>';
         }
 
-        tbodyForeignWeekly.innerHTML += `
+        return `
             <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
                 <td class="p-3 font-mono">
                     <div class="flex items-center gap-2">
@@ -311,7 +308,7 @@ function renderForeignWeeklyTable() {
                 <td class="p-3">${phaseBadge}</td>
             </tr>
         `;
-    });
+    }).join('');
 }
 
 function renderForeignMonthlyTable() {
@@ -319,14 +316,13 @@ function renderForeignMonthlyTable() {
 
     const rawList = allForeignData.monthly.topBuy || allForeignData.monthly.all || [];
     const filteredList = filterForeignList(rawList);
-    tbodyForeignMonthly.innerHTML = '';
 
     if (filteredList.length === 0) {
         tbodyForeignMonthly.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-slate-500 italic">Tidak ada data akumulasi bulanan (20D) sesuai kriteria filter.</td></tr>`;
         return;
     }
 
-    filteredList.forEach((row, idx) => {
+    tbodyForeignMonthly.innerHTML = filteredList.map((row, idx) => {
         const ret = parseFloat(row.monthlyPriceChgPct || row.monthlyReturnPct || 0);
         const retColor = ret >= 0 ? 'text-emerald-400' : 'text-rose-400';
         const sign = ret >= 0 ? '+' : '';
@@ -342,7 +338,7 @@ function renderForeignMonthlyTable() {
             baseBadge = '<span class="bg-slate-800 text-slate-400 text-[10px] px-2 py-0.5 rounded font-semibold">TESTING BASE ⭐</span>';
         }
 
-        tbodyForeignMonthly.innerHTML += `
+        return `
             <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
                 <td class="p-3 font-mono">
                     <div class="flex items-center gap-2">
@@ -363,7 +359,7 @@ function renderForeignMonthlyTable() {
                 <td class="p-3">${baseBadge}</td>
             </tr>
         `;
-    });
+    }).join('');
 }
 
 function renderForeignStreakTable() {
@@ -371,14 +367,13 @@ function renderForeignStreakTable() {
 
     const rawList = allForeignData.streak.streaks || (Array.isArray(allForeignData.streak) ? allForeignData.streak : []);
     const filteredList = filterForeignList(rawList);
-    tbodyForeignStreak.innerHTML = '';
 
     if (filteredList.length === 0) {
         tbodyForeignStreak.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500 italic">Tidak ada emiten dengan streak akumulasi aktif (≥ 2 hari) saat ini.</td></tr>`;
         return;
     }
 
-    filteredList.forEach((row, idx) => {
+    tbodyForeignStreak.innerHTML = filteredList.map((row, idx) => {
         const currentPrice = row.currentPrice || row.price || 0;
         const streakDays = row.streakDays || 2;
         const flame = streakDays >= 7 ? '💎💎💎' : streakDays >= 5 ? '🔥🔥🔥' : streakDays >= 3 ? '🔥🔥' : '🔥';
@@ -404,7 +399,7 @@ function renderForeignStreakTable() {
         const winRate = row.backtestWinRate || row.backtest?.winRate || '78.4%';
         const profitFactor = row.profitFactor || row.backtest?.profitFactor || '2.80';
 
-        tbodyForeignStreak.innerHTML += `
+        return `
             <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
                 <td class="p-3 font-mono">
                     <div class="flex items-center gap-2">
@@ -436,7 +431,7 @@ function renderForeignStreakTable() {
                 </td>
             </tr>
         `;
-    });
+    }).join('');
 }
 
 // Delegated click handler for foreign tables
