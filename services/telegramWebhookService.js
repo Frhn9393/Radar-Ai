@@ -35,6 +35,13 @@ async function processTelegramUpdate(update) {
     const chatId = message?.chat?.id;
     const text = String(message?.text || '').trim();
     if (!chatId || !text) return;
+
+    const configuredAdminChatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
+    if (configuredAdminChatId && chatId.toString() !== configuredAdminChatId.toString()) {
+        console.warn('[telegram-webhook] ignored command from non-admin chat', chatId.toString());
+        return;
+    }
+
     if (/^\/screener(?:@\w+)?$/i.test(text)) {
         const result = await runScreener();
         const picks = (result.swing || []).slice(0, 3).map(item => `$${item.ticker} | Rp ${Number(item.price).toLocaleString('id-ID')} | R:R ${item.riskReward}`).join('\n');

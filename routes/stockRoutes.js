@@ -58,15 +58,33 @@ router.get('/broksum/:ticker', async (req, res) => {
 
 router.post('/telegram-webhook', (req, res) => {
     const update = req.body || {};
+    const message = update.message || update.edited_message;
+    const chatId = message?.chat?.id;
     const updateId = update.update_id;
+    console.log('[telegram-webhook] inbound request', JSON.stringify({
+        updateId: updateId ?? null,
+        updateType: update.message ? 'message' : update.edited_message ? 'edited_message' : 'other',
+        chatId: chatId === undefined || chatId === null ? null : chatId.toString()
+    }));
+
+    // Telegram retries requests that take too long; acknowledge before all processing.
+    res.status(200).send('OK');
+
     const expectedSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
     const suppliedSecret = req.get('x-telegram-bot-api-secret-token');
     const authorized = !expectedSecret || suppliedSecret === expectedSecret;
-    const duplicate = authorized && isDuplicateTelegramUpdate(updateId);
-
-    // Acknowledge Telegram before starting any provider or screener work.
-    res.status(200).send('OK');
-    if (!authorized || duplicate || !process.env.TELEGRAM_BOT_TOKEN) return;
+    if (!authorized) {
+        console.warn('[telegram-webhook] rejected request: secret token mismatch');
+        return;
+    }
+    if (isDuplicateTelegramUpdate(updateId)) {
+        console.log('[telegram-webhook] duplicate update ignored', updateId);
+        return;
+    }
+    if (!process.env.TELEGRAM_BOT_TOKEN) {
+        console.error('[telegram-webhook] cannot process update: TELEGRAM_BOT_TOKEN is not configured');
+        return;
+    }
 
     const backgroundTask = Promise.resolve().then(() => processTelegramUpdate(update)).catch(error => {
         console.error('Telegram webhook background task failed:', error.message || error);
