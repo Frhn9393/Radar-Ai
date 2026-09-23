@@ -53,7 +53,11 @@ router.get('/broksum/:ticker', async (req, res) => {
     if (!dateBounds) {
         return res.status(400).json({ error: 'Rentang tanggal tidak valid.' });
     }
-    res.json(await fetchBroksum(ticker, dateBounds));
+    try {
+        res.json(await fetchBroksum(ticker, dateBounds));
+    } catch (_error) {
+        res.status(502).json({ error: 'Data broksum dari GoAPI sementara tidak tersedia.' });
+    }
 });
 
 router.post('/telegram-webhook', (req, res) => {
