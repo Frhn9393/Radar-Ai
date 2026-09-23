@@ -3,7 +3,7 @@ const { sanitizeTicker } = require('./services/utils');
 const { search_stocks } = require('./services/searchService');
 const { get_stock_price, get_market_indices } = require('./services/marketDataService');
 const { get_technical_indicators } = require('./services/technicalService');
-const { fetch_market_news, fetch_ma_deals } = require('./services/newsService');
+const { fetch_market_news, fetch_ma_deals, extractNewsTicker } = require('./services/newsService');
 const { classifyNewsSentiment, findNewNewsItems, formatNewsAlert } = require('./services/newsAlertService');
 const { analyzeStock, runScreener } = require('./services/stockService');
 
@@ -54,6 +54,9 @@ async function runAllTests() {
     assert(classifyNewsSentiment({ title: 'Emiten umumkan akuisisi' }).label === 'Netral / perlu verifikasi', 'News alert avoids assuming M&A is bullish');
     assert(findNewNewsItems([{ title: 'existing' }], []).length === 0, 'Cold-start feed establishes a baseline without sending a notification burst');
     assert(findNewNewsItems([{ title: 'new' }, { title: 'old' }], [{ title: 'old' }]).length === 1, 'Only items added since the previous feed poll trigger alerts');
+    assert(extractNewsTicker('Kredit Bank Tumbuh Agustus, BI Sebut Permintaan Naik!') === null, 'Ticker parser ignores ordinary title-case words');
+    assert(extractNewsTicker('Buka Suara, Guna Memperkuat Sektor') === null, 'Ticker parser does not treat short common words as issuer names');
+    assert(extractNewsTicker('Astra (ASII) Bakal Fokus ke 3 Segmen') === 'ASII', 'Ticker parser resolves an explicitly formatted issuer code');
     const formattedAlert = formatNewsAlert({ ticker: 'BBRI', title: 'Laba tumbuh', link: 'https://example.com/news' });
     assert(formattedAlert.includes('Emiten: $BBRI') && formattedAlert.includes('Link: https://example.com/news'), 'News alert includes issuer and source link');
 

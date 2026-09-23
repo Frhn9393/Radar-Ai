@@ -194,16 +194,22 @@ ALL_IDX_STOCKS.forEach(stock => {
 
 const KNOWN_TICKERS = new Set(ALL_IDX_STOCKS.map(stock => String(stock?.ticker || '').toUpperCase()).filter(Boolean));
 
+function titleHasIssuerName(title, name) {
+    const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+    return new RegExp(`(?:^|[^a-z0-9])${escapedName}(?=$|[^a-z0-9])`, 'i').test(title);
+}
+
 function extractNewsTicker(title) {
-    const upperTitle = String(title || '').toUpperCase();
-    const explicitTickers = upperTitle.match(/\$?([A-Z0-9]{3,5})(?:\.JK)?\b/g) || [];
+    const originalTitle = String(title || '');
+    const explicitTickers = originalTitle.match(/(?:^|[^A-Za-z0-9])\$?([A-Z0-9]{3,5})(?:\.JK)?(?=$|[^A-Za-z0-9])/g) || [];
     for (const match of explicitTickers) {
-        const ticker = match.replace(/^\$/, '').replace(/\.JK$/, '');
+        const ticker = (match.match(/\$?([A-Z0-9]{3,5})/) || [])[1];
+        if (!ticker) continue;
         if (KNOWN_TICKERS.has(ticker) && !STOP_TICKERS.has(ticker)) return ticker;
     }
-    const lowerTitle = upperTitle.toLowerCase();
+    const lowerTitle = originalTitle.toLowerCase();
     for (const [companyName, ticker] of Object.entries(KNOWN_EMITEN_DICT)) {
-        if (lowerTitle.includes(companyName)) return ticker;
+        if (companyName.length >= 5 && titleHasIssuerName(lowerTitle, companyName)) return ticker;
     }
     return null;
 }
@@ -490,7 +496,7 @@ async function fetchMaDealsFresh(previousDeals) {
             }
 
             for (const [name, code] of Object.entries(KNOWN_EMITEN_DICT)) {
-                if (lowerTitle.includes(name) && !tickers.includes(code)) {
+                if (name.length >= 5 && titleHasIssuerName(lowerTitle, name) && !tickers.includes(code)) {
                     tickers.push(code);
                 }
             }
@@ -597,5 +603,6 @@ async function fetchMaDealsFresh(previousDeals) {
 module.exports = {
     fetch_market_news,
     fetch_corporate_news,
-    fetch_ma_deals
+    fetch_ma_deals,
+    extractNewsTicker
 };
