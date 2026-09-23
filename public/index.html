@@ -53,14 +53,14 @@
 
 </head>
 
-<body class="antialiased min-h-screen flex flex-col">
+<body class="antialiased min-h-screen flex flex-col w-full max-w-full overflow-x-hidden">
 
     <!-- ================= 1. HEADER (STOCKRADAR AI) ================= -->
     <header class="bg-[#090d16] py-2 lg:py-2.5 shadow-md px-3 sm:px-4 md:px-6 sticky top-0 z-50">
-        <div class="max-w-[1550px] mx-auto flex flex-col lg:flex-row items-center justify-between gap-2.5 lg:gap-3">
+        <div class="w-full max-w-full min-w-0 mx-auto flex flex-col lg:flex-row items-center justify-between gap-2.5 lg:gap-3">
 
             <!-- Left / Top Bar: Brand Logo & Mobile Action Bar -->
-            <div class="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-start">
+            <div class="flex items-center gap-3 w-full max-w-full min-w-0 lg:w-auto justify-between lg:justify-start">
                 <div class="flex items-center gap-2 sm:gap-2.5 cursor-pointer flex-shrink-0" onclick="window.location.reload()">
                     <!-- Icon Pulse/Radar -->
                     <div
@@ -81,10 +81,10 @@
                 </div>
 
                 <!-- Mobile Header Quick Actions (Visible only on mobile/tablet < lg) -->
-                <div class="flex items-center gap-1.5 flex-1 lg:flex-initial justify-end lg:justify-start lg:hidden">
+                <div class="flex items-center gap-1.5 flex-1 min-w-0 lg:flex-initial justify-end lg:justify-start lg:hidden">
                     <!-- Mobile Search Pill Trigger (Sleek, prominent, easy to tap) -->
                     <button id="btn-mobile-search-pill"
-                        class="flex-1 flex items-center gap-2 bg-[#0c1322] hover:bg-[#121c30] text-slate-400 hover:text-white px-3 py-2 rounded-xl text-xs transition cursor-pointer mx-1 min-h-[40px] shadow-sm"
+                        class="flex-1 min-w-0 flex items-center gap-2 bg-[#0c1322] hover:bg-[#121c30] text-slate-400 hover:text-white px-3 py-2 rounded-xl text-xs transition cursor-pointer mx-1 min-h-[40px] shadow-sm"
                         title="Cari Saham IDX">
                         <svg class="w-4 h-4 text-cyan-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -339,7 +339,7 @@
     </div>
 
     <!-- ================= MAIN DASHBOARD CONTAINER ================= -->
-    <main class="max-w-[1550px] mx-auto p-3 sm:p-4 md:p-6 w-full space-y-4 sm:space-y-6 flex-1 pb-24 lg:pb-8">
+    <main class="w-full max-w-full min-w-0 overflow-x-hidden mx-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6 flex-1 pb-24 lg:pb-8">
 
         <!-- Stream Status & Quick Stats Bar -->
         <div class="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400 px-1">
@@ -524,7 +524,7 @@
                     <div class="bg-[#0e1626] rounded-xl p-3"><span class="text-[10px] text-slate-400 block">Diversifikasi</span><strong id="portfolio-diversification" class="text-white text-xs">-</strong></div>
                     <div class="bg-[#0e1626] rounded-xl p-3"><span class="text-[10px] text-slate-400 block">Sektor Terbesar</span><strong id="portfolio-sector-exposure" class="text-cyan-300 text-xs">-</strong></div>
                 </div>
-                <div class="screener-table-scroll"><table class="w-full min-w-[900px] text-left text-xs"><thead class="text-slate-400 uppercase bg-[#070b13]"><tr><th class="p-3">Saham</th><th class="p-3">Lot</th><th class="p-3">Avg Price</th><th class="p-3">Last Price</th><th class="p-3">Nilai Pasar</th><th class="p-3">Unrealized P/L</th><th class="p-3">Trailing Stop</th><th class="p-3">Aksi</th></tr></thead><tbody id="portfolio-rows"></tbody></table></div>
+                <div class="screener-table-scroll w-full max-w-full min-w-0 overflow-x-auto"><table class="w-full min-w-[900px] text-left text-xs"><thead class="text-slate-400 uppercase bg-[#070b13]"><tr><th class="p-3">Saham</th><th class="p-3">Lot</th><th class="p-3">Avg Price</th><th class="p-3">Last Price</th><th class="p-3">Nilai Pasar</th><th class="p-3">Unrealized P/L</th><th class="p-3">Trailing Stop</th><th class="p-3">Aksi</th></tr></thead><tbody id="portfolio-rows"></tbody></table></div>
             </div>
         </section>
 
@@ -682,7 +682,7 @@
                                 Gain: 1.5% - 2.5% | Jam: 09:00 - 11:30 WIB</span>
                         </div>
                     </div>
-                    <div class="screener-table-scroll">
+                    <div class="screener-table-scroll w-full max-w-full min-w-0 overflow-x-auto">
                         <div class="text-[10px] text-slate-400 sm:hidden px-3 py-1.5 bg-[#070b13]  flex items-center justify-between">
                             <span class="flex items-center gap-1"><svg class="w-3 h-3 text-cyan-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg> Geser ke kanan untuk rincian</span>
                             <span class="text-cyan-400 font-mono text-[9px] bg-cyan-950/80 px-1.5 py-0.5 rounded ">KODE TERKUNCI</span>
@@ -719,7 +719,7 @@
                         </h3>
                         <span class="text-xs text-slate-400">Target Gain ~3% | Stop Loss ~1.5%</span>
                     </div>
-                    <div class="screener-table-scroll">
+                    <div class="screener-table-scroll w-full max-w-full min-w-0 overflow-x-auto">
                         <div class="text-[10px] text-slate-400 sm:hidden px-3 py-1.5 bg-[#070b13]  flex items-center justify-between">
                             <span class="flex items-center gap-1"><svg class="w-3 h-3 text-cyan-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg> Geser ke kanan untuk rincian</span>
                             <span class="text-cyan-400 font-mono text-[9px] bg-cyan-950/80 px-1.5 py-0.5 rounded ">KODE TERKUNCI</span>
@@ -754,7 +754,7 @@
                         </h3>
                         <span class="text-xs text-slate-400">Risk : Reward dinamis (minimum 1:1)</span>
                     </div>
-                    <div class="screener-table-scroll">
+                    <div class="screener-table-scroll w-full max-w-full min-w-0 overflow-x-auto">
                         <div class="text-[10px] text-slate-400 sm:hidden px-3 py-1.5 bg-[#070b13]  flex items-center justify-between">
                             <span class="flex items-center gap-1"><svg class="w-3 h-3 text-cyan-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg> Geser ke kanan untuk rincian</span>
                             <span class="text-cyan-400 font-mono text-[9px] bg-cyan-950/80 px-1.5 py-0.5 rounded ">KODE TERKUNCI</span>
@@ -790,7 +790,7 @@
                         </h3>
                         <span class="text-xs text-slate-400">Akumulasi Sesi II (14:30 - 15:00)</span>
                     </div>
-                    <div class="screener-table-scroll">
+                    <div class="screener-table-scroll w-full max-w-full min-w-0 overflow-x-auto">
                         <div class="text-[10px] text-slate-400 sm:hidden px-3 py-1.5 bg-[#070b13]  flex items-center justify-between">
                             <span class="flex items-center gap-1"><svg class="w-3 h-3 text-cyan-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg> Geser ke kanan untuk rincian</span>
                             <span class="text-cyan-400 font-mono text-[9px] bg-cyan-950/80 px-1.5 py-0.5 rounded ">KODE TERKUNCI</span>
@@ -826,7 +826,7 @@
                         </h3>
                         <span class="text-xs text-slate-400">Entry Pukul 09:00 - 09:30 WIB</span>
                     </div>
-                    <div class="screener-table-scroll">
+                    <div class="screener-table-scroll w-full max-w-full min-w-0 overflow-x-auto">
                         <div class="text-[10px] text-slate-400 sm:hidden px-3 py-1.5 bg-[#070b13]  flex items-center justify-between">
                             <span class="flex items-center gap-1"><svg class="w-3 h-3 text-cyan-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg> Geser ke kanan untuk rincian</span>
                             <span class="text-cyan-400 font-mono text-[9px] bg-cyan-950/80 px-1.5 py-0.5 rounded ">KODE TERKUNCI</span>
@@ -863,7 +863,7 @@
                         </h3>
                         <span class="text-xs text-slate-400">Horizon 6 - 12 Bulan</span>
                     </div>
-                    <div class="screener-table-scroll">
+                    <div class="screener-table-scroll w-full max-w-full min-w-0 overflow-x-auto">
                         <div class="text-[10px] text-slate-400 sm:hidden px-3 py-1.5 bg-[#070b13]  flex items-center justify-between">
                             <span class="flex items-center gap-1"><svg class="w-3 h-3 text-cyan-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg> Geser ke kanan untuk rincian</span>
                             <span class="text-cyan-400 font-mono text-[9px] bg-cyan-950/80 px-1.5 py-0.5 rounded ">KODE TERKUNCI</span>

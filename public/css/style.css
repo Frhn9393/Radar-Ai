@@ -1,8 +1,19 @@
+html,
+body {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+}
+
+html {
+    overscroll-behavior-x: none;
+}
+
 body {
     background-color: #07090e;
     color: #e2e8f0;
     font-family: 'Plus Jakarta Sans', sans-serif;
-    overflow-x: hidden;
+    min-width: 0;
 }
 
 /* Custom subtle scrollbars */
@@ -71,6 +82,10 @@ body {
 
 /* Gradient mask for smooth ticker edges */
 .ticker-mask {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
     mask-image: linear-gradient(to right, transparent, black 40px, black calc(100% - 40px), transparent);
     -webkit-mask-image: linear-gradient(to right, transparent, black 40px, black calc(100% - 40px), transparent);
 }
@@ -81,7 +96,11 @@ body {
 }
 
 .screener-table-scroll {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     overflow-x: auto;
+    overflow-y: hidden;
     overscroll-behavior-x: contain;
     scrollbar-width: thin;
     scrollbar-color: #334155 #090d16;
