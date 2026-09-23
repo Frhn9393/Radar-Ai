@@ -8,8 +8,8 @@ const { classifyNewsSentiment, findNewNewsItems, formatNewsAlert } = require('./
 const { isStrictBsjpEligible, isStrictBpjpEligible, isStrictIntradayEligible } = require('./services/strictScreenerFilters');
 const { getDailyCatalysts } = require('./services/screenerService');
 const { processTelegramUpdate, formatScreenerRows, STRICT_EMPTY_ALERT } = require('./services/telegramWebhookService');
-const { fetchStockPrices, fetchHistorical, fetchBrokerSummary, analyzeBrokerSummary, GoApiError, GOAPI_CAPABILITIES, _clearCacheForTests } = require('./services/goapi');
-const { fetchBroksum, tradingDaysBetween } = require('./services/broksumService');
+const { fetchBrokerTop, requestBrokerTop, parseStockbitResponse, _clearCacheForTests } = require('./services/customMarketFeed');
+const { fetchBroksum } = require('./services/broksumService');
 const { analyzeStock, runScreener } = require('./services/stockService');
 
 let totalTests = 0;
@@ -54,54 +54,69 @@ async function testEmptyTelegramCommands() {
     }
 }
 
-async function testGoApiService() {
-    const previousKey = process.env.GOAPI_KEY;
+async function testStockbitFeed() {
+    const previousToken = process.env.SEKURITAS_AUTH_TOKEN;
     const previousFetch = global.fetch;
     const requests = [];
-    process.env.GOAPI_KEY = 'unit-test-key';
+    process.env.SEKURITAS_AUTH_TOKEN = 'unit-test-bearer';
     _clearCacheForTests();
     global.fetch = async (url, options) => {
         requests.push({ url: String(url), options });
         const parsedUrl = new URL(String(url));
-        if (parsedUrl.pathname.endsWith('/prices')) return { ok: true, json: async () => ({ status: 'success', data: [{ symbol: 'BBCA', date: '2026-09-23', open: 1000, high: 1020, low: 990, close: 1010, volume: 30000000 }] }) };
-        if (parsedUrl.pathname.endsWith('/historical')) return { ok: true, json: async () => ({ status: 'success', data: [{ ticker: 'BBCA', date: '2026-09-22', open: 990, high: 1010, low: 980, close: 1000, volume: 20000000 }] }) };
-        return { ok: true, json: async () => ({ status: 'success', data: { results: [
-            { code: 'YP', side: 'BUY', transaction_type: 'NET', lot: 100, value: 600, avg: 1000 },
-            { code: 'CC', side: 'BUY', transaction_type: 'NET', lot: 50, value: 300, avg: 1000 },
-            { code: 'MG', side: 'BUY', transaction_type: 'NET', lot: 20, value: 100, avg: 1000 },
-            { code: 'AK', side: 'SELL', transaction_type: 'NET', lot: 80, value: 500, avg: 1000 },
-            { code: 'ZP', side: 'SELL', transaction_type: 'NET', lot: 40, value: 200, avg: 1000 },
-            { code: 'BK', side: 'SELL', transaction_type: 'NET', lot: 40, value: 200, avg: 1000 }
-        ] } }) };
+        assert(parsedUrl.origin === 'https://exodus.stockbit.com' && parsedUrl.pathname === '/order-trade/broker/top', 'Stockbit feed uses the configured broker-top endpoint');
+        return { ok: true, status: 200, json: async () => ({ data: {
+            symbol: 'BBCA', date: '2026-09-23',
+            brokers_buy: [
+                { code: 'YP', net_value: 600, lot: 100, avg_price: 1000 },
+                { code: 'CC', net_value: 300, lot: 50, avg_price: 1000 },
+                { code: 'MG', net_value: 100, lot: 20, avg_price: 1000 }
+            ],
+            brokers_sell: [
+                { code: 'AK', net_value: 500, lot: 80, avg_price: 1000 },
+                { code: 'ZP', net_value: 200, lot: 40, avg_price: 1000 },
+                { code: 'BK', net_value: 200, lot: 40, avg_price: 1000 }
+            ],
+            order_book: { total_bid_volume: 300, total_offer_volume: 100 },
+            running_trade_frequency_per_minute: 60,
+            average_daily_turnover: 21_000_000_000
+        } }) };
     };
     try {
-        const prices = await fetchStockPrices(['bbca', 'BBCA', 'BAD!']);
-        assert(prices.get('BBCA')?.close === 1010 && prices.size === 1, 'GoAPI batched prices normalize issuer data and filter invalid symbols');
-        const historical = await fetchHistorical('BBCA', '2026-09-01', '2026-09-23');
-        assert(historical.length === 1 && historical[0].close === 1000, 'GoAPI historical endpoint returns normalized OHLCV rows');
-        const summary = analyzeBrokerSummary(await fetchBrokerSummary('BBCA', '2026-09-23'));
-        assert(summary?.dataSource === 'GOAPI' && summary.status === 'BIG ACCUMULATION', 'GoAPI broker summary calculates a strict accumulation classification');
-        assert(GOAPI_CAPABILITIES.orderBook === false && GOAPI_CAPABILITIES.runningTrade === false, 'Unsupported order-book and running-trade feeds are explicitly unavailable, not fabricated');
-        const periodSummary = await fetchBroksum('BBCA', { startDate: '2026-09-21', endDate: '2026-09-23' });
-        assert(periodSummary.dataSource === 'GOAPI' && periodSummary.buyers.length > 0 && periodSummary.sellers.length > 0, 'Broksum service aggregates real-provider rows for the selected trading-date range');
-        assert(tradingDaysBetween('2026-09-19', '2026-09-23').join(',') === '2026-09-21,2026-09-22,2026-09-23', 'Broksum date iteration skips weekend dates in WIB calendar');
-        assert(requests.every(request => request.options.headers['X-API-KEY'] === 'unit-test-key'), 'GoAPI requests use the secret X-API-KEY header');
-        assert(requests.every(request => !request.url.includes('unit-test-key')), 'GoAPI secret is not placed in request URLs');
-        assert(requests.some(request => new URL(request.url).searchParams.get('investor') === 'ALL'), 'GoAPI broker-summary request specifies investor scope');
+        const feed = await fetchBrokerTop('bbca');
+        assert(feed?.dataSource === 'STOCKBIT' && feed.ticker === 'BBCA' && feed.status === 'BIG ACCUMULATION', 'Stockbit broker feed parses real-schema data and classifies accumulation');
+        assert(feed?.orderBook?.totalBidVolume === 300 && feed.runningTradeFrequencyPerMinute === 60, 'Stockbit microstructure metrics are normalized for strict strategy filters');
+        assert(requests[0].options.headers.Authorization === 'Bearer unit-test-bearer', 'Stockbit requests use the Bearer Authorization header');
+        assert(!requests[0].url.includes('unit-test-bearer'), 'Stockbit bearer token is never placed in the request URL');
+        assert(new URL(requests[0].url).searchParams.get('symbol') === 'BBCA', 'Stockbit broker-top request is scoped to the validated ticker');
+        const periodSummary = await fetchBroksum('BBCA', { startDate: '2026-09-22', endDate: '2026-09-23' });
+        assert(periodSummary.dataSource === 'STOCKBIT' && periodSummary.buyers.length > 0 && periodSummary.sellers.length > 0, 'Broksum route response maps Stockbit buyers and sellers');
+        assert(parseStockbitResponse({ data: { symbol: 'BBRI', brokers_buy: [], brokers_sell: [] } }, 'BBCA') === null, 'Stockbit feed rejects a response for a different issuer');
+        assert(parseStockbitResponse({ data: { brokers_buy: [], brokers_sell: [] } }, 'BBCA') === null, 'Stockbit feed rejects broker data without issuer identity');
     } finally {
         global.fetch = previousFetch;
-        if (previousKey === undefined) delete process.env.GOAPI_KEY;
-        else process.env.GOAPI_KEY = previousKey;
+        if (previousToken === undefined) delete process.env.SEKURITAS_AUTH_TOKEN;
+        else process.env.SEKURITAS_AUTH_TOKEN = previousToken;
         _clearCacheForTests();
     }
-    const noKey = process.env.GOAPI_KEY;
-    delete process.env.GOAPI_KEY;
+    const token = process.env.SEKURITAS_AUTH_TOKEN;
+    delete process.env.SEKURITAS_AUTH_TOKEN;
     try {
-        let missingKeyRejected = false;
-        try { await fetchStockPrices(['BBCA']); } catch (error) { missingKeyRejected = error instanceof GoApiError; }
-        assert(missingKeyRejected, 'GoAPI helper fails closed when GOAPI_KEY is missing');
+        assert(await fetchBrokerTop('BBCA') === null, 'Stockbit feed fails closed when Bearer token is missing');
+        const emptyResponse = await fetchBroksum('BBCA', { startDate: '2026-09-22', endDate: '2026-09-23' });
+        assert(emptyResponse.dataSource === 'STOCKBIT_UNAVAILABLE' && emptyResponse.buyers.length === 0, 'Missing token returns empty broksum arrays for UI Wait & See');
     } finally {
-        if (noKey !== undefined) process.env.GOAPI_KEY = noKey;
+        if (token !== undefined) process.env.SEKURITAS_AUTH_TOKEN = token;
+    }
+
+    process.env.SEKURITAS_AUTH_TOKEN = 'invalid-test-bearer';
+    global.fetch = async () => ({ ok: false, status: 401 });
+    try {
+        assert(await fetchBrokerTop('BBCA') === null, 'Stockbit 401/expired token returns empty data instead of throwing');
+    } finally {
+        global.fetch = previousFetch;
+        if (previousToken === undefined) delete process.env.SEKURITAS_AUTH_TOKEN;
+        else process.env.SEKURITAS_AUTH_TOKEN = previousToken;
+        _clearCacheForTests();
     }
 }
 
@@ -144,10 +159,10 @@ async function runAllTests() {
     assert(formattedAlert.includes('Emiten: $BBRI') && formattedAlert.includes('Link: https://example.com/news'), 'News alert includes issuer and source link');
 
     console.log('\n▶ Testing strict screener eligibility and null-data handling...');
-    await testGoApiService();
-    const strictBsjp = { isCurrentJakartaDay: true, close: 98, high: 100, tickSize: 1, turnover: 10000000001, volumeToday: 201, ma5Volume: 100, broksum: { dataSource: 'IDX_PROVIDER', analysis: { key: 'BIG_ACCUMULATION' } } };
+    await testStockbitFeed();
+    const strictBsjp = { isCurrentJakartaDay: true, close: 98, high: 100, tickSize: 1, turnover: 10000000001, volumeToday: 201, ma5Volume: 100, broksum: { dataSource: 'STOCKBIT', analysis: { key: 'BIG_ACCUMULATION' } } };
     assert(isStrictBsjpEligible(strictBsjp), 'BSJP accepts a row meeting every strict criterion');
-    assert(!isStrictBsjpEligible({ ...strictBsjp, broksum: { dataSource: 'MOCK', analysis: { key: 'BIG_ACCUMULATION' } } }), 'BSJP rejects mock broker-summary data');
+    assert(!isStrictBsjpEligible({ ...strictBsjp, broksum: { dataSource: 'UNVERIFIED', analysis: { key: 'BIG_ACCUMULATION' } } }), 'BSJP rejects non-Stockbit broker-summary data');
     assert(!isStrictBsjpEligible({ ...strictBsjp, volumeToday: 200 }), 'BSJP rejects volume that is not greater than 2x MA5');
     assert(!isStrictBsjpEligible({ ...strictBsjp, close: 97.9 }), 'BSJP rejects a close more than two ticks below the high');
     assert(!isStrictBsjpEligible(null), 'BSJP safely rejects null market data');

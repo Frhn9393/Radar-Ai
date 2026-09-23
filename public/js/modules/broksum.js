@@ -44,7 +44,7 @@ async function loadBroksumForPeriod() {
         document.getElementById('broksum-buy-bar').style.width = `${analysis.buyStrength}%`;
         document.getElementById('broksum-sell-bar').style.width = `${analysis.sellStrength}%`;
         document.getElementById('broksum-summary').textContent = `Top 3 buyer ${formatBroksumValue(analysis.buyTotal)} vs top 3 seller ${formatBroksumValue(analysis.sellTotal)}. Dataset: ${data.dataSource}; periode ${data.period.startDate}–${data.period.endDate}.`;
-        document.getElementById('broksum-source').textContent = data.dataSource === 'MOCK' ? 'Data simulasi • belum tersambung ke data broker BEI' : `Sumber: ${data.dataSource}`;
+        document.getElementById('broksum-source').textContent = data.dataSource === 'STOCKBIT_UNAVAILABLE' ? 'Feed Stockbit belum tersedia · Wait & See' : `Sumber: ${data.dataSource}`;
     } catch (error) {
         conclusion.textContent = 'Gagal memuat analisis broksum.';
         console.error('Broksum load failed:', error);

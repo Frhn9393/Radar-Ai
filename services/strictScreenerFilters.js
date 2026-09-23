@@ -14,7 +14,7 @@ function isStrictBsjpEligible(metrics = {}) {
         Number(close) >= Number(high) - 2 * Number(tickSize) &&
         Number(turnover) > 10_000_000_000 &&
         Number(volumeToday) > 2 * Number(ma5Volume) &&
-        Boolean(source) && !['MOCK', 'DEMO', 'SAMPLE'].includes(source) &&
+        source === 'STOCKBIT' &&
         status === 'BIG ACCUMULATION';
 }
 

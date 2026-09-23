@@ -4,11 +4,11 @@ const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
 const { calcBullishConfidence, processTechnicalData } = require('./technicalService');
 const { ALL_IDX_STOCKS } = require('./searchService');
 const { getTickSize } = require('./utils');
-const { formatJakartaDate, daysAgoJakarta } = require('./dateTime');
+const { formatJakartaDate } = require('./dateTime');
 const { fetch_market_news, fetch_ma_deals } = require('./newsService');
 const { classifyNewsSentiment } = require('./newsAlertService');
 const { isStrictBsjpEligible, isStrictBpjpEligible, isStrictIntradayEligible } = require('./strictScreenerFilters');
-const { fetchStockPrices, fetchHistorical, fetchBrokerSummary, analyzeBrokerSummary, GOAPI_CAPABILITIES } = require('./goapi');
+const { fetchBrokerTop } = require('./customMarketFeed');
 
 const STOCK_SECTOR_MAP = new Map();
 if (Array.isArray(ALL_IDX_STOCKS)) {
@@ -113,15 +113,14 @@ function getTechnicalStatus(isSupertrendBullish, rsi, fallbackLabel) {
 
 async function runScreener() {
     if (screenerCache && (Date.now() - screenerCacheTime < SCREENER_CACHE_TTL)) {
-        return screenerCache;
+        const hasCachedStrictSignals = [
+            screenerCache.scalpingSesi1, screenerCache.scalpingSesi2, screenerCache.daytrade,
+            screenerCache.bsjp, screenerCache.bpjp
+        ].some(rows => Array.isArray(rows) && rows.length > 0);
+        if (!hasCachedStrictSignals) return screenerCache;
     }
 
-    const [marketNewsResult, maDealsResult, goApiPricesResult] = await Promise.allSettled([
-        fetch_market_news(),
-        fetch_ma_deals(),
-        fetchStockPrices(UNIQUE_WATCHLIST)
-    ]);
-    const goApiPrices = goApiPricesResult.status === 'fulfilled' ? goApiPricesResult.value : new Map();
+    const [marketNewsResult, maDealsResult] = await Promise.allSettled([fetch_market_news(), fetch_ma_deals()]);
     const dailyCatalysts = getDailyCatalysts(
         marketNewsResult.status === 'fulfilled' ? marketNewsResult.value : null,
         maDealsResult.status === 'fulfilled' ? maDealsResult.value : null
@@ -139,6 +138,7 @@ async function runScreener() {
     };
 
     const period1 = new Date(Date.now() - 365 * 24 * 3600 * 1000);
+    let stockbitSignals = 0;
 
     async function evaluateTicker(ticker) {
         try {
@@ -150,8 +150,13 @@ async function runScreener() {
             const validQuotes = chart.quotes.filter(q => q && q.close !== null);
             const latest = validQuotes[validQuotes.length - 1];
             const prev = validQuotes.length > 1 ? validQuotes[validQuotes.length - 2] : latest;
+            const priorFiveVolumes = validQuotes.slice(-6, -1).map(quote => Number(quote.volume)).filter(volumeValue => Number.isFinite(volumeValue) && volumeValue > 0);
+            const ma5Volume = priorFiveVolumes.length === 5
+                ? priorFiveVolumes.reduce((sum, volumeValue) => sum + volumeValue, 0) / 5
+                : null;
             const price = latest.close;
             const prevClose = prev.close;
+            const openPrice = latest.open;
             const high = latest.high || price;
             const low = latest.low || price;
             const volume = latest.volume ? Math.floor(latest.volume / 100) : 0; // Lot
@@ -183,46 +188,24 @@ async function runScreener() {
             const pivots = trendData.pivots?.classic || null;
             const candlestick = trendData.candlestick?.pattern || 'N/A';
             const technicalStatus = getTechnicalStatus(isSupertrendBullish, rsi, label);
-            const goApiQuote = goApiPrices.get(ticker) || null;
-            const strictQuoteToday = Boolean(goApiQuote && isTodayInJakarta(goApiQuote.date));
-            const goApiTurnover = goApiQuote?.value ?? (goApiQuote?.volume !== null && goApiQuote?.close !== null
-                ? goApiQuote.volume * goApiQuote.close
-                : null);
-            let brokerSummary = null;
-            let goApiMa5Volume = null;
-            const goApiBsjpBaseEligible = strictQuoteToday &&
-                Number.isFinite(goApiQuote.close) && Number.isFinite(goApiQuote.high) && Number.isFinite(goApiQuote.volume) &&
-                Number.isFinite(goApiTurnover) &&
-                goApiQuote.close >= goApiQuote.high - 2 * getTickSize(goApiQuote.high) &&
-                goApiTurnover > 10_000_000_000;
-            if (goApiBsjpBaseEligible) {
-                try {
-                    const goApiHistory = await fetchHistorical(ticker, daysAgoJakarta(14), formatJakartaDate());
-                    const priorDailyVolumes = goApiHistory
-                        .filter(row => String(row.date || '') < String(goApiQuote.date || ''))
-                        .sort((left, right) => String(left.date).localeCompare(String(right.date)))
-                        .slice(-5)
-                        .map(row => row.volume)
-                        .filter(volumeValue => Number.isFinite(volumeValue) && volumeValue > 0);
-                    if (priorDailyVolumes.length === 5) {
-                        goApiMa5Volume = priorDailyVolumes.reduce((sum, volumeValue) => sum + volumeValue, 0) / 5;
-                        if (goApiQuote.volume > 2 * goApiMa5Volume) {
-                            const brokerRows = await fetchBrokerSummary(ticker, formatJakartaDate());
-                            brokerSummary = analyzeBrokerSummary(brokerRows);
-                        }
-                    }
-                } catch (_error) {
-                    brokerSummary = null;
-                }
-            }
-            const orderBook = null;
             const hasPositiveDailyNews = dailyCatalysts.positiveNewsTickers.has(ticker);
             const hasDailyMaNews = dailyCatalysts.maTickers.has(ticker);
+            const strictQuoteToday = isTodayInJakarta(latest.date);
+            const bpjpGapPct = prevClose > 0 ? ((openPrice - prevClose) / prevClose) * 100 : null;
+            const canQualifyBsjp = strictQuoteToday && ma5Volume !== null && latest.high > 0 &&
+                latest.close >= latest.high - 2 * getTickSize(latest.high) && value > 10_000_000_000 && latest.volume > 2 * ma5Volume;
+            const canQualifyBpjp = strictQuoteToday && bpjpGapPct >= 1 && bpjpGapPct <= 3 && (hasPositiveDailyNews || hasDailyMaNews);
+            const canQualifyIntraday = strictQuoteToday && value > 20_000_000_000;
+            const stockbitMetrics = canQualifyBsjp || canQualifyBpjp || canQualifyIntraday ? await fetchBrokerTop(ticker) : null;
+            if (stockbitMetrics?.dataSource === 'STOCKBIT') stockbitSignals += 1;
+            const stockbitQuoteToday = Boolean(stockbitMetrics && isTodayInJakarta(stockbitMetrics.date));
+            const brokerSummary = stockbitMetrics;
+            const orderBook = stockbitMetrics?.orderBook || null;
             const strictIntradayMetrics = {
-                isCurrentJakartaDay: strictQuoteToday,
-                runningTradeFrequencyPerMinute: null,
-                averageDailyTurnover: goApiTurnover,
-                netBuyerPowerPct: null
+                isCurrentJakartaDay: stockbitQuoteToday,
+                runningTradeFrequencyPerMinute: stockbitMetrics?.runningTradeFrequencyPerMinute,
+                averageDailyTurnover: stockbitMetrics?.averageDailyTurnover,
+                netBuyerPowerPct: stockbitMetrics?.netBuyerPowerPct
             };
             const strictIntradayEligible = isStrictIntradayEligible(strictIntradayMetrics);
 
@@ -383,23 +366,23 @@ async function runScreener() {
             bsjpScore += (confidence * 0.3);
 
             if (isStrictBsjpEligible({
-                isCurrentJakartaDay: strictQuoteToday,
-                close: goApiQuote?.close,
-                high: goApiQuote?.high,
-                tickSize: goApiQuote ? getTickSize(goApiQuote.high) : null,
-                turnover: goApiTurnover,
-                volumeToday: goApiQuote?.volume,
-                ma5Volume: goApiMa5Volume,
+                isCurrentJakartaDay: stockbitQuoteToday,
+                close: latest.close,
+                high: latest.high,
+                tickSize: getTickSize(latest.high),
+                turnover: value,
+                volumeToday: latest.volume,
+                ma5Volume,
                 broksum: brokerSummary
             })) candidates.bsjp.push({
                 score: bsjpScore,
                 item: {
-                    ticker, sector, price: goApiQuote.close, changePct: changePct.toFixed(2),
+                    ticker, sector, price, changePct: changePct.toFixed(2),
                     rsi: rsi.toFixed(1),
-                    pullbackFromHigh: (((goApiQuote.high - goApiQuote.close) / goApiQuote.high) * 100).toFixed(2),
-                    beliSore: `Sesi II (14:30-15:00) ≤ ${Math.round(goApiQuote.close).toLocaleString('id-ID')}`,
-                    targetPagi: Math.round(goApiQuote.close * 1.025),
-                    stopLoss: Math.round(goApiQuote.low * 0.99),
+                    pullbackFromHigh: pullbackFromHigh.toFixed(2),
+                    beliSore: `Sesi II (14:30-15:00) ≤ ${Math.round(price).toLocaleString('id-ID')}`,
+                    targetPagi: Math.round(price * 1.025),
+                    stopLoss: Math.round(low * 0.99),
                     estimasiGain: '1.5-3%',
                     riskReward: '1:2',
                     broksumStatus: brokerSummary.status,
@@ -433,9 +416,9 @@ async function runScreener() {
             bpjpScore += (confidence * 0.4);
 
             if (isStrictBpjpEligible({
-                isCurrentJakartaDay: strictQuoteToday,
-                open: goApiQuote?.open,
-                previousClose: goApiQuote?.previousClose,
+                isCurrentJakartaDay: stockbitQuoteToday,
+                open: openPrice,
+                previousClose: prevClose,
                 totalBidVolume: orderBook?.totalBidVolume,
                 totalOfferVolume: orderBook?.totalOfferVolume,
                 hasPositiveDailyNews,
@@ -555,13 +538,7 @@ async function runScreener() {
             auditStatus: "STRICT_FAIL_CLOSED",
             timestamp: new Date().toISOString()
         },
-        dataSources: {
-            goapi: {
-                connected: goApiPricesResult.status === 'fulfilled' && goApiPrices.size > 0,
-                quoteCount: goApiPrices.size,
-                capabilities: GOAPI_CAPABILITIES
-            }
-        }
+        dataSources: { stockbit: { connected: stockbitSignals > 0, qualifiedRequests: stockbitSignals } }
     };
 
     screenerCache = results;
