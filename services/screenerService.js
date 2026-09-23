@@ -5,6 +5,8 @@ const { calcBullishConfidence, processTechnicalData } = require('./technicalServ
 const { ALL_IDX_STOCKS } = require('./searchService');
 const { getTickSize } = require('./utils');
 const { formatJakartaDate } = require('./dateTime');
+const { sendTelegramAlert } = require('./telegramService');
+const { claimAlert, releaseAlert } = require('./alertDedupeStore');
 const { isStrictBsjpEligible, isStrictBpjpEligible, isStrictIntradayEligible } = require('./strictScreenerFilters');
 
 const STOCK_SECTOR_MAP = new Map();
@@ -22,6 +24,7 @@ if (Array.isArray(ALL_IDX_STOCKS)) {
 let screenerCache = null;
 let screenerCacheTime = 0;
 const SCREENER_CACHE_TTL = 3 * 60 * 1000; // 3 minutes
+const previousAlertSignals = new Set();
 
 const WATCHLIST_UNIVERSE = [
     // ── Bluechip & Top Tier LQ45 / Kompas100 ─────────────────────────────
@@ -489,6 +492,49 @@ async function runScreener() {
         },
         dataSources: { prices: 'Yahoo Finance', indicators: 'Yahoo Finance OHLCV' }
     };
+
+    const currentSignals = new Set();
+    const alertCategories = [
+        ['BSJP', results.allCandidates.bsjp],
+        ['BPJS', results.allCandidates.bpjs],
+        ['SCALPING', results.allCandidates.scalpingSesi1],
+        ['DAYTRADE', results.allCandidates.daytrade]
+    ];
+    const newlyQualified = [];
+    for (const [strategy, rows] of alertCategories) {
+        for (const row of rows) {
+            const key = `${formatJakartaDate()}|${strategy}|${row.ticker}`;
+            currentSignals.add(key);
+            if (!previousAlertSignals.has(key)) newlyQualified.push({ key, strategy, row });
+        }
+    }
+    previousAlertSignals.clear();
+    currentSignals.forEach(key => previousAlertSignals.add(key));
+    if (newlyQualified.length && process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_ADMIN_CHAT_ID) {
+        const alertTask = Promise.all(newlyQualified.map(async ({ key, strategy, row }) => {
+            const dedupeKey = `signal:${key}`;
+            if (!await claimAlert(dedupeKey)) return;
+            const message = [
+                `📡 [SCREENER ${strategy}]`,
+                `Emiten: $${row.ticker}`,
+                `Harga: Rp ${Number(row.price || 0).toLocaleString('id-ID')}`,
+                `Perubahan: ${row.changePct || '0.00'}%`,
+                `Strategi: ${row.backtest?.strategy || strategy}`,
+                'Sumber: Yahoo Finance OHLCV'
+            ].join('\n');
+            try {
+                if (!await sendTelegramAlert(message)) {
+                    previousAlertSignals.delete(key);
+                    await releaseAlert(dedupeKey);
+                }
+            } catch (error) {
+                previousAlertSignals.delete(key);
+                await releaseAlert(dedupeKey).catch(() => {});
+                throw error;
+            }
+        })).catch(error => console.error('[screener-alert] Telegram delivery failed:', error.message || error));
+        try { require('@vercel/functions').waitUntil(alertTask); } catch { alertTask.catch(() => {}); }
+    }
 
     screenerCache = results;
     screenerCacheTime = Date.now();

@@ -1,5 +1,6 @@
 const { waitUntil } = require('@vercel/functions');
 const { sendTelegramAlert } = require('./telegramService');
+const { claimAlert, releaseAlert } = require('./alertDedupeStore');
 
 const notifiedNews = new Map();
 const DEDUPE_TTL_MS = 24 * 60 * 60 * 1000;
@@ -69,20 +70,26 @@ function rememberKey(key) {
 
 function enqueueNewsAlerts(items = []) {
     for (const item of items) {
+        const sentiment = classifyNewsSentiment(item).label;
+        const isMaOrCorporateAction = /m&a|aksi korporasi|akuisisi|merger|buyback|rups/i.test(`${item?.category || ''} ${item?.title || ''}`);
+        if (sentiment === 'Netral / perlu verifikasi' && !isMaOrCorporateAction) continue;
         const key = getNewsAlertKey(item);
         if (!key || notifiedNews.has(key)) continue;
         rememberKey(key);
 
-        const task = sendTelegramAlert(formatNewsAlert(item)).then(sent => {
+        const dedupeKey = `news:${key}`;
+        const task = claimAlert(dedupeKey).then(claimed => claimed ? sendTelegramAlert(formatNewsAlert(item)) : true).then(async sent => {
             if (!sent) {
                 notifiedNews.delete(key);
+                await releaseAlert(dedupeKey);
                 if (!missingConfigLogged) {
                     console.warn('[news-alert] TELEGRAM_BOT_TOKEN or TELEGRAM_ADMIN_CHAT_ID is not configured');
                     missingConfigLogged = true;
                 }
             }
-        }).catch(error => {
+        }).catch(async error => {
             notifiedNews.delete(key);
+            await releaseAlert(dedupeKey).catch(() => {});
             console.error('[news-alert] Telegram delivery failed:', error.message || error);
         });
 

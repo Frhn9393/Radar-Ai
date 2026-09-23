@@ -3,7 +3,8 @@ const router = express.Router();
 const {
     getAvailableStrategies,
     runBacktest,
-    quickAudit
+    quickAudit,
+    runScreenerPortfolioBacktest
 } = require('../services/backtestEngine');
 
 // API: List available backtest strategies
@@ -55,6 +56,25 @@ router.get('/quick/:ticker', async (req, res) => {
         res.json(audit);
     } catch (error) {
         res.status(500).json({ error: error.message || 'Gagal melakukan audit backtest' });
+    }
+});
+
+router.post('/', async (req, res) => {
+    try {
+        const result = await runScreenerPortfolioBacktest(req.body || {});
+        res.json(result);
+    } catch (error) {
+        res.status(400).json({ error: error.message || 'Gagal menjalankan backtest screener.' });
+    }
+});
+
+router.get('/', async (req, res) => {
+    try {
+        const tickers = String(req.query.tickers || req.query.ticker || '').split(',').map(value => value.trim()).filter(Boolean);
+        const result = await runScreenerPortfolioBacktest({ tickers, period: req.query.period || '3m', initialCapital: req.query.initialCapital ? Number(req.query.initialCapital) : 100000000 });
+        res.json(result);
+    } catch (error) {
+        res.status(400).json({ error: error.message || 'Gagal menjalankan backtest screener.' });
     }
 });
 

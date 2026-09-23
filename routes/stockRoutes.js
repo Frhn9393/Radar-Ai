@@ -1,9 +1,12 @@
 const express = require('express');
 const router = express.Router();
+let lastTelegramTestAt = 0;
 const { fetchBroksum } = require('../services/broksumService');
 const { StockbitFeedError } = require('../services/customMarketFeed');
 const { formatJakartaDate, daysAgoJakarta, tradingDateBounds } = require('../services/dateTime');
 const { waitUntil } = require('@vercel/functions');
+const { sendTelegramAlert } = require('../services/telegramService');
+const { fetchHistoricalData } = require('../services/backtestEngine');
 const { isDuplicateTelegramUpdate, processTelegramUpdate } = require('../services/telegramWebhookService');
 const {
     analyzeStock,
@@ -104,6 +107,27 @@ router.post('/telegram-webhook', (req, res) => {
     }
 });
 
+router.post('/telegram/test-alert', async (req, res) => {
+    const origin = req.get('origin');
+    if (origin) {
+        try {
+            if (new URL(origin).host !== req.get('host')) return res.status(403).json({ ok: false, error: 'Origin tidak diizinkan.' });
+        } catch { return res.status(403).json({ ok: false, error: 'Origin tidak valid.' }); }
+    }
+    if (Date.now() - lastTelegramTestAt < 60_000) return res.status(429).json({ ok: false, error: 'Tunggu satu menit sebelum mengirim tes berikutnya.' });
+    if (!process.env.TELEGRAM_BOT_TOKEN || !process.env.TELEGRAM_ADMIN_CHAT_ID) {
+        return res.status(503).json({ ok: false, error: 'Konfigurasi Telegram belum tersedia.' });
+    }
+    try {
+        lastTelegramTestAt = Date.now();
+        const ok = await sendTelegramAlert('✅ STOCKRADAR AI: Tes notifikasi berhasil. Alert Telegram aktif.');
+        return res.status(ok ? 200 : 502).json({ ok, message: ok ? 'Tes notifikasi berhasil dikirim.' : 'Telegram menolak pengiriman.' });
+    } catch (error) {
+        console.error('[telegram-test] delivery failed:', error.message || error);
+        return res.status(502).json({ ok: false, error: 'Gagal mengirim tes notifikasi ke Telegram.' });
+    }
+});
+
 // API: Analyze specific stock
 router.get('/analyze/:ticker', async (req, res) => {
     try {
@@ -112,6 +136,18 @@ router.get('/analyze/:ticker', async (req, res) => {
         res.json(data);
     } catch (error) {
         res.status(404).json({ error: error.message || 'Data saham tidak ditemukan' });
+    }
+});
+
+router.get('/chart/:ticker', async (req, res) => {
+    const ticker = String(req.params.ticker || '').trim().toUpperCase().replace(/\.JK$/i, '');
+    if (!/^[A-Z0-9]{2,5}$/.test(ticker)) return res.status(400).json({ error: 'Kode emiten tidak valid.', candles: [] });
+    const period = ['1m', '2m', '3m', '6m', '1y'].includes(req.query.period) ? req.query.period : '6m';
+    try {
+        const candles = await fetchHistoricalData(ticker, period);
+        return res.json({ ticker, period, candles, dataSource: 'Yahoo Finance' });
+    } catch (error) {
+        return res.status(502).json({ error: 'Riwayat harga Yahoo Finance belum tersedia.', candles: [] });
     }
 });
 

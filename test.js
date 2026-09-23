@@ -156,6 +156,11 @@ async function runAllTests() {
     assert(extractNewsTicker('Astra (ASII) Bakal Fokus ke 3 Segmen') === 'ASII', 'Ticker parser resolves an explicitly formatted issuer code');
     const formattedAlert = formatNewsAlert({ ticker: 'BBRI', title: 'Laba tumbuh', link: 'https://example.com/news' });
     assert(formattedAlert.includes('Emiten: $BBRI') && formattedAlert.includes('Link: https://example.com/news'), 'News alert includes issuer and source link');
+    const { generateScreenerSignal } = require('./services/backtestEngine');
+    const historicalBars = Array.from({ length: 20 }, (_, index) => ({ date: `2026-01-${String(index + 1).padStart(2, '0')}`, open: 100, high: 105, low: 99, close: index === 19 ? 104 : 100, volume: index === 19 ? 200 : 100 }));
+    assert(generateScreenerSignal('DAYTRADE', historicalBars, 19), 'Historical screener backtest recognizes >3% range and >1.8x volume signal');
+    assert(!generateScreenerSignal('DAYTRADE', historicalBars.map((bar, index) => index === 19 ? { ...bar, volume: 180 } : bar), 19), 'Historical screener backtest respects strict volume threshold');
+    assert(generateScreenerSignal('SWING', historicalBars.map((bar, index) => ({ ...bar, high: 110, close: index === 19 ? 106 : 100 })), 19), 'Historical swing backtest uses only available moving-average and volume data');
 
     console.log('\n▶ Testing strict screener eligibility and null-data handling...');
     const strictBsjp = { isCurrentJakartaDay: true, close: 98, high: 100, tickSize: 1, volumeToday: 151, ma5Volume: 100, rsi: 60 };

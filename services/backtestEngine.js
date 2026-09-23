@@ -13,6 +13,122 @@ const { calculateSupertrend } = require('./technicalService');
 const historyCache = new Map();
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
+function calculateYahooRsi(closes, period = 14) {
+    if (!Array.isArray(closes) || closes.length <= period) return null;
+    const values = ti.RSI.calculate({ period, values: closes });
+    return Number.isFinite(values[values.length - 1]) ? values[values.length - 1] : null;
+}
+
+function generateScreenerSignal(strategy, bars, index) {
+    if (index < 5) return false;
+    const bar = bars[index];
+    const previous = bars[index - 1];
+    const meanVolume = bars.slice(index - 5, index).reduce((sum, item) => sum + item.volume, 0) / 5;
+    if (!meanVolume || !bar.volume) return false;
+    if (strategy === 'BSJP') {
+        const rsi = calculateYahooRsi(bars.slice(0, index + 1).map(item => item.close));
+        const tick = bar.close < 200 ? 1 : bar.close < 500 ? 2 : bar.close < 2000 ? 5 : bar.close < 5000 ? 10 : 25;
+        return bar.close >= bar.high - (2 * tick) && bar.volume > 1.5 * meanVolume && rsi >= 50 && rsi <= 70;
+    }
+    if (strategy === 'BPJS' || strategy === 'BPJP') {
+        const gap = previous.close > 0 ? ((bar.open - previous.close) / previous.close) * 100 : 0;
+        const change = previous.close > 0 ? ((bar.close - previous.close) / previous.close) * 100 : 0;
+        return gap >= 1 && gap <= 3 && (bar.close > bar.open || change > 2);
+    }
+    if (strategy === 'DAYTRADE' || strategy === 'SCALPING') {
+        const volatility = bar.low > 0 ? ((bar.high - bar.low) / bar.low) * 100 : 0;
+        return volatility > 3 && bar.volume > 1.8 * meanVolume;
+    }
+    if (strategy === 'SWING') {
+        const closes = bars.slice(0, index + 1).map(item => item.close);
+        if (closes.length < 20) return false;
+        const ma20 = closes.slice(-20).reduce((sum, value) => sum + value, 0) / 20;
+        return bar.close > ma20 && bar.volume > 1.2 * meanVolume;
+    }
+    return false;
+}
+
+async function runScreenerPortfolioBacktest({ tickers = [], period = '3m', initialCapital = 100000000 } = {}) {
+    const cleanTickers = [...new Set((Array.isArray(tickers) ? tickers : []).map(sanitizeTicker).filter(ticker => /^[A-Z0-9]{2,5}$/.test(ticker)))].slice(0, 8);
+    if (!cleanTickers.length) throw new Error('Masukkan minimal satu kode emiten yang valid.');
+    if (!new Set(['1m', '2m', '3m']).has(period)) throw new Error('Periode backtest harus 1m, 2m, atau 3m.');
+    const initialEquity = Number(initialCapital);
+    if (!Number.isFinite(initialEquity) || initialEquity <= 0 || initialEquity > 1e12) throw new Error('Modal awal tidak valid.');
+    const trades = [];
+    const errors = [];
+    const dataByTicker = await Promise.all(cleanTickers.map(async ticker => {
+        try { return { ticker, bars: await fetchHistoricalData(ticker, period) }; }
+        catch (error) { errors.push({ ticker, message: error.message }); return { ticker, bars: [] }; }
+    }));
+    const strategies = ['BSJP', 'BPJS', 'DAYTRADE', 'SWING'];
+    const simulationTradingBars = period === '1m' ? 22 : period === '2m' ? 44 : 66;
+    for (const { ticker, bars } of dataByTicker) {
+        if (!Array.isArray(bars) || bars.length < 20) continue;
+        for (const strategy of strategies) {
+            let cooldownUntil = -1;
+            const simulationStart = Math.max(20, bars.length - simulationTradingBars - 1);
+            for (let index = simulationStart; index < bars.length - 1; index += 1) {
+                if (index <= cooldownUntil || !generateScreenerSignal(strategy, bars, index)) continue;
+                const entry = bars[index + 1];
+                if (!entry || entry.open <= 0) continue;
+                const riskPct = strategy === 'BSJP' ? 0.025 : strategy === 'BPJS' || strategy === 'DAYTRADE' ? 0.03 : 0.06;
+                const targetPct = strategy === 'BSJP' ? 0.03 : strategy === 'BPJS' || strategy === 'DAYTRADE' ? 0.04 : 0.10;
+                const maxHold = strategy === 'DAYTRADE' ? 1 : strategy === 'BPJS' ? 2 : strategy === 'BSJP' ? 3 : 10;
+                let exitPrice = entry.close;
+                let exitIndex = index + 1;
+                let exitReason = 'Periode berakhir';
+                for (let hold = 0; hold < maxHold && exitIndex < bars.length; hold += 1) {
+                    const candle = bars[exitIndex];
+                    const stop = entry.open * (1 - riskPct);
+                    const target = entry.open * (1 + targetPct);
+                    if (candle.low <= stop) { exitPrice = stop; exitReason = 'Stop Loss'; break; }
+                    if (candle.high >= target) { exitPrice = target; exitReason = 'Target'; break; }
+                    exitPrice = candle.close;
+                    exitReason = 'Time Exit';
+                    if (hold < maxHold - 1 && exitIndex + 1 < bars.length) exitIndex += 1;
+                }
+                const grossPct = ((exitPrice - entry.open) / entry.open) * 100;
+                const netPct = grossPct - 0.30;
+                trades.push({ ticker, strategy, entryDate: entry.date, exitDate: bars[exitIndex].date, entryPrice: entry.open, exitPrice: Math.round(exitPrice), gainPct: Number(netPct.toFixed(2)), exitReason });
+                cooldownUntil = exitIndex;
+            }
+        }
+    }
+    trades.sort((a, b) => a.exitDate.localeCompare(b.exitDate) || a.entryDate.localeCompare(b.entryDate) || a.ticker.localeCompare(b.ticker) || a.strategy.localeCompare(b.strategy));
+    let equity = initialEquity;
+    const equityCurve = [];
+    const positionWeight = 1 / (cleanTickers.length * strategies.length);
+    for (const trade of trades) {
+        trade.pnl = Math.round(equity * positionWeight * trade.gainPct / 100);
+        equity += trade.pnl;
+        equityCurve.push({ date: trade.exitDate, portfolioValue: Math.round(equity) });
+    }
+    if (!equityCurve.length) equityCurve.push({ date: new Date().toISOString().slice(0, 10), portfolioValue: initialEquity });
+    let peak = initialEquity;
+    let maxDrawdownPct = 0;
+    for (const point of equityCurve) {
+        peak = Math.max(peak, point.portfolioValue);
+        maxDrawdownPct = Math.max(maxDrawdownPct, ((peak - point.portfolioValue) / peak) * 100);
+    }
+    const wins = trades.filter(trade => trade.gainPct > 0);
+    const losses = trades.filter(trade => trade.gainPct <= 0);
+    const average = items => items.length ? items.reduce((sum, trade) => sum + trade.gainPct, 0) / items.length : 0;
+    return {
+        tickerCount: cleanTickers.length, tickers: cleanTickers, strategies, period, initialCapital: initialEquity,
+        finalEquity: Math.round(equity),
+        metrics: {
+            totalTrades: trades.length,
+            winRate: trades.length ? Number((wins.length / trades.length * 100).toFixed(2)) : 0,
+            totalReturnPct: Number(((equity / initialEquity - 1) * 100).toFixed(2)),
+            avgGainPct: Number(average(wins).toFixed(2)),
+            avgLossPct: Number(average(losses).toFixed(2)),
+            maxDrawdownPct: Number(maxDrawdownPct.toFixed(2))
+        },
+        equityCurve, trades: trades.slice(-300), errors, dataSource: 'Yahoo Finance historical OHLCV',
+        caveat: 'Historical simulation; estimated 0.30% round-trip fees, excludes slippage; ambiguous same-candle stop/target resolves to stop loss.'
+    };
+}
+
 // ═══════════════════════════════════════════════════════════════
 //  1. STRATEGY REGISTRY & SPECIFICATIONS
 // ═══════════════════════════════════════════════════════════════
@@ -87,7 +203,9 @@ async function fetchHistoricalData(ticker, period = '1y') {
     }
 
     let days = 365;
-    if (period === '3m') days = 90;
+    if (period === '1m') days = 30;
+    else if (period === '2m') days = 60;
+    else if (period === '3m') days = 90;
     else if (period === '6m') days = 180;
     else if (period === '1y') days = 365;
     else if (period === '2y') days = 730;
@@ -572,5 +690,7 @@ module.exports = {
     getAvailableStrategies,
     fetchHistoricalData,
     runBacktest,
-    quickAudit
+    quickAudit,
+    runScreenerPortfolioBacktest,
+    generateScreenerSignal
 };

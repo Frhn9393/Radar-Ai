@@ -555,6 +555,10 @@
                     </div>
 
                     <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
+                        <button id="btn-test-telegram-alert" title="Kirim notifikasi uji ke Telegram admin"
+                            class="bg-[#101929] hover:bg-[#18253d] text-emerald-300 hover:text-white font-bold text-xs py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-2 min-h-[44px] cursor-pointer">
+                            <span>🔔 Tes Telegram</span>
+                        </button>
                         <button id="btn-open-backtest-modal"
                             class="bg-[#101929] hover:bg-[#18253d] text-cyan-300 shadow-sm hover:text-white font-bold text-xs py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-2 shadow-sm min-h-[44px] cursor-pointer">
                             <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1205,6 +1209,28 @@
         <!-- ================= 3.5. SECTION: AUTOMATED QUANT BACKTEST ENGINE ================= -->
         <section id="section-backtest" class="hidden space-y-6">
 
+            <div class="bg-[#0b101a] border border-slate-800 rounded-2xl p-5 space-y-4">
+                <div>
+                    <h3 class="text-lg font-black text-white">Backtest Strategi Screener · Portfolio</h3>
+                    <p class="text-xs text-slate-400 mt-1">Simulasi 1–3 bulan dari candle Yahoo Finance; sinyal memakai data yang tersedia saat itu.</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-[1fr_120px_auto] gap-2">
+                    <input id="screener-backtest-tickers" value="BBCA,BBRI,TLKM" aria-label="Kode emiten backtest" class="bg-[#070b13] rounded-lg px-3 py-2.5 text-sm text-white font-mono" placeholder="BBCA, BBRI, TLKM (maks. 8)">
+                    <select id="screener-backtest-period" aria-label="Periode backtest" class="bg-[#070b13] rounded-lg px-3 py-2.5 text-sm text-white"><option value="1m">1 Bulan</option><option value="2m">2 Bulan</option><option value="3m" selected>3 Bulan</option></select>
+                    <button id="btn-run-screener-backtest" class="bg-violet-600 hover:bg-violet-500 rounded-lg px-4 py-2.5 text-sm font-bold text-white">Jalankan Backtest</button>
+                </div>
+                <p id="screener-backtest-status" class="text-xs text-slate-500" aria-live="polite">Pilih emiten untuk menguji BSJP, BPJS, Daytrade, dan Swing.</p>
+                <div class="grid grid-cols-2 lg:grid-cols-5 gap-2">
+                    <div class="bg-[#070b13] rounded-lg p-3"><span class="text-[10px] text-slate-500">Win Rate</span><div id="portfolio-bt-winrate" class="text-lg font-bold text-emerald-400">—</div></div>
+                    <div class="bg-[#070b13] rounded-lg p-3"><span class="text-[10px] text-slate-500">Total P/L</span><div id="portfolio-bt-return" class="text-lg font-bold text-cyan-300">—</div></div>
+                    <div class="bg-[#070b13] rounded-lg p-3"><span class="text-[10px] text-slate-500">Avg Gain</span><div id="portfolio-bt-gain" class="text-lg font-bold text-emerald-300">—</div></div>
+                    <div class="bg-[#070b13] rounded-lg p-3"><span class="text-[10px] text-slate-500">Avg Loss</span><div id="portfolio-bt-loss" class="text-lg font-bold text-rose-300">—</div></div>
+                    <div class="bg-[#070b13] rounded-lg p-3"><span class="text-[10px] text-slate-500">Max Drawdown</span><div id="portfolio-bt-drawdown" class="text-lg font-bold text-amber-300">—</div></div>
+                </div>
+                <div class="h-56 bg-[#070b13] rounded-xl p-2"><canvas id="portfolio-bt-equity" class="w-full h-full"></canvas></div>
+                <p class="text-[10px] text-slate-500">Simulasi historis bukan jaminan hasil. Estimasi biaya transaksi 0,30% per round-trip; slippage belum dihitung.</p>
+            </div>
+
             <!-- Hero Header Banner -->
             <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0d1424] via-[#11192e] to-[#0d1424] p-6 shadow-2xl">
                 <div class="absolute top-0 right-0 w-96 h-96 bg-violet-600/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
@@ -1585,6 +1611,17 @@
                     </button>
                 </div>
             </div>
+
+            <section class="bg-[#090e1a] rounded-xl p-3 sm:p-4 space-y-2">
+                <div class="flex items-center justify-between gap-2">
+                    <div>
+                        <h3 class="text-sm font-bold text-white">Grafik Harga Historis</h3>
+                    <div class="flex flex-wrap items-center gap-x-2"><p id="modal-chart-status" class="text-[10px] text-slate-500">Yahoo Finance · candle harian</p><a class="text-[10px] text-cyan-500 hover:text-cyan-300" href="https://www.tradingview.com/" target="_blank" rel="noopener noreferrer">TradingView Lightweight Charts™ · Copyright © 2025 TradingView, Inc.</a></div>
+                    </div>
+                    <div class="flex gap-2 text-[10px] text-slate-400"><span>MA 5</span><span>EMA 20</span><span>EMA 200</span><span>Volume</span></div>
+                </div>
+                <div id="modal-stock-chart" class="w-full h-[300px] sm:h-[380px] relative"></div>
+            </section>
 
             <!-- Price & Intraday Stats Ribbon -->
             <div
@@ -2140,6 +2177,7 @@
     <!-- Vector PDF export libraries -->
     <script src="/vendor/jspdf.umd.min.js"></script>
     <script src="/vendor/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://unpkg.com/lightweight-charts@5.0.8/dist/lightweight-charts.standalone.production.js" defer></script>
 
     <!-- App Logic -->
     <script src="/app.js?v=2.0"></script>

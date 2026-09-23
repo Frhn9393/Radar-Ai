@@ -11,6 +11,7 @@ const moduleOrder = [
     'deals.js',
     'news.js',
     'analysisModal.js',
+    'stockChart.js',
     'search.js',
     'screener.js',
     'pdfExport.js',
@@ -21,6 +22,7 @@ const moduleOrder = [
     'indices.js',
     'controls.js',
     'backtest.js',
+    'screenerBacktest.js',
     'mobileSearch.js',
     'init.js'
 ];
