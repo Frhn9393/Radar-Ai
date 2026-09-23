@@ -14,6 +14,12 @@ function getNewsAlertKey(item) {
     return '';
 }
 
+function findNewNewsItems(items = [], previousItems = []) {
+    if (!previousItems.length) return [];
+    const previousKeys = new Set(previousItems.map(getNewsAlertKey));
+    return items.filter(item => !previousKeys.has(getNewsAlertKey(item)));
+}
+
 function classifyNewsSentiment(item) {
     const content = `${item?.title || ''} ${item?.summary || ''}`.toLowerCase();
     const bearish = /\b(rugi|merugi|turun|anjlok|tertekan|gagal|default|pailit|sanksi|pidana|digugat|PHK|pemutusan hubungan kerja|utang membengkak|penurunan laba)\b/i.test(content);
@@ -88,4 +94,4 @@ function enqueueNewsAlerts(items = []) {
     }
 }
 
-module.exports = { classifyNewsSentiment, enqueueNewsAlerts, formatNewsAlert, getNewsAlertKey };
+module.exports = { classifyNewsSentiment, enqueueNewsAlerts, findNewNewsItems, formatNewsAlert, getNewsAlertKey };

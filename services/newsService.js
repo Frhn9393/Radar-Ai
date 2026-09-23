@@ -1,6 +1,6 @@
 const Parser = require('rss-parser');
 const { formatWibTime, formatWibDate, calcTimeAgo } = require('./utils');
-const { enqueueNewsAlerts, getNewsAlertKey } = require('./newsAlertService');
+const { enqueueNewsAlerts, findNewNewsItems } = require('./newsAlertService');
 
 const parser = new Parser();
 
@@ -306,8 +306,7 @@ async function fetchMarketNewsFresh(previousItems) {
         const finalNews = unique.slice(0, 36);
 
         if (finalNews.length > 0) {
-            const previousKeys = new Set(previousItems.map(getNewsAlertKey));
-            enqueueNewsAlerts(finalNews.filter(item => !previousKeys.has(getNewsAlertKey(item))));
+            enqueueNewsAlerts(findNewNewsItems(finalNews, previousItems));
 
             const responseData = {
                 news: finalNews,
@@ -580,8 +579,7 @@ async function fetchMaDealsFresh(previousDeals) {
         };
 
         if (result.deals.length > 0) {
-            const previousKeys = new Set(previousDeals.map(getNewsAlertKey));
-            enqueueNewsAlerts(result.deals.filter(item => !previousKeys.has(getNewsAlertKey(item))));
+            enqueueNewsAlerts(findNewNewsItems(result.deals, previousDeals));
             dealsCache = result;
             dealsCacheTime = Date.now();
             return result;
