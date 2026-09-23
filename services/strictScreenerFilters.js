@@ -4,41 +4,34 @@ function finite(value) {
 
 function isStrictBsjpEligible(metrics = {}) {
     if (!metrics || typeof metrics !== 'object' || Array.isArray(metrics)) return false;
-    const { close, high, tickSize, turnover, volumeToday, ma5Volume, broksum } = metrics;
-    if (![close, high, tickSize, turnover, volumeToday, ma5Volume].every(finite)) return false;
+    const { close, high, tickSize, volumeToday, ma5Volume, rsi } = metrics;
+    if (![close, high, tickSize, volumeToday, ma5Volume, rsi].every(finite)) return false;
     if (Number(tickSize) <= 0 || Number(ma5Volume) <= 0) return false;
-    const source = String(broksum?.dataSource || '').trim().toUpperCase();
-    const status = String(broksum?.status || broksum?.analysis?.label || broksum?.analysis?.key || '')
-        .toUpperCase().replace(/[_-]+/g, ' ').replace(/[^A-Z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
     return metrics.isCurrentJakartaDay === true &&
         Number(close) >= Number(high) - 2 * Number(tickSize) &&
-        Number(turnover) > 10_000_000_000 &&
-        Number(volumeToday) > 2 * Number(ma5Volume) &&
-        source === 'STOCKBIT' &&
-        status === 'BIG ACCUMULATION';
+        Number(volumeToday) > 1.5 * Number(ma5Volume) &&
+        Number(rsi) >= 50 && Number(rsi) <= 70;
 }
 
 function isStrictBpjpEligible(metrics = {}) {
     if (!metrics || typeof metrics !== 'object' || Array.isArray(metrics)) return false;
-    const { open, previousClose, totalBidVolume, totalOfferVolume } = metrics;
-    if (![open, previousClose, totalBidVolume, totalOfferVolume].every(finite)) return false;
-    if (Number(previousClose) <= 0 || Number(totalOfferVolume) <= 0) return false;
+    const { open, previousClose, close } = metrics;
+    if (![open, previousClose, close].every(finite) || Number(previousClose) <= 0) return false;
     const gapPct = ((Number(open) - Number(previousClose)) / Number(previousClose)) * 100;
+    const changePct = ((Number(close) - Number(previousClose)) / Number(previousClose)) * 100;
     return metrics.isCurrentJakartaDay === true &&
-        Number(open) > Number(previousClose) &&
         gapPct >= 1 && gapPct <= 3 &&
-        Number(totalBidVolume) > 2 * Number(totalOfferVolume) &&
-        (metrics.hasPositiveDailyNews === true || metrics.hasDailyMaNews === true);
+        (Number(close) > Number(open) || changePct > 2);
 }
 
 function isStrictIntradayEligible(metrics = {}) {
     if (!metrics || typeof metrics !== 'object' || Array.isArray(metrics)) return false;
-    const { runningTradeFrequencyPerMinute, averageDailyTurnover, netBuyerPowerPct } = metrics;
-    if (![runningTradeFrequencyPerMinute, averageDailyTurnover, netBuyerPowerPct].every(finite)) return false;
+    const { high, low, volumeToday, ma5Volume } = metrics;
+    if (![high, low, volumeToday, ma5Volume].every(finite) || Number(low) <= 0 || Number(ma5Volume) <= 0) return false;
+    const dailyVolatilityPct = ((Number(high) - Number(low)) / Number(low)) * 100;
     return metrics.isCurrentJakartaDay === true &&
-        Number(runningTradeFrequencyPerMinute) > 50 &&
-        Number(averageDailyTurnover) > 20_000_000_000 &&
-        Number(netBuyerPowerPct) > 65;
+        dailyVolatilityPct > 3 &&
+        Number(volumeToday) > 1.8 * Number(ma5Volume);
 }
 
 module.exports = { isStrictBsjpEligible, isStrictBpjpEligible, isStrictIntradayEligible };

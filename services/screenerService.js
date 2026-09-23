@@ -5,10 +5,7 @@ const { calcBullishConfidence, processTechnicalData } = require('./technicalServ
 const { ALL_IDX_STOCKS } = require('./searchService');
 const { getTickSize } = require('./utils');
 const { formatJakartaDate } = require('./dateTime');
-const { fetch_market_news, fetch_ma_deals } = require('./newsService');
-const { classifyNewsSentiment } = require('./newsAlertService');
 const { isStrictBsjpEligible, isStrictBpjpEligible, isStrictIntradayEligible } = require('./strictScreenerFilters');
-const { fetchBrokerTop } = require('./customMarketFeed');
 
 const STOCK_SECTOR_MAP = new Map();
 if (Array.isArray(ALL_IDX_STOCKS)) {
@@ -56,30 +53,6 @@ function isTodayInJakarta(value, now = new Date()) {
     return Number.isFinite(timestamp.getTime()) && formatJakartaDate(timestamp) === formatJakartaDate(now);
 }
 
-function getDailyCatalysts(marketNews, maDeals, now = new Date()) {
-    const positiveNewsTickers = new Set();
-    const maTickers = new Set();
-    const newsRows = Array.isArray(marketNews?.news) ? marketNews.news : [];
-    const dealRows = Array.isArray(maDeals?.deals) ? maDeals.deals : [];
-
-    for (const item of newsRows) {
-        const ticker = String(item?.ticker || '').toUpperCase();
-        if (!/^[A-Z0-9]{3,5}$/.test(ticker) || ticker === 'IHSG' || !isTodayInJakarta(item?.pubDate, now)) continue;
-        if (classifyNewsSentiment(item).label === 'Bullish') positiveNewsTickers.add(ticker);
-    }
-
-    for (const item of dealRows) {
-        if (!isTodayInJakarta(item?.pubDate, now)) continue;
-        const tickers = Array.isArray(item?.tickers) ? item.tickers : [];
-        for (const tickerValue of tickers) {
-            const ticker = String(tickerValue || '').toUpperCase();
-            if (/^[A-Z0-9]{3,5}$/.test(ticker) && ticker !== 'IHSG') maTickers.add(ticker);
-        }
-    }
-
-    return { positiveNewsTickers, maTickers };
-}
-
 function roundToTick(value) {
     const numeric = Number(value);
     if (!Number.isFinite(numeric)) return 0;
@@ -120,12 +93,6 @@ async function runScreener() {
         if (!hasCachedStrictSignals) return screenerCache;
     }
 
-    const [marketNewsResult, maDealsResult] = await Promise.allSettled([fetch_market_news(), fetch_ma_deals()]);
-    const dailyCatalysts = getDailyCatalysts(
-        marketNewsResult.status === 'fulfilled' ? marketNewsResult.value : null,
-        maDealsResult.status === 'fulfilled' ? maDealsResult.value : null
-    );
-
     const candidates = {
         scalpingSesi1: [],
         scalpingSesi2: [],
@@ -138,7 +105,6 @@ async function runScreener() {
     };
 
     const period1 = new Date(Date.now() - 365 * 24 * 3600 * 1000);
-    let stockbitSignals = 0;
 
     async function evaluateTicker(ticker) {
         try {
@@ -188,24 +154,14 @@ async function runScreener() {
             const pivots = trendData.pivots?.classic || null;
             const candlestick = trendData.candlestick?.pattern || 'N/A';
             const technicalStatus = getTechnicalStatus(isSupertrendBullish, rsi, label);
-            const hasPositiveDailyNews = dailyCatalysts.positiveNewsTickers.has(ticker);
-            const hasDailyMaNews = dailyCatalysts.maTickers.has(ticker);
             const strictQuoteToday = isTodayInJakarta(latest.date);
             const bpjpGapPct = prevClose > 0 ? ((openPrice - prevClose) / prevClose) * 100 : null;
-            const canQualifyBsjp = strictQuoteToday && ma5Volume !== null && latest.high > 0 &&
-                latest.close >= latest.high - 2 * getTickSize(latest.high) && value > 10_000_000_000 && latest.volume > 2 * ma5Volume;
-            const canQualifyBpjp = strictQuoteToday && bpjpGapPct >= 1 && bpjpGapPct <= 3 && (hasPositiveDailyNews || hasDailyMaNews);
-            const canQualifyIntraday = strictQuoteToday && value > 20_000_000_000;
-            const stockbitMetrics = canQualifyBsjp || canQualifyBpjp || canQualifyIntraday ? await fetchBrokerTop(ticker) : null;
-            if (stockbitMetrics?.dataSource === 'STOCKBIT') stockbitSignals += 1;
-            const stockbitQuoteToday = Boolean(stockbitMetrics && isTodayInJakarta(stockbitMetrics.date));
-            const brokerSummary = stockbitMetrics;
-            const orderBook = stockbitMetrics?.orderBook || null;
             const strictIntradayMetrics = {
-                isCurrentJakartaDay: stockbitQuoteToday,
-                runningTradeFrequencyPerMinute: stockbitMetrics?.runningTradeFrequencyPerMinute,
-                averageDailyTurnover: stockbitMetrics?.averageDailyTurnover,
-                netBuyerPowerPct: stockbitMetrics?.netBuyerPowerPct
+                isCurrentJakartaDay: strictQuoteToday,
+                high,
+                low,
+                volumeToday: latest.volume,
+                ma5Volume
             };
             const strictIntradayEligible = isStrictIntradayEligible(strictIntradayMetrics);
 
@@ -366,14 +322,13 @@ async function runScreener() {
             bsjpScore += (confidence * 0.3);
 
             if (isStrictBsjpEligible({
-                isCurrentJakartaDay: stockbitQuoteToday,
+                isCurrentJakartaDay: strictQuoteToday,
                 close: latest.close,
                 high: latest.high,
                 tickSize: getTickSize(latest.high),
-                turnover: value,
                 volumeToday: latest.volume,
                 ma5Volume,
-                broksum: brokerSummary
+                rsi
             })) candidates.bsjp.push({
                 score: bsjpScore,
                 item: {
@@ -385,9 +340,6 @@ async function runScreener() {
                     stopLoss: Math.round(low * 0.99),
                     estimasiGain: '1.5-3%',
                     riskReward: '1:2',
-                    broksumStatus: brokerSummary.status,
-                    broksumBuyers: brokerSummary.topBuyers,
-                    broksumSellers: brokerSummary.topSellers,
                     supertrendBadge, rvolBadge, confidence, label: technicalStatus,
                     smartMoney, pivots, candlestick,
                     backtest: {
@@ -416,13 +368,10 @@ async function runScreener() {
             bpjpScore += (confidence * 0.4);
 
             if (isStrictBpjpEligible({
-                isCurrentJakartaDay: stockbitQuoteToday,
+                isCurrentJakartaDay: strictQuoteToday,
                 open: openPrice,
                 previousClose: prevClose,
-                totalBidVolume: orderBook?.totalBidVolume,
-                totalOfferVolume: orderBook?.totalOfferVolume,
-                hasPositiveDailyNews,
-                hasDailyMaNews
+                close: price
             })) candidates.bpjp.push({
                 score: bpjpScore,
                 item: {
@@ -538,7 +487,7 @@ async function runScreener() {
             auditStatus: "STRICT_FAIL_CLOSED",
             timestamp: new Date().toISOString()
         },
-        dataSources: { stockbit: { connected: stockbitSignals > 0, qualifiedRequests: stockbitSignals } }
+        dataSources: { prices: 'Yahoo Finance', indicators: 'Yahoo Finance OHLCV' }
     };
 
     screenerCache = results;
@@ -552,7 +501,6 @@ module.exports = {
     getTechnicalStatus,
     roundToTick,
     isTodayInJakarta,
-    getDailyCatalysts,
     WATCHLIST_UNIVERSE,
     UNIQUE_WATCHLIST
 };
