@@ -5,6 +5,7 @@
 const PORTFOLIO_STORAGE_KEY = 'stockradar_portfolio_v1';
 let portfolioPositions = loadPortfolioPositions();
 let portfolioRefreshTimer = null;
+let portfolioRefreshInFlight = false;
 
 function loadPortfolioPositions() {
     try {
@@ -77,9 +78,11 @@ function renderPortfolioRows(rows) {
 }
 
 async function refreshPortfolio() {
+    if (document.hidden || portfolioRefreshInFlight) return;
     const status = document.getElementById('portfolio-status');
     if (!portfolioPositions.length) { renderPortfolioRows([]); renderPortfolioSummary([]); return; }
     if (status) status.textContent = 'Memuat harga realtime...';
+    portfolioRefreshInFlight = true;
     try {
         const tickers = portfolioPositions.map(position => position.ticker).join(',');
         const response = await fetch(`/api/portfolio/quotes?tickers=${encodeURIComponent(tickers)}`);
@@ -96,6 +99,15 @@ async function refreshPortfolio() {
         renderPortfolioRows(rows); renderPortfolioSummary(rows);
         if (status) status.textContent = `Update terakhir: ${new Date().toLocaleTimeString('id-ID')}`;
     } catch (error) { if (status) status.textContent = 'Gagal memuat harga realtime.'; console.error('Portfolio refresh failed:', error); }
+    finally { portfolioRefreshInFlight = false; }
+}
+
+function startPortfolioAutoRefresh() {
+    clearInterval(portfolioRefreshTimer);
+    portfolioRefreshTimer = null;
+    if (document.hidden) return;
+    refreshPortfolio();
+    portfolioRefreshTimer = setInterval(() => { if (!document.hidden) refreshPortfolio(); }, 60000);
 }
 
 document.getElementById('portfolio-form')?.addEventListener('submit', event => {
@@ -112,7 +124,6 @@ document.getElementById('portfolio-form')?.addEventListener('submit', event => {
 document.getElementById('portfolio-refresh')?.addEventListener('click', refreshPortfolio);
 document.addEventListener('visibilitychange', () => {
     if (document.hidden) { clearInterval(portfolioRefreshTimer); portfolioRefreshTimer = null; }
-    else if (!portfolioRefreshTimer) { refreshPortfolio(); portfolioRefreshTimer = setInterval(refreshPortfolio, 60000); }
+    else startPortfolioAutoRefresh();
 });
-refreshPortfolio();
-portfolioRefreshTimer = setInterval(refreshPortfolio, 60000);
+startPortfolioAutoRefresh();

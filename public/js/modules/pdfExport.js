@@ -6,6 +6,12 @@ function pdfTimestamp() {
     return new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'medium', timeStyle: 'short' }) + ' WIB';
 }
 
+function pdfJakartaDate() {
+    const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+    const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+    return `${values.year}-${values.month}-${values.day}`;
+}
+
 // jsPDF's built-in Helvetica font cannot render emoji reliably. Keep the
 // report text readable by removing pictographs only at PDF export time.
 function sanitizePdfText(value) {
@@ -31,8 +37,10 @@ function screenerPdfSections() {
         ['bpjp', 'BPJP - Momentum / Rebound', ['Kode', 'Harga', 'RSI', 'ADX', 'Entry', 'Target', 'Stop Loss', 'Status'], row => [row.ticker, formatPrice(row.price), `${row.rsi} (${row.rsiStatus || ''})`, row.adx, row.entryPagi, formatPrice(row.target), formatPrice(row.stopLoss), row.label]],
         ['longterm', 'Investasi Jangka Panjang', ['Kode', 'Harga', 'RSI', 'EMA 200', 'Support', 'Target 20%', 'Target 40%', 'Cut Loss', 'Status'], row => [row.ticker, formatPrice(row.price), row.rsi, formatPrice(row.ema200), formatPrice(row.support), formatPrice(row.targetKonservatif), formatPrice(row.targetAgresif), formatPrice(row.cutLoss), row.label]]
     ];
+    let rowBudget = 50;
     return definitions.map(([key, title, columns, map]) => {
-        const rows = filterScreenerList(lastScreenerData?.[key] || []);
+        const rows = filterScreenerList(lastScreenerData?.[key] || []).slice(0, rowBudget);
+        rowBudget -= rows.length;
         return rows.length ? { title: sanitizePdfText(title), columns: columns.map(sanitizePdfText), rows: rows.map(row => map(row).map(sanitizePdfText)) } : null;
     }).filter(Boolean);
 }
@@ -53,15 +61,19 @@ function addPdfFooter(doc) {
     }
 }
 
-function exportScreenerToPDF() {
+async function exportScreenerToPDF() {
     const button = document.getElementById('btn-export-screener-pdf');
     if (!window.jspdf?.jsPDF || typeof window.jspdf.jsPDF.API.autoTable !== 'function') { alert('Library PDF belum siap. Silakan refresh halaman.'); return; }
-    const sections = screenerPdfSections();
+    let sections = screenerPdfSections();
     if (!sections.length) { alert('Jalankan screener terlebih dahulu agar ada data untuk diekspor.'); return; }
     pdfSetLoading(button, true);
+    let doc = null;
     try {
-        const { jsPDF } = window.jspdf; const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-        addPdfChrome(doc, 'STOCKRADAR AI - LAPORAN SCREENER', 'Kategori: Data screener yang sedang tampil dan terfilter');
+        // Let the browser paint the progress state before generating the document.
+        await new Promise(resolve => setTimeout(resolve, 30));
+        const { jsPDF } = window.jspdf;
+        doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+        addPdfChrome(doc, 'STOCKRADAR AI - LAPORAN SCREENER', 'Kategori: Data yang sedang tampil dan terfilter · Maksimum 50 baris');
         let y = 32;
         sections.forEach((section, index) => {
             if (index > 0 && y > 175) { doc.addPage(); y = 32; }
@@ -71,8 +83,17 @@ function exportScreenerToPDF() {
         });
         addPdfFooter(doc);
         const height = doc.internal.pageSize.getHeight(); doc.setPage(doc.internal.getNumberOfPages()); doc.setTextColor(100, 116, 139); doc.setFontSize(7); doc.text('Disclaimer: Laporan ini digenerate secara otomatis oleh sistem Stockradar AI. Keputusan investasi tetap berada di tangan pengguna.', 14, height - 17);
-        doc.save(`stockradar-screener-${new Date().toISOString().slice(0, 10)}.pdf`);
-    } finally { pdfSetLoading(button, false); }
+        await doc.save(`stockradar-screener-${pdfJakartaDate()}.pdf`, { returnPromise: true });
+    } catch (error) {
+        console.error('PDF export failed:', error);
+        alert('PDF gagal dibuat. Silakan coba lagi.');
+    } finally {
+        sections.forEach(section => { section.rows.length = 0; });
+        sections.length = 0;
+        doc = null;
+        await new Promise(resolve => setTimeout(resolve, 0));
+        pdfSetLoading(button, false);
+    }
 }
 
 document.getElementById('btn-export-screener-pdf')?.addEventListener('click', exportScreenerToPDF);

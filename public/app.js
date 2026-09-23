@@ -1543,6 +1543,17 @@ function filterScreenerList(items) {
 // ============================================================
 //  5. SCREENER EXECUTION & RENDERING
 // ============================================================
+let screenerProgressInterval = null;
+let activeScreenerProgressTick = null;
+
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        clearInterval(screenerProgressInterval);
+        screenerProgressInterval = null;
+    } else if (activeScreenerProgressTick && !screenerProgressInterval) {
+        screenerProgressInterval = setInterval(activeScreenerProgressTick, 1000);
+    }
+});
 
 function renderScalpingTable(session = 'sesi1') {
     activeScalpSession = session;
@@ -1642,7 +1653,8 @@ btnTriggerScreener?.addEventListener('click', async () => {
         'Finalisasi analisis teknikal...'
     ];
 
-    const timerInterval = setInterval(() => {
+    activeScreenerProgressTick = () => {
+        if (document.hidden) return;
         elapsed++;
         if (timerEl) timerEl.textContent = elapsed + 's';
 
@@ -1655,7 +1667,8 @@ btnTriggerScreener?.addEventListener('click', async () => {
         // Cycle status messages
         const msgIdx = Math.min(Math.floor(elapsed / 3), statusMessages.length - 1);
         if (statusEl) statusEl.textContent = statusMessages[msgIdx];
-    }, 1000);
+    };
+    if (!document.hidden) screenerProgressInterval = setInterval(activeScreenerProgressTick, 1000);
 
     try {
         const res = await fetch('/api/screener');
@@ -1679,7 +1692,9 @@ btnTriggerScreener?.addEventListener('click', async () => {
     } catch (err) {
         alert('Kendala Screener: ' + err.message);
     } finally {
-        clearInterval(timerInterval);
+        clearInterval(screenerProgressInterval);
+        screenerProgressInterval = null;
+        activeScreenerProgressTick = null;
         screenerLoading?.classList.add('hidden');
         if (btnTriggerScreener) btnTriggerScreener.disabled = false;
         screenerBtnIcon?.classList.remove('animate-spin');
@@ -1932,6 +1947,12 @@ function pdfTimestamp() {
     return new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'medium', timeStyle: 'short' }) + ' WIB';
 }
 
+function pdfJakartaDate() {
+    const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+    const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+    return `${values.year}-${values.month}-${values.day}`;
+}
+
 // jsPDF's built-in Helvetica font cannot render emoji reliably. Keep the
 // report text readable by removing pictographs only at PDF export time.
 function sanitizePdfText(value) {
@@ -1957,8 +1978,10 @@ function screenerPdfSections() {
         ['bpjp', 'BPJP - Momentum / Rebound', ['Kode', 'Harga', 'RSI', 'ADX', 'Entry', 'Target', 'Stop Loss', 'Status'], row => [row.ticker, formatPrice(row.price), `${row.rsi} (${row.rsiStatus || ''})`, row.adx, row.entryPagi, formatPrice(row.target), formatPrice(row.stopLoss), row.label]],
         ['longterm', 'Investasi Jangka Panjang', ['Kode', 'Harga', 'RSI', 'EMA 200', 'Support', 'Target 20%', 'Target 40%', 'Cut Loss', 'Status'], row => [row.ticker, formatPrice(row.price), row.rsi, formatPrice(row.ema200), formatPrice(row.support), formatPrice(row.targetKonservatif), formatPrice(row.targetAgresif), formatPrice(row.cutLoss), row.label]]
     ];
+    let rowBudget = 50;
     return definitions.map(([key, title, columns, map]) => {
-        const rows = filterScreenerList(lastScreenerData?.[key] || []);
+        const rows = filterScreenerList(lastScreenerData?.[key] || []).slice(0, rowBudget);
+        rowBudget -= rows.length;
         return rows.length ? { title: sanitizePdfText(title), columns: columns.map(sanitizePdfText), rows: rows.map(row => map(row).map(sanitizePdfText)) } : null;
     }).filter(Boolean);
 }
@@ -1979,15 +2002,19 @@ function addPdfFooter(doc) {
     }
 }
 
-function exportScreenerToPDF() {
+async function exportScreenerToPDF() {
     const button = document.getElementById('btn-export-screener-pdf');
     if (!window.jspdf?.jsPDF || typeof window.jspdf.jsPDF.API.autoTable !== 'function') { alert('Library PDF belum siap. Silakan refresh halaman.'); return; }
-    const sections = screenerPdfSections();
+    let sections = screenerPdfSections();
     if (!sections.length) { alert('Jalankan screener terlebih dahulu agar ada data untuk diekspor.'); return; }
     pdfSetLoading(button, true);
+    let doc = null;
     try {
-        const { jsPDF } = window.jspdf; const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-        addPdfChrome(doc, 'STOCKRADAR AI - LAPORAN SCREENER', 'Kategori: Data screener yang sedang tampil dan terfilter');
+        // Let the browser paint the progress state before generating the document.
+        await new Promise(resolve => setTimeout(resolve, 30));
+        const { jsPDF } = window.jspdf;
+        doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+        addPdfChrome(doc, 'STOCKRADAR AI - LAPORAN SCREENER', 'Kategori: Data yang sedang tampil dan terfilter · Maksimum 50 baris');
         let y = 32;
         sections.forEach((section, index) => {
             if (index > 0 && y > 175) { doc.addPage(); y = 32; }
@@ -1997,8 +2024,17 @@ function exportScreenerToPDF() {
         });
         addPdfFooter(doc);
         const height = doc.internal.pageSize.getHeight(); doc.setPage(doc.internal.getNumberOfPages()); doc.setTextColor(100, 116, 139); doc.setFontSize(7); doc.text('Disclaimer: Laporan ini digenerate secara otomatis oleh sistem Stockradar AI. Keputusan investasi tetap berada di tangan pengguna.', 14, height - 17);
-        doc.save(`stockradar-screener-${new Date().toISOString().slice(0, 10)}.pdf`);
-    } finally { pdfSetLoading(button, false); }
+        await doc.save(`stockradar-screener-${pdfJakartaDate()}.pdf`, { returnPromise: true });
+    } catch (error) {
+        console.error('PDF export failed:', error);
+        alert('PDF gagal dibuat. Silakan coba lagi.');
+    } finally {
+        sections.forEach(section => { section.rows.length = 0; });
+        sections.length = 0;
+        doc = null;
+        await new Promise(resolve => setTimeout(resolve, 0));
+        pdfSetLoading(button, false);
+    }
 }
 
 document.getElementById('btn-export-screener-pdf')?.addEventListener('click', exportScreenerToPDF);
@@ -2543,6 +2579,7 @@ function renderWatchlistDrawer() {
 const PORTFOLIO_STORAGE_KEY = 'stockradar_portfolio_v1';
 let portfolioPositions = loadPortfolioPositions();
 let portfolioRefreshTimer = null;
+let portfolioRefreshInFlight = false;
 
 function loadPortfolioPositions() {
     try {
@@ -2615,9 +2652,11 @@ function renderPortfolioRows(rows) {
 }
 
 async function refreshPortfolio() {
+    if (document.hidden || portfolioRefreshInFlight) return;
     const status = document.getElementById('portfolio-status');
     if (!portfolioPositions.length) { renderPortfolioRows([]); renderPortfolioSummary([]); return; }
     if (status) status.textContent = 'Memuat harga realtime...';
+    portfolioRefreshInFlight = true;
     try {
         const tickers = portfolioPositions.map(position => position.ticker).join(',');
         const response = await fetch(`/api/portfolio/quotes?tickers=${encodeURIComponent(tickers)}`);
@@ -2634,6 +2673,15 @@ async function refreshPortfolio() {
         renderPortfolioRows(rows); renderPortfolioSummary(rows);
         if (status) status.textContent = `Update terakhir: ${new Date().toLocaleTimeString('id-ID')}`;
     } catch (error) { if (status) status.textContent = 'Gagal memuat harga realtime.'; console.error('Portfolio refresh failed:', error); }
+    finally { portfolioRefreshInFlight = false; }
+}
+
+function startPortfolioAutoRefresh() {
+    clearInterval(portfolioRefreshTimer);
+    portfolioRefreshTimer = null;
+    if (document.hidden) return;
+    refreshPortfolio();
+    portfolioRefreshTimer = setInterval(() => { if (!document.hidden) refreshPortfolio(); }, 60000);
 }
 
 document.getElementById('portfolio-form')?.addEventListener('submit', event => {
@@ -2650,10 +2698,9 @@ document.getElementById('portfolio-form')?.addEventListener('submit', event => {
 document.getElementById('portfolio-refresh')?.addEventListener('click', refreshPortfolio);
 document.addEventListener('visibilitychange', () => {
     if (document.hidden) { clearInterval(portfolioRefreshTimer); portfolioRefreshTimer = null; }
-    else if (!portfolioRefreshTimer) { refreshPortfolio(); portfolioRefreshTimer = setInterval(refreshPortfolio, 60000); }
+    else startPortfolioAutoRefresh();
 });
-refreshPortfolio();
-portfolioRefreshTimer = setInterval(refreshPortfolio, 60000);
+startPortfolioAutoRefresh();
 
 // --- END MODULE: portfolio.js ---
 
@@ -2661,6 +2708,12 @@ portfolioRefreshTimer = setInterval(refreshPortfolio, 60000);
 // Broker summary modal and mock API adapter for Bandarmologi analysis.
 const broksumModal = document.getElementById('modal-broksum');
 let activeBroksumTicker = '';
+
+function broksumJakartaDate(date = new Date()) {
+    const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(date);
+    const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+    return `${values.year}-${values.month}-${values.day}`;
+}
 
 function formatBroksumValue(value) {
     const amount = Number(value) || 0;
@@ -2708,9 +2761,11 @@ async function loadBroksumForPeriod() {
 function openBroksum(ticker) {
     activeBroksumTicker = String(ticker || '').toUpperCase();
     document.getElementById('broksum-ticker').textContent = `$${activeBroksumTicker}`;
-    const end = new Date(); const start = new Date(); start.setDate(start.getDate() - 6);
-    document.getElementById('broksum-start').value = start.toISOString().slice(0, 10);
-    document.getElementById('broksum-end').value = end.toISOString().slice(0, 10);
+    const endDate = broksumJakartaDate();
+    const startDate = new Date(`${endDate}T00:00:00Z`);
+    startDate.setUTCDate(startDate.getUTCDate() - 6);
+    document.getElementById('broksum-start').value = startDate.toISOString().slice(0, 10);
+    document.getElementById('broksum-end').value = endDate;
     broksumModal.classList.remove('hidden'); broksumModal.classList.add('flex');
     loadBroksumForPeriod();
 }
@@ -2791,8 +2846,9 @@ btnToggleStream?.addEventListener('click', () => {
 
 function startAutoStream() {
     stopAutoStream();
+    if (!autoStreamActive || document.hidden) return;
     streamInterval = setInterval(() => {
-        if (streamRefreshInFlight || !autoStreamActive) return;
+        if (document.hidden || streamRefreshInFlight || !autoStreamActive) return;
         streamRefreshInFlight = true;
         const tasks = [];
         if (typeof loadMarketNews === 'function') tasks.push(loadMarketNews());

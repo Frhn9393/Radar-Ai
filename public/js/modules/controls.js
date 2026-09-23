@@ -24,8 +24,9 @@ btnToggleStream?.addEventListener('click', () => {
 
 function startAutoStream() {
     stopAutoStream();
+    if (!autoStreamActive || document.hidden) return;
     streamInterval = setInterval(() => {
-        if (streamRefreshInFlight || !autoStreamActive) return;
+        if (document.hidden || streamRefreshInFlight || !autoStreamActive) return;
         streamRefreshInFlight = true;
         const tasks = [];
         if (typeof loadMarketNews === 'function') tasks.push(loadMarketNews());

@@ -69,6 +69,17 @@ function filterScreenerList(items) {
 // ============================================================
 //  5. SCREENER EXECUTION & RENDERING
 // ============================================================
+let screenerProgressInterval = null;
+let activeScreenerProgressTick = null;
+
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        clearInterval(screenerProgressInterval);
+        screenerProgressInterval = null;
+    } else if (activeScreenerProgressTick && !screenerProgressInterval) {
+        screenerProgressInterval = setInterval(activeScreenerProgressTick, 1000);
+    }
+});
 
 function renderScalpingTable(session = 'sesi1') {
     activeScalpSession = session;
@@ -168,7 +179,8 @@ btnTriggerScreener?.addEventListener('click', async () => {
         'Finalisasi analisis teknikal...'
     ];
 
-    const timerInterval = setInterval(() => {
+    activeScreenerProgressTick = () => {
+        if (document.hidden) return;
         elapsed++;
         if (timerEl) timerEl.textContent = elapsed + 's';
 
@@ -181,7 +193,8 @@ btnTriggerScreener?.addEventListener('click', async () => {
         // Cycle status messages
         const msgIdx = Math.min(Math.floor(elapsed / 3), statusMessages.length - 1);
         if (statusEl) statusEl.textContent = statusMessages[msgIdx];
-    }, 1000);
+    };
+    if (!document.hidden) screenerProgressInterval = setInterval(activeScreenerProgressTick, 1000);
 
     try {
         const res = await fetch('/api/screener');
@@ -205,7 +218,9 @@ btnTriggerScreener?.addEventListener('click', async () => {
     } catch (err) {
         alert('Kendala Screener: ' + err.message);
     } finally {
-        clearInterval(timerInterval);
+        clearInterval(screenerProgressInterval);
+        screenerProgressInterval = null;
+        activeScreenerProgressTick = null;
         screenerLoading?.classList.add('hidden');
         if (btnTriggerScreener) btnTriggerScreener.disabled = false;
         screenerBtnIcon?.classList.remove('animate-spin');

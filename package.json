@@ -15,7 +15,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@vercel/functions": "^3.9.9",
     "cors": "^2.8.6",
+    "dayjs": "^1.11.23",
     "express": "^5.2.1",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",

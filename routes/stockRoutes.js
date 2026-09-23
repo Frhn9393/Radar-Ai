@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const { fetchBroksum } = require('../services/broksumService');
+const { formatJakartaDate, daysAgoJakarta, tradingDateBounds } = require('../services/dateTime');
+const { waitUntil } = require('@vercel/functions');
+const { isDuplicateTelegramUpdate, processTelegramUpdate } = require('../services/telegramWebhookService');
 const {
     analyzeStock,
     fetch_corporate_news,
@@ -44,12 +47,36 @@ router.get('/portfolio/quotes', async (req, res) => {
 router.get('/broksum/:ticker', async (req, res) => {
     const ticker = String(req.params.ticker || '').trim().toUpperCase().replace(/\.JK$/i, '');
     if (!/^[A-Z]{2,5}$/.test(ticker)) return res.status(400).json({ error: 'Kode saham tidak valid.' });
-    const endDate = String(req.query.endDate || new Date().toISOString().slice(0, 10));
-    const startDate = String(req.query.startDate || new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10));
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate) || startDate > endDate) {
+    const endDate = String(req.query.endDate || formatJakartaDate());
+    const startDate = String(req.query.startDate || daysAgoJakarta(6));
+    const dateBounds = tradingDateBounds(startDate, endDate);
+    if (!dateBounds) {
         return res.status(400).json({ error: 'Rentang tanggal tidak valid.' });
     }
-    res.json(await fetchBroksum(ticker, startDate, endDate));
+    res.json(await fetchBroksum(ticker, dateBounds));
+});
+
+router.post('/telegram-webhook', (req, res) => {
+    const update = req.body || {};
+    const updateId = update.update_id;
+    const expectedSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
+    const suppliedSecret = req.get('x-telegram-bot-api-secret-token');
+    const authorized = !expectedSecret || suppliedSecret === expectedSecret;
+    const duplicate = authorized && isDuplicateTelegramUpdate(updateId);
+
+    // Acknowledge Telegram before starting any provider or screener work.
+    res.status(200).send('OK');
+    if (!authorized || duplicate || !process.env.TELEGRAM_BOT_TOKEN) return;
+
+    const backgroundTask = Promise.resolve().then(() => processTelegramUpdate(update)).catch(error => {
+        console.error('Telegram webhook background task failed:', error.message || error);
+    });
+    try {
+        waitUntil(backgroundTask);
+    } catch (error) {
+        // Local Express execution has no Vercel request context; keep the task detached.
+        backgroundTask.catch(() => {});
+    }
 });
 
 // API: Analyze specific stock

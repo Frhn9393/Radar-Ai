@@ -1,4 +1,5 @@
 const BROKER_CODES = ['YP', 'MG', 'CC', 'PD', 'NI', 'ZP', 'BK', 'AK'];
+const { nowJakarta, tradingDateBounds } = require('./dateTime');
 
 function analyzeBandarmologi(topBuyers = [], topSellers = []) {
     const buyers = topBuyers.slice(0, 3).map(row => Math.max(0, Number(row.netValue) || 0));
@@ -23,8 +24,8 @@ function analyzeBandarmologi(topBuyers = [], topSellers = []) {
     return { ...status, buyTotal, sellTotal, buyStrength: Math.round(ratio * 100), sellStrength: Math.round((1 - ratio) * 100) };
 }
 
-function createMockBroksum(ticker, startDate, endDate) {
-    const seed = [...String(ticker)].reduce((sum, char) => sum + char.charCodeAt(0), 0) + new Date(`${endDate}T00:00:00Z`).getUTCDate();
+function createMockBroksum(ticker, dates) {
+    const seed = [...String(ticker)].reduce((sum, char) => sum + char.charCodeAt(0), 0) + Number(dates.endDate.slice(-2));
     const makeRows = (offset, direction) => BROKER_CODES.slice(offset, offset + 5).map((code, index) => {
         const lots = (seed * (index + 5 + offset) * 73) % 7500 + 350;
         const averagePrice = Math.round(((seed * (index + 11) * 37) % 9500 + 500) / 25) * 25;
@@ -34,14 +35,16 @@ function createMockBroksum(ticker, startDate, endDate) {
     const buyers = makeRows(0, 1);
     const sellers = makeRows(3, -1);
     return {
-        schemaVersion: '1.0', ticker: String(ticker).toUpperCase(), period: { startDate, endDate }, currency: 'IDR',
-        dataSource: 'MOCK', buyers, sellers, analysis: analyzeBandarmologi(buyers, sellers), generatedAt: new Date().toISOString()
+        schemaVersion: '1.0', ticker: String(ticker).toUpperCase(), period: dates, currency: 'IDR',
+        dataSource: 'MOCK', buyers, sellers, analysis: analyzeBandarmologi(buyers, sellers), generatedAt: nowJakarta().format()
     };
 }
 
-async function fetchBroksum(ticker, startDate, endDate) {
+async function fetchBroksum(ticker, dates, legacyEndDate) {
     // Replace the mock response with the provider adapter while preserving this response schema.
-    return createMockBroksum(ticker, startDate, endDate);
+    const bounds = typeof dates === 'string' ? tradingDateBounds(dates, legacyEndDate) : dates;
+    if (!bounds) throw new Error('Rentang tanggal trading Jakarta tidak valid.');
+    return createMockBroksum(ticker, bounds);
 }
 
 module.exports = { analyzeBandarmologi, createMockBroksum, fetchBroksum };

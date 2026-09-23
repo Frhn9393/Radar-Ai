@@ -8,8 +8,14 @@
     "ticker": { "type": "string", "pattern": "^[A-Z]{2,5}$" },
     "period": {
       "type": "object",
-      "required": ["startDate", "endDate"],
-      "properties": { "startDate": { "type": "string", "format": "date" }, "endDate": { "type": "string", "format": "date" } }
+      "required": ["startDate", "endDate", "startAt", "endAt", "timeZone"],
+      "properties": {
+        "startDate": { "type": "string", "format": "date" },
+        "endDate": { "type": "string", "format": "date" },
+        "startAt": { "type": "string", "format": "date-time" },
+        "endAt": { "type": "string", "format": "date-time" },
+        "timeZone": { "type": "string", "const": "Asia/Jakarta" }
+      }
     },
     "currency": { "type": "string", "const": "IDR" },
     "dataSource": { "type": "string" },
