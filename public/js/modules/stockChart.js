@@ -17,7 +17,7 @@ async function renderStockPriceChart(ticker) {
     try {
         const response = await fetch(`/api/chart/${encodeURIComponent(ticker)}?period=1y`);
         const payload = await response.json();
-        if (!response.ok || !Array.isArray(payload.candles) || payload.candles.length < 5) throw new Error(payload.error || 'Data candle belum cukup.');
+        if (!response.ok || !Array.isArray(payload.candles) || payload.candles.length < 5) throw new Error('Data realtime/historis emiten ini tidak tersedia di bursa saat ini.');
         if (requestId !== stockChartRequestId || currentActiveTicker !== ticker || !window.LightweightCharts) throw new Error('Grafik tidak tersedia.');
         const library = window.LightweightCharts;
         const chart = library.createChart(container, {
@@ -57,8 +57,8 @@ async function renderStockPriceChart(ticker) {
         stockChartResizeObserver = new ResizeObserver(entries => { const width = entries[0]?.contentRect.width; if (width && stockPriceChart) stockPriceChart.applyOptions({ width }); });
         stockChartResizeObserver.observe(container);
         status.textContent = 'Yahoo Finance · candle harian · MA5 / EMA20 / EMA200 · Support/Resistance 60 sesi';
-    } catch (error) {
-        if (requestId === stockChartRequestId) status.textContent = error.message || 'Grafik harga belum tersedia.';
+    } catch {
+        if (requestId === stockChartRequestId) status.textContent = 'Data realtime/historis emiten ini tidak tersedia di bursa saat ini.';
     }
 }
 

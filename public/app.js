@@ -770,6 +770,7 @@ btnToggleNewsMore?.addEventListener('click', () => {
 // ============================================================
 //  4. DEEP STOCK ANALYSIS MODAL
 // ============================================================
+let stockAnalysisRequestId = 0;
 function updateModalWatchlistButton(ticker) {
     if (!btnModalToggleWatchlist || !textModalWatchlist) return;
     const isSaved = savedWatchlist.includes(ticker);
@@ -799,7 +800,10 @@ if (btnModalToggleWatchlist) {
 async function executeStockAnalysis(ticker) {
     if (!ticker) return;
     const cleanTicker = ticker.trim().toUpperCase().replace(/^[\$#]/, '').replace(/\.JK$/i, '');
+    const requestId = ++stockAnalysisRequestId;
     currentActiveTicker = cleanTicker;
+    const rightsIssueContainer = document.getElementById('modal-rights-issue-container');
+    rightsIssueContainer?.classList.add('hidden');
 
     // Open modal with loading placeholders
     modalAnalysis.classList.remove('hidden');
@@ -815,14 +819,22 @@ async function executeStockAnalysis(ticker) {
 
     try {
         const res = await fetch(`/api/analyze/${cleanTicker}`);
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Gagal memuat data saham');
+        const data = await res.json().catch(() => null);
+        if (requestId !== stockAnalysisRequestId || currentActiveTicker !== cleanTicker) return;
+        if (!res.ok || !data || !data.realtime || !Number.isFinite(Number(data.realtime.lastPrice)) || Number(data.realtime.lastPrice) <= 0) {
+            throw new Error('Data unavailable');
+        }
 
         populateAnalysisModal(data);
-    } catch (err) {
+    } catch {
+        if (requestId !== stockAnalysisRequestId || currentActiveTicker !== cleanTicker) return;
         document.getElementById('modal-price').textContent = 'N/A';
         document.getElementById('modal-change').textContent = '-';
-        document.getElementById('modal-fin-summary').textContent = `Gagal menganalisa ${cleanTicker}: ${err.message}`;
+        document.getElementById('modal-high-low').textContent = '-';
+        document.getElementById('modal-volume').textContent = '-';
+        document.getElementById('modal-turnover').textContent = '-';
+        document.getElementById('modal-fin-summary').textContent = 'Data realtime/historis emiten ini tidak tersedia di bursa saat ini.';
+        rightsIssueContainer?.classList.add('hidden');
     }
 }
 window.executeStockAnalysis = executeStockAnalysis;
@@ -832,6 +844,9 @@ function populateAnalysisModal(data) {
     const val = data.valuation;
     const trend = data.trend;
     const fin = data.financials;
+    if (!rt || !Number.isFinite(Number(rt.lastPrice)) || Number(rt.lastPrice) <= 0 || !val || !trend || !fin) {
+        throw new Error('Data unavailable');
+    }
 
     // Header info
     document.getElementById('modal-stock-ticker').textContent = data.ticker;
@@ -1190,8 +1205,15 @@ function populateAnalysisModal(data) {
     // Card 5: Modul Aksi Korporasi Rights Issue (HMETD) & Tebus Calculator
     const ri = data.rightsIssue;
     const riContainer = document.getElementById('modal-rights-issue-container');
+    const cumDate = String(ri?.dates?.cumDate || '').trim();
+    const riIsRenderable = ri?.hasRightsIssue === true && ri?.isCorporateActionActive === true &&
+        cumDate !== '' && cumDate !== '-' && Number.isFinite(Date.parse(cumDate)) &&
+        Number.isFinite(Number(ri?.exercisePrice)) && Number(ri.exercisePrice) > 0 &&
+        Number.isFinite(Number(ri?.ratioOld)) && Number(ri.ratioOld) > 0 &&
+        Number.isFinite(Number(ri?.ratioNew)) && Number(ri.ratioNew) > 0;
+    riContainer?.classList.toggle('hidden', !riIsRenderable);
 
-    if (ri && riContainer) {
+    if (riIsRenderable && riContainer) {
         const badge = document.getElementById('modal-rights-status-badge');
         if (badge) {
             if (ri.hasRightsIssue && ri.isCorporateActionActive) {
@@ -1289,6 +1311,7 @@ function populateAnalysisModal(data) {
 }
 
 btnCloseModal.addEventListener('click', () => {
+    stockAnalysisRequestId += 1;
     modalAnalysis.classList.add('hidden');
     modalAnalysis.classList.remove('flex');
     document.body.style.overflow = 'auto';
@@ -1335,7 +1358,7 @@ async function renderStockPriceChart(ticker) {
     try {
         const response = await fetch(`/api/chart/${encodeURIComponent(ticker)}?period=1y`);
         const payload = await response.json();
-        if (!response.ok || !Array.isArray(payload.candles) || payload.candles.length < 5) throw new Error(payload.error || 'Data candle belum cukup.');
+        if (!response.ok || !Array.isArray(payload.candles) || payload.candles.length < 5) throw new Error('Data realtime/historis emiten ini tidak tersedia di bursa saat ini.');
         if (requestId !== stockChartRequestId || currentActiveTicker !== ticker || !window.LightweightCharts) throw new Error('Grafik tidak tersedia.');
         const library = window.LightweightCharts;
         const chart = library.createChart(container, {
@@ -1375,8 +1398,8 @@ async function renderStockPriceChart(ticker) {
         stockChartResizeObserver = new ResizeObserver(entries => { const width = entries[0]?.contentRect.width; if (width && stockPriceChart) stockPriceChart.applyOptions({ width }); });
         stockChartResizeObserver.observe(container);
         status.textContent = 'Yahoo Finance · candle harian · MA5 / EMA20 / EMA200 · Support/Resistance 60 sesi';
-    } catch (error) {
-        if (requestId === stockChartRequestId) status.textContent = error.message || 'Grafik harga belum tersedia.';
+    } catch {
+        if (requestId === stockChartRequestId) status.textContent = 'Data realtime/historis emiten ini tidak tersedia di bursa saat ini.';
     }
 }
 

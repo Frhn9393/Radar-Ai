@@ -36,6 +36,11 @@ async function analyzeStock(ticker) {
             getTickerForeignFlow(clean)
         ]);
 
+        if (!realtime || !Number.isFinite(Number(realtime.lastPrice)) || Number(realtime.lastPrice) <= 0 ||
+            !financialReport?.valuation || !financialReport?.financials || !trend || typeof trend !== 'object') {
+            throw new Error('Market data unavailable');
+        }
+
         const { valuation, financials } = financialReport;
 
         // Dynamic adjustment based on realtime price vs EMA and Supertrend
@@ -94,11 +99,8 @@ async function analyzeStock(ticker) {
             positionSizing,
             news
         };
-    } catch (error) {
-        if (error.message && error.message.includes('tidak ditemukan')) {
-            throw error;
-        }
-        throw new Error(`Data realtime untuk ${clean} tidak ditemukan atau gagal dimuat dari penyedia data.`);
+    } catch {
+        throw new Error('Data realtime/historis emiten ini tidak tersedia di bursa saat ini.');
     }
 }
 

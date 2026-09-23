@@ -133,9 +133,12 @@ router.get('/analyze/:ticker', async (req, res) => {
     try {
         const ticker = (req.params.ticker || '').trim();
         const data = await analyzeStock(ticker);
+        if (!data?.realtime || !Number.isFinite(Number(data.realtime.lastPrice)) || Number(data.realtime.lastPrice) <= 0) {
+            return res.status(404).json({ error: 'Data realtime/historis emiten ini tidak tersedia di bursa saat ini.' });
+        }
         res.json(data);
-    } catch (error) {
-        res.status(404).json({ error: error.message || 'Data saham tidak ditemukan' });
+    } catch {
+        res.status(404).json({ error: 'Data realtime/historis emiten ini tidak tersedia di bursa saat ini.' });
     }
 });
 
@@ -145,9 +148,12 @@ router.get('/chart/:ticker', async (req, res) => {
     const period = ['1m', '2m', '3m', '6m', '1y'].includes(req.query.period) ? req.query.period : '6m';
     try {
         const candles = await fetchHistoricalData(ticker, period);
+        if (!Array.isArray(candles) || candles.length === 0) {
+            return res.status(502).json({ error: 'Data realtime/historis emiten ini tidak tersedia di bursa saat ini.', candles: [] });
+        }
         return res.json({ ticker, period, candles, dataSource: 'Yahoo Finance' });
-    } catch (error) {
-        return res.status(502).json({ error: 'Riwayat harga Yahoo Finance belum tersedia.', candles: [] });
+    } catch {
+        return res.status(502).json({ error: 'Data realtime/historis emiten ini tidak tersedia di bursa saat ini.', candles: [] });
     }
 });
 
