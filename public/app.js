@@ -1515,6 +1515,10 @@ function formatRange(low, high, fallback) {
     return escapeHtml(fallback || '-');
 }
 
+function broksumAction(ticker) {
+    return `<button type="button" class="broksum-open rounded-md border border-cyan-500/30 bg-cyan-500/10 px-2 py-1 text-[10px] font-bold text-cyan-300 hover:bg-cyan-500/20" data-broksum-ticker="${escapeHtml(ticker)}">Broksum</button>`;
+}
+
 function getRankBadge(row) {
     if (row.rank === 1) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold tracking-tight shadow-sm">🥇 #1</span>`;
     if (row.rank === 2) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-slate-400/20 text-slate-200 font-bold tracking-tight shadow-sm">🥈 #2</span>`;
@@ -1584,6 +1588,7 @@ function renderScalpingTable(session = 'sesi1') {
                     <div class="flex items-center gap-1.5">
                         <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
                         ${rankBadge}
+                        ${broksumAction(row.ticker)}
                     </div>
                     <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
                 </td>
@@ -1705,6 +1710,7 @@ function renderScreenerResults(data) {
                             <div class="flex items-center gap-1.5">
                                 <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
                                 ${rankBadge}
+                                ${broksumAction(row.ticker)}
                             </div>
                             <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
                         </td>
@@ -1738,6 +1744,7 @@ function renderScreenerResults(data) {
                             <div class="flex items-center gap-1.5">
                                 <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
                                 ${rankBadge}
+                                ${broksumAction(row.ticker)}
                             </div>
                             <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
                         </td>
@@ -1772,6 +1779,7 @@ function renderScreenerResults(data) {
                             <div class="flex items-center gap-1.5">
                                 <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
                                 ${rankBadge}
+                                ${broksumAction(row.ticker)}
                             </div>
                             <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
                         </td>
@@ -1806,6 +1814,7 @@ function renderScreenerResults(data) {
                             <div class="flex items-center gap-1.5">
                                 <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
                                 ${rankBadge}
+                                ${broksumAction(row.ticker)}
                             </div>
                             <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
                         </td>
@@ -1840,6 +1849,7 @@ function renderScreenerResults(data) {
                             <div class="flex items-center gap-1.5">
                                 <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
                                 ${rankBadge}
+                                ${broksumAction(row.ticker)}
                             </div>
                             <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge}</div>
                         </td>
@@ -1863,6 +1873,7 @@ function renderScreenerResults(data) {
     const el = document.getElementById(id);
     if (!el) return;
     el.addEventListener('click', (e) => {
+        if (e.target.closest('.broksum-open')) return;
         const tr = e.target.closest('tr[data-ticker]');
         if (tr) {
             const ticker = tr.getAttribute('data-ticker');
@@ -2594,7 +2605,7 @@ function renderPortfolioRows(rows) {
     body.innerHTML = rows.length ? rows.map(row => {
         const pnl = row.marketValue - row.cost;
         const stop = Math.max(row.quote.lastPrice * 0.95, row.avgPrice * 0.9);
-        return `<tr class="border-b border-slate-800/60"><td class="p-3 font-mono font-bold text-cyan-300">$${escapeHtml(row.ticker)}</td><td class="p-3 text-slate-300">${row.quantity.toLocaleString('id-ID')}</td><td class="p-3 font-mono">${portfolioMoney(row.avgPrice)}</td><td class="p-3 font-mono">${portfolioMoney(row.quote.lastPrice)}</td><td class="p-3 font-mono">${portfolioMoney(row.marketValue)}</td><td class="p-3 font-mono ${pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${portfolioMoney(pnl)} (${portfolioPct(row.cost ? pnl / row.cost * 100 : 0)})</td><td class="p-3 text-amber-300 font-mono">${portfolioMoney(stop)}</td><td class="p-3"><button class="portfolio-remove text-rose-400" data-ticker="${escapeHtml(row.ticker)}" aria-label="Hapus ${escapeHtml(row.ticker)}">Hapus</button></td></tr>`;
+        return `<tr class="border-b border-slate-800/60"><td class="p-3 font-mono font-bold text-cyan-300">$${escapeHtml(row.ticker)}</td><td class="p-3 text-slate-300">${row.quantity.toLocaleString('id-ID')}</td><td class="p-3 font-mono">${portfolioMoney(row.avgPrice)}</td><td class="p-3 font-mono">${portfolioMoney(row.quote.lastPrice)}</td><td class="p-3 font-mono">${portfolioMoney(row.marketValue)}</td><td class="p-3 font-mono ${pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${portfolioMoney(pnl)} (${portfolioPct(row.cost ? pnl / row.cost * 100 : 0)})</td><td class="p-3 text-amber-300 font-mono">${portfolioMoney(stop)}</td><td class="p-3 whitespace-nowrap"><button type="button" class="broksum-open mr-2 rounded border border-cyan-500/30 px-2 py-1 text-[10px] text-cyan-300" data-broksum-ticker="${escapeHtml(row.ticker)}">Broksum</button><button class="portfolio-remove text-rose-400" data-ticker="${escapeHtml(row.ticker)}" aria-label="Hapus ${escapeHtml(row.ticker)}">Hapus</button></td></tr>`;
     }).join('') : '<tr><td colspan="8" class="p-6 text-center text-slate-500">Belum ada posisi. Tambahkan saham di atas.</td></tr>';
     body.querySelectorAll('.portfolio-remove').forEach(button => button.addEventListener('click', () => {
         portfolioPositions = portfolioPositions.filter(position => position.ticker !== button.dataset.ticker);
@@ -2645,6 +2656,75 @@ refreshPortfolio();
 portfolioRefreshTimer = setInterval(refreshPortfolio, 60000);
 
 // --- END MODULE: portfolio.js ---
+
+// --- START MODULE: broksum.js ---
+// Broker summary modal and mock API adapter for Bandarmologi analysis.
+const broksumModal = document.getElementById('modal-broksum');
+let activeBroksumTicker = '';
+
+function formatBroksumValue(value) {
+    const amount = Number(value) || 0;
+    return fmtRp.format(amount);
+}
+
+async function fetchBroksum(ticker, startDate, endDate) {
+    const response = await fetch(`/api/broksum/${encodeURIComponent(ticker)}?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return response.json();
+}
+
+function renderBrokerRows(elementId, rows, color) {
+    const body = document.getElementById(elementId);
+    if (!body) return;
+    body.innerHTML = rows.map(row => `<tr class="border-t border-slate-800"><td class="p-2 font-mono font-bold ${color}">${escapeHtml(row.brokerCode)}</td><td class="p-2 text-right font-mono">${Number(row.lots).toLocaleString('id-ID')}</td><td class="p-2 text-right font-mono">${formatBroksumValue(row.averagePrice)}</td><td class="p-2 text-right font-mono">${formatBroksumValue(Math.abs(row.netValue))}</td></tr>`).join('');
+}
+
+async function loadBroksumForPeriod() {
+    const button = document.getElementById('broksum-load');
+    const conclusion = document.getElementById('broksum-conclusion');
+    const startDate = document.getElementById('broksum-start').value;
+    const endDate = document.getElementById('broksum-end').value;
+    if (!startDate || !endDate || startDate > endDate) { conclusion.textContent = 'Pilih rentang tanggal yang valid.'; return; }
+    button.disabled = true; button.textContent = 'Memuat…';
+    try {
+        const data = await fetchBroksum(activeBroksumTicker, startDate, endDate);
+        const analysis = data.analysis;
+        conclusion.textContent = analysis.label;
+        conclusion.className = `rounded-xl border bg-[#0e1626] p-4 text-center text-lg font-black ${analysis.className}`;
+        renderBrokerRows('broksum-buyers', data.buyers, 'text-emerald-300');
+        renderBrokerRows('broksum-sellers', data.sellers, 'text-orange-300');
+        document.getElementById('broksum-buy-strength').textContent = `${analysis.buyStrength}%`;
+        document.getElementById('broksum-sell-strength').textContent = `${analysis.sellStrength}%`;
+        document.getElementById('broksum-buy-bar').style.width = `${analysis.buyStrength}%`;
+        document.getElementById('broksum-sell-bar').style.width = `${analysis.sellStrength}%`;
+        document.getElementById('broksum-summary').textContent = `Top 3 buyer ${formatBroksumValue(analysis.buyTotal)} vs top 3 seller ${formatBroksumValue(analysis.sellTotal)}. Dataset: ${data.dataSource}; periode ${data.period.startDate}–${data.period.endDate}.`;
+        document.getElementById('broksum-source').textContent = data.dataSource === 'MOCK' ? 'Data simulasi • belum tersambung ke data broker BEI' : `Sumber: ${data.dataSource}`;
+    } catch (error) {
+        conclusion.textContent = 'Gagal memuat analisis broksum.';
+        console.error('Broksum load failed:', error);
+    } finally { button.disabled = false; button.textContent = 'Analisis Periode'; }
+}
+
+function openBroksum(ticker) {
+    activeBroksumTicker = String(ticker || '').toUpperCase();
+    document.getElementById('broksum-ticker').textContent = `$${activeBroksumTicker}`;
+    const end = new Date(); const start = new Date(); start.setDate(start.getDate() - 6);
+    document.getElementById('broksum-start').value = start.toISOString().slice(0, 10);
+    document.getElementById('broksum-end').value = end.toISOString().slice(0, 10);
+    broksumModal.classList.remove('hidden'); broksumModal.classList.add('flex');
+    loadBroksumForPeriod();
+}
+
+document.addEventListener('click', event => {
+    const button = event.target.closest('.broksum-open');
+    if (button) { event.preventDefault(); event.stopPropagation(); openBroksum(button.dataset.broksumTicker); }
+});
+document.getElementById('broksum-load')?.addEventListener('click', loadBroksumForPeriod);
+document.getElementById('broksum-close')?.addEventListener('click', () => { broksumModal.classList.add('hidden'); broksumModal.classList.remove('flex'); });
+broksumModal?.addEventListener('click', event => { if (event.target === broksumModal) document.getElementById('broksum-close').click(); });
+document.addEventListener('keydown', event => { if (event.key === 'Escape' && broksumModal && !broksumModal.classList.contains('hidden')) document.getElementById('broksum-close').click(); });
+
+// --- END MODULE: broksum.js ---
 
 // --- START MODULE: indices.js ---
 // ============================================================

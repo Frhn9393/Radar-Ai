@@ -107,6 +107,7 @@ const { runScreener, WATCHLIST_UNIVERSE, UNIQUE_WATCHLIST } = require('./screene
 
 module.exports = {
     get_stock_price,
+    get_sector_for_ticker: (ticker) => STOCK_SECTOR_MAP.get(sanitizeTicker(ticker)) || 'Emiten BEI',
     get_financial_report,
     get_market_indices,
     get_technical_indicators,

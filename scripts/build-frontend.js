@@ -17,6 +17,7 @@ const moduleOrder = [
     'foreignFlow.js',
     'watchlist.js',
     'portfolio.js',
+    'broksum.js',
     'indices.js',
     'controls.js',
     'backtest.js',

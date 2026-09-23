@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
+const { fetchBroksum } = require('../services/broksumService');
 const {
     analyzeStock,
     fetch_corporate_news,
     search_stocks,
-    get_stock_price
+    get_stock_price,
+    get_sector_for_ticker
 } = require('../services/stockService');
-const { ALL_IDX_STOCKS } = require('../services/searchService');
 
 // API: Search / Autocomplete suggestions
 router.get('/search-suggest', (req, res) => {
@@ -28,10 +29,9 @@ router.get('/portfolio/quotes', async (req, res) => {
         .slice(0, 30);
     if (!tickers.length) return res.json({ quotes: [], timestamp: new Date().toISOString() });
 
-    const sectorMap = new Map((ALL_IDX_STOCKS || []).map(stock => [stock.ticker, stock.sector || 'Emiten BEI']));
     const results = await Promise.allSettled(tickers.map(async ticker => ({
         ticker,
-        sector: sectorMap.get(ticker) || 'Emiten BEI',
+        sector: get_sector_for_ticker(ticker),
         quote: await get_stock_price(ticker)
     })));
     res.json({
@@ -39,6 +39,17 @@ router.get('/portfolio/quotes', async (req, res) => {
         errors: results.filter(result => result.status === 'rejected').length,
         timestamp: new Date().toISOString()
     });
+});
+
+router.get('/broksum/:ticker', async (req, res) => {
+    const ticker = String(req.params.ticker || '').trim().toUpperCase().replace(/\.JK$/i, '');
+    if (!/^[A-Z]{2,5}$/.test(ticker)) return res.status(400).json({ error: 'Kode saham tidak valid.' });
+    const endDate = String(req.query.endDate || new Date().toISOString().slice(0, 10));
+    const startDate = String(req.query.startDate || new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10));
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate) || startDate > endDate) {
+        return res.status(400).json({ error: 'Rentang tanggal tidak valid.' });
+    }
+    res.json(await fetchBroksum(ticker, startDate, endDate));
 });
 
 // API: Analyze specific stock

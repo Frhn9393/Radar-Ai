@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Stockradar Broker Summary",
+  "type": "object",
+  "required": ["schemaVersion", "ticker", "period", "currency", "dataSource", "buyers", "sellers", "analysis", "generatedAt"],
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1.0" },
+    "ticker": { "type": "string", "pattern": "^[A-Z]{2,5}$" },
+    "period": {
+      "type": "object",
+      "required": ["startDate", "endDate"],
+      "properties": { "startDate": { "type": "string", "format": "date" }, "endDate": { "type": "string", "format": "date" } }
+    },
+    "currency": { "type": "string", "const": "IDR" },
+    "dataSource": { "type": "string" },
+    "buyers": { "type": "array", "items": { "$ref": "#/$defs/broker" } },
+    "sellers": { "type": "array", "items": { "$ref": "#/$defs/broker" } },
+    "analysis": {
+      "type": "object",
+      "required": ["key", "label", "buyTotal", "sellTotal", "buyStrength", "sellStrength"],
+      "properties": {
+        "key": { "enum": ["BIG_ACCUMULATION", "NORMAL_ACCUMULATION", "NORMAL_DISTRIBUTION", "BIG_DISTRIBUTION", "NEUTRAL"] },
+        "label": { "type": "string" }, "buyTotal": { "type": "number" }, "sellTotal": { "type": "number" },
+        "buyStrength": { "type": "integer", "minimum": 0, "maximum": 100 }, "sellStrength": { "type": "integer", "minimum": 0, "maximum": 100 }
+      }
+    },
+    "generatedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "broker": {
+      "type": "object", "required": ["brokerCode", "lots", "averagePrice", "netValue"],
+      "properties": { "brokerCode": { "type": "string", "minLength": 2, "maxLength": 2 }, "lots": { "type": "number", "minimum": 0 }, "averagePrice": { "type": "number", "minimum": 0 }, "netValue": { "type": "number" } }
+    }
+  }
+}

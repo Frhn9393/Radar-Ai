@@ -41,6 +41,10 @@ function formatRange(low, high, fallback) {
     return escapeHtml(fallback || '-');
 }
 
+function broksumAction(ticker) {
+    return `<button type="button" class="broksum-open rounded-md border border-cyan-500/30 bg-cyan-500/10 px-2 py-1 text-[10px] font-bold text-cyan-300 hover:bg-cyan-500/20" data-broksum-ticker="${escapeHtml(ticker)}">Broksum</button>`;
+}
+
 function getRankBadge(row) {
     if (row.rank === 1) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold tracking-tight shadow-sm">🥇 #1</span>`;
     if (row.rank === 2) return `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-slate-400/20 text-slate-200 font-bold tracking-tight shadow-sm">🥈 #2</span>`;
@@ -110,6 +114,7 @@ function renderScalpingTable(session = 'sesi1') {
                     <div class="flex items-center gap-1.5">
                         <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
                         ${rankBadge}
+                        ${broksumAction(row.ticker)}
                     </div>
                     <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
                 </td>
@@ -231,6 +236,7 @@ function renderScreenerResults(data) {
                             <div class="flex items-center gap-1.5">
                                 <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
                                 ${rankBadge}
+                                ${broksumAction(row.ticker)}
                             </div>
                             <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
                         </td>
@@ -264,6 +270,7 @@ function renderScreenerResults(data) {
                             <div class="flex items-center gap-1.5">
                                 <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
                                 ${rankBadge}
+                                ${broksumAction(row.ticker)}
                             </div>
                             <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
                         </td>
@@ -298,6 +305,7 @@ function renderScreenerResults(data) {
                             <div class="flex items-center gap-1.5">
                                 <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
                                 ${rankBadge}
+                                ${broksumAction(row.ticker)}
                             </div>
                             <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
                         </td>
@@ -332,6 +340,7 @@ function renderScreenerResults(data) {
                             <div class="flex items-center gap-1.5">
                                 <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
                                 ${rankBadge}
+                                ${broksumAction(row.ticker)}
                             </div>
                             <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
                         </td>
@@ -366,6 +375,7 @@ function renderScreenerResults(data) {
                             <div class="flex items-center gap-1.5">
                                 <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
                                 ${rankBadge}
+                                ${broksumAction(row.ticker)}
                             </div>
                             <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge}</div>
                         </td>
@@ -389,6 +399,7 @@ function renderScreenerResults(data) {
     const el = document.getElementById(id);
     if (!el) return;
     el.addEventListener('click', (e) => {
+        if (e.target.closest('.broksum-open')) return;
         const tr = e.target.closest('tr[data-ticker]');
         if (tr) {
             const ticker = tr.getAttribute('data-ticker');
