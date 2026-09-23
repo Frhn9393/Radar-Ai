@@ -4,6 +4,10 @@ const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
 const { calcBullishConfidence, processTechnicalData } = require('./technicalService');
 const { ALL_IDX_STOCKS } = require('./searchService');
 const { getTickSize } = require('./utils');
+const { formatJakartaDate } = require('./dateTime');
+const { fetch_market_news, fetch_ma_deals } = require('./newsService');
+const { classifyNewsSentiment } = require('./newsAlertService');
+const { isStrictBsjpEligible, isStrictBpjpEligible, isStrictIntradayEligible } = require('./strictScreenerFilters');
 
 const STOCK_SECTOR_MAP = new Map();
 if (Array.isArray(ALL_IDX_STOCKS)) {
@@ -46,6 +50,35 @@ const WATCHLIST_UNIVERSE = [
 
 const UNIQUE_WATCHLIST = Array.from(new Set(WATCHLIST_UNIVERSE));
 
+function isTodayInJakarta(value, now = new Date()) {
+    const timestamp = value instanceof Date ? value : new Date(value);
+    return Number.isFinite(timestamp.getTime()) && formatJakartaDate(timestamp) === formatJakartaDate(now);
+}
+
+function getDailyCatalysts(marketNews, maDeals, now = new Date()) {
+    const positiveNewsTickers = new Set();
+    const maTickers = new Set();
+    const newsRows = Array.isArray(marketNews?.news) ? marketNews.news : [];
+    const dealRows = Array.isArray(maDeals?.deals) ? maDeals.deals : [];
+
+    for (const item of newsRows) {
+        const ticker = String(item?.ticker || '').toUpperCase();
+        if (!/^[A-Z0-9]{3,5}$/.test(ticker) || ticker === 'IHSG' || !isTodayInJakarta(item?.pubDate, now)) continue;
+        if (classifyNewsSentiment(item).label === 'Bullish') positiveNewsTickers.add(ticker);
+    }
+
+    for (const item of dealRows) {
+        if (!isTodayInJakarta(item?.pubDate, now)) continue;
+        const tickers = Array.isArray(item?.tickers) ? item.tickers : [];
+        for (const tickerValue of tickers) {
+            const ticker = String(tickerValue || '').toUpperCase();
+            if (/^[A-Z0-9]{3,5}$/.test(ticker) && ticker !== 'IHSG') maTickers.add(ticker);
+        }
+    }
+
+    return { positiveNewsTickers, maTickers };
+}
+
 function roundToTick(value) {
     const numeric = Number(value);
     if (!Number.isFinite(numeric)) return 0;
@@ -82,6 +115,12 @@ async function runScreener() {
         return screenerCache;
     }
 
+    const [marketNewsResult, maDealsResult] = await Promise.allSettled([fetch_market_news(), fetch_ma_deals()]);
+    const dailyCatalysts = getDailyCatalysts(
+        marketNewsResult.status === 'fulfilled' ? marketNewsResult.value : null,
+        maDealsResult.status === 'fulfilled' ? maDealsResult.value : null
+    );
+
     const candidates = {
         scalpingSesi1: [],
         scalpingSesi2: [],
@@ -89,6 +128,7 @@ async function runScreener() {
         swing: [],
         bsjp: [],
         bpjp: [],
+        bpjs: [],
         longterm: []
     };
 
@@ -104,9 +144,14 @@ async function runScreener() {
             const validQuotes = chart.quotes.filter(q => q && q.close !== null);
             const latest = validQuotes[validQuotes.length - 1];
             const prev = validQuotes.length > 1 ? validQuotes[validQuotes.length - 2] : latest;
+            const priorFiveVolumes = validQuotes.slice(-6, -1).map(quote => Number(quote.volume)).filter(volumeValue => Number.isFinite(volumeValue) && volumeValue > 0);
+            const ma5Volume = priorFiveVolumes.length === 5
+                ? priorFiveVolumes.reduce((sum, volumeValue) => sum + volumeValue, 0) / 5
+                : null;
 
             const price = latest.close;
             const prevClose = prev.close;
+            const openPrice = latest.open;
             const high = latest.high || price;
             const low = latest.low || price;
             const volume = latest.volume ? Math.floor(latest.volume / 100) : 0; // Lot
@@ -134,10 +179,23 @@ async function runScreener() {
             const ema200 = trendData.ema200 || (price * 0.95);
 
             const sector = STOCK_SECTOR_MAP.get(ticker) || 'Bursa Efek Indonesia';
-            const smartMoney = trendData.smartMoney || { score: 75, status: 'AKUMULASI 🚀', badge: 'Smart Money: 75/100' };
-            const pivots = trendData.pivots?.classic || { pivot: price, r1: price, s1: price };
-            const candlestick = trendData.candlestick?.pattern || 'Bullish Momentum 🟢';
+            const smartMoney = trendData.smartMoney || { score: 0, status: 'DATA TIDAK TERSEDIA', badge: 'Smart Money: N/A' };
+            const pivots = trendData.pivots?.classic || null;
+            const candlestick = trendData.candlestick?.pattern || 'N/A';
             const technicalStatus = getTechnicalStatus(isSupertrendBullish, rsi, label);
+            const isCurrentJakartaDay = isTodayInJakarta(latest.date);
+            const strictMetrics = latest.strictMetrics || latest.marketMicrostructure || chart.marketMicrostructure || {};
+            const orderBook = strictMetrics.orderBook || latest.orderBook || latest.orderbook || {};
+            const brokerSummary = strictMetrics.broksum || strictMetrics.brokerSummary || latest.brokerSummary || latest.broksum;
+            const hasPositiveDailyNews = dailyCatalysts.positiveNewsTickers.has(ticker);
+            const hasDailyMaNews = dailyCatalysts.maTickers.has(ticker);
+            const strictIntradayMetrics = {
+                isCurrentJakartaDay,
+                runningTradeFrequencyPerMinute: strictMetrics.runningTradeFrequencyPerMinute,
+                averageDailyTurnover: strictMetrics.averageDailyTurnover,
+                netBuyerPowerPct: strictMetrics.netBuyerPowerPct
+            };
+            const strictIntradayEligible = isStrictIntradayEligible(strictIntradayMetrics);
 
             // 1. SCALPING CANDIDATES (Sesi 1 & Sesi 2)
             let scalpScore = (intraRange * 3) + (rvol * 15) + (changePct > 0 ? changePct * 2 : -5) + (confidence * 0.5);
@@ -149,7 +207,7 @@ async function runScreener() {
             const tpSesi1 = Math.round(price + Math.max(2 * tick, Math.round(price * 0.02)));
             const slSesi1 = Math.round(price - Math.max(2 * tick, Math.round(price * 0.012)));
 
-            candidates.scalpingSesi1.push({
+            if (strictIntradayEligible) candidates.scalpingSesi1.push({
                 score: scalpScore,
                 item: {
                     ticker, sector, price, changePct: changePct.toFixed(2),
@@ -176,7 +234,7 @@ async function runScreener() {
                 const tpSesi2 = Math.round(price + Math.max(3 * tick, Math.round(price * 0.025)));
                 const slSesi2 = Math.round(price - Math.max(2 * tick, Math.round(price * 0.015)));
 
-                candidates.scalpingSesi2.push({
+                if (strictIntradayEligible) candidates.scalpingSesi2.push({
                     score: scalpScore - (pullbackFromHigh * 2),
                     item: {
                         ticker, sector, price, changePct: changePct.toFixed(2),
@@ -211,9 +269,9 @@ async function runScreener() {
             const dayEntryHigh = Math.round(price);
             const dayTarget = Math.round(price * 1.035);
             const dayStop = Math.round(price * 0.985);
-            if (dayStop >= dayEntryLow || dayTarget <= dayEntryHigh) return;
+            const dayTradePricesValid = dayStop < dayEntryLow && dayTarget > dayEntryHigh;
 
-            candidates.daytrade.push({
+            if (strictIntradayEligible && dayTradePricesValid) candidates.daytrade.push({
                 score: dayScore,
                 item: {
                     ticker, sector, price, changePct: changePct.toFixed(2),
@@ -295,7 +353,16 @@ async function runScreener() {
             if (smartMoney.score >= 70) bsjpScore += 15;
             bsjpScore += (confidence * 0.3);
 
-            candidates.bsjp.push({
+            if (isStrictBsjpEligible({
+                isCurrentJakartaDay,
+                close: latest.close,
+                high: latest.high,
+                tickSize: getTickSize(Number(latest.high)),
+                turnover: value,
+                volumeToday: latest.volume,
+                ma5Volume,
+                broksum: brokerSummary
+            })) candidates.bsjp.push({
                 score: bsjpScore,
                 item: {
                     ticker, sector, price, changePct: changePct.toFixed(2),
@@ -333,7 +400,15 @@ async function runScreener() {
             if (smartMoney.score >= 60) bpjpScore += 10;
             bpjpScore += (confidence * 0.4);
 
-            candidates.bpjp.push({
+            if (isStrictBpjpEligible({
+                isCurrentJakartaDay,
+                open: openPrice,
+                previousClose: prevClose,
+                totalBidVolume: orderBook.totalBidVolume,
+                totalOfferVolume: orderBook.totalOfferVolume,
+                hasPositiveDailyNews,
+                hasDailyMaNews
+            })) candidates.bpjp.push({
                 score: bpjpScore,
                 item: {
                     ticker, sector, price, changePct: changePct.toFixed(2),
@@ -426,22 +501,26 @@ async function runScreener() {
         scalpingSesi1: rankAndPick(candidates.scalpingSesi1, 3),
         scalpingSesi2: rankAndPick(candidates.scalpingSesi2, 3),
         daytrade: rankAndPick(candidates.daytrade, 3),
+        intraday: rankAndPick(candidates.daytrade, 3),
         swing: rankAndPick(candidates.swing, 3),
         bsjp: rankAndPick(candidates.bsjp, 3),
         bpjp: rankAndPick(candidates.bpjp, 3),
+        bpjs: rankAndPick(candidates.bpjp, 3),
         longterm: rankAndPick(candidates.longterm, 3),
         allCandidates: {
             scalpingSesi1: rankAndPick(candidates.scalpingSesi1, 10),
             scalpingSesi2: rankAndPick(candidates.scalpingSesi2, 10),
             daytrade: rankAndPick(candidates.daytrade, 10),
+            intraday: rankAndPick(candidates.daytrade, 10),
             swing: rankAndPick(candidates.swing, 10),
             bsjp: rankAndPick(candidates.bsjp, 10),
             bpjp: rankAndPick(candidates.bpjp, 10),
+            bpjs: rankAndPick(candidates.bpjp, 10),
             longterm: rankAndPick(candidates.longterm, 10)
         },
         backtestMetadata: {
             methodology: "Battle-tested Multi-Month Quant Backtest (IDX)",
-            auditStatus: "VERIFIED_PROFESSIONAL",
+            auditStatus: "STRICT_FAIL_CLOSED",
             timestamp: new Date().toISOString()
         }
     };
@@ -456,6 +535,8 @@ module.exports = {
     calculateSwingRiskReward,
     getTechnicalStatus,
     roundToTick,
+    isTodayInJakarta,
+    getDailyCatalysts,
     WATCHLIST_UNIVERSE,
     UNIQUE_WATCHLIST
 };

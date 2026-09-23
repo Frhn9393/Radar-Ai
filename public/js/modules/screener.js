@@ -66,6 +66,10 @@ function filterScreenerList(items) {
     return result;
 }
 
+function strictScreenerEmptyRow(colspan) {
+    return `<tr><td colspan="${colspan}" role="status" class="p-4 text-center text-amber-300"><span class="inline-flex items-center justify-center gap-2">🛡️ Tidak ada emiten yang memenuhi standar filter ketat hari ini. Kondisi pasar cenderung volatile/risky (Wait &amp; See).</span><small class="mt-1 block text-slate-500">Sinyal yang memerlukan data broksum, order book, dan running trade hanya ditampilkan jika sumber metrik terverifikasi tersedia.</small></td></tr>`;
+}
+
 // ============================================================
 //  5. SCREENER EXECUTION & RENDERING
 // ============================================================
@@ -107,7 +111,7 @@ function renderScalpingTable(session = 'sesi1') {
     const list = filterScreenerList(rawList);
 
     if (!list || list.length === 0) {
-        tbodyScalp.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500 italic">Tidak ada saham lolos filter scalping ${session === 'sesi1' ? 'Sesi 1' : 'Sesi 2'} saat ini.</td></tr>`;
+        tbodyScalp.innerHTML = strictScreenerEmptyRow(10);
         return;
     }
 
@@ -199,7 +203,8 @@ btnTriggerScreener?.addEventListener('click', async () => {
     try {
         const res = await fetch('/api/screener');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
+        const responseData = await res.json();
+        const data = responseData && typeof responseData === 'object' && !Array.isArray(responseData) ? responseData : {};
         if (data.error) throw new Error(data.error);
 
         // Complete the progress bar
@@ -228,7 +233,7 @@ btnTriggerScreener?.addEventListener('click', async () => {
 });
 
 function renderScreenerResults(data) {
-    if (!data) return;
+    data = data && typeof data === 'object' && !Array.isArray(data) ? data : {};
 
     // 1. Scalping (rendered with session support)
     renderScalpingTable(activeScalpSession || 'sesi1');
@@ -238,7 +243,7 @@ function renderScreenerResults(data) {
     if (tbodyDay) {
         const dayList = filterScreenerList(data.daytrade || []);
         if (dayList.length === 0) {
-            tbodyDay.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-slate-500 italic">Tidak ada saham lolos filter daytrade ketat saat ini.</td></tr>`;
+            tbodyDay.innerHTML = strictScreenerEmptyRow(8);
         } else {
             tbodyDay.innerHTML = dayList.map(row => {
                 const rankBadge = getRankBadge(row);
@@ -307,7 +312,7 @@ function renderScreenerResults(data) {
     if (tbodyBsjp) {
         const bsjpList = filterScreenerList(data.bsjp || []);
         if (bsjpList.length === 0) {
-            tbodyBsjp.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-slate-500 italic">Tidak ada saham lolos filter BSJP ketat saat ini.</td></tr>`;
+            tbodyBsjp.innerHTML = strictScreenerEmptyRow(9);
         } else {
             tbodyBsjp.innerHTML = bsjpList.map(row => {
                 const rankBadge = getRankBadge(row);
@@ -342,7 +347,7 @@ function renderScreenerResults(data) {
     if (tbodyBpjp) {
         const bpjpList = filterScreenerList(data.bpjp || []);
         if (bpjpList.length === 0) {
-            tbodyBpjp.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500 italic">Tidak ada saham lolos filter BPJP oversold saat ini.</td></tr>`;
+            tbodyBpjp.innerHTML = strictScreenerEmptyRow(10);
         } else {
             tbodyBpjp.innerHTML = bpjpList.map(row => {
                 const rankBadge = getRankBadge(row);

@@ -5,6 +5,9 @@ const { get_stock_price, get_market_indices } = require('./services/marketDataSe
 const { get_technical_indicators } = require('./services/technicalService');
 const { fetch_market_news, fetch_ma_deals, extractNewsTicker } = require('./services/newsService');
 const { classifyNewsSentiment, findNewNewsItems, formatNewsAlert } = require('./services/newsAlertService');
+const { isStrictBsjpEligible, isStrictBpjpEligible, isStrictIntradayEligible } = require('./services/strictScreenerFilters');
+const { getDailyCatalysts } = require('./services/screenerService');
+const { processTelegramUpdate, formatScreenerRows, STRICT_EMPTY_ALERT } = require('./services/telegramWebhookService');
 const { analyzeStock, runScreener } = require('./services/stockService');
 
 let totalTests = 0;
@@ -19,6 +22,33 @@ function assert(condition, testName, details = '') {
     } else {
         failedTests.push({ testName, details });
         console.error(`  ❌ FAIL: ${testName} - ${details}`);
+    }
+}
+
+async function testEmptyTelegramCommands() {
+    const previousToken = process.env.TELEGRAM_BOT_TOKEN;
+    const previousChatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
+    const previousFetch = global.fetch;
+    const sentMessages = [];
+    process.env.TELEGRAM_BOT_TOKEN = 'test-token';
+    process.env.TELEGRAM_ADMIN_CHAT_ID = '555';
+    global.fetch = async (_url, options) => {
+        sentMessages.push(JSON.parse(options.body).text);
+        return { ok: true, json: async () => ({ ok: true }) };
+    };
+    try {
+        for (const command of ['/screener', '/bsjp', '/bpjs', '/bpjp', '/scalping', '/intraday', '/daytrade']) {
+            await processTelegramUpdate({ message: { chat: { id: 555 }, text: command } }, {
+                runScreener: async () => ({ swing: [], bsjp: [], bpjs: [], bpjp: [], scalping: [], scalpingSesi1: [], scalpingSesi2: [], daytrade: [] })
+            });
+        }
+        return sentMessages;
+    } finally {
+        global.fetch = previousFetch;
+        if (previousToken === undefined) delete process.env.TELEGRAM_BOT_TOKEN;
+        else process.env.TELEGRAM_BOT_TOKEN = previousToken;
+        if (previousChatId === undefined) delete process.env.TELEGRAM_ADMIN_CHAT_ID;
+        else process.env.TELEGRAM_ADMIN_CHAT_ID = previousChatId;
     }
 }
 
@@ -60,6 +90,37 @@ async function runAllTests() {
     const formattedAlert = formatNewsAlert({ ticker: 'BBRI', title: 'Laba tumbuh', link: 'https://example.com/news' });
     assert(formattedAlert.includes('Emiten: $BBRI') && formattedAlert.includes('Link: https://example.com/news'), 'News alert includes issuer and source link');
 
+    console.log('\n▶ Testing strict screener eligibility and null-data handling...');
+    const strictBsjp = { isCurrentJakartaDay: true, close: 98, high: 100, tickSize: 1, turnover: 10000000001, volumeToday: 201, ma5Volume: 100, broksum: { dataSource: 'IDX_PROVIDER', analysis: { key: 'BIG_ACCUMULATION' } } };
+    assert(isStrictBsjpEligible(strictBsjp), 'BSJP accepts a row meeting every strict criterion');
+    assert(!isStrictBsjpEligible({ ...strictBsjp, broksum: { dataSource: 'MOCK', analysis: { key: 'BIG_ACCUMULATION' } } }), 'BSJP rejects mock broker-summary data');
+    assert(!isStrictBsjpEligible({ ...strictBsjp, volumeToday: 200 }), 'BSJP rejects volume that is not greater than 2x MA5');
+    assert(!isStrictBsjpEligible({ ...strictBsjp, close: 97.9 }), 'BSJP rejects a close more than two ticks below the high');
+    assert(!isStrictBsjpEligible(null), 'BSJP safely rejects null market data');
+    const strictBpjp = { isCurrentJakartaDay: true, open: 101, previousClose: 100, totalBidVolume: 201, totalOfferVolume: 100, hasDailyMaNews: true };
+    assert(isStrictBpjpEligible(strictBpjp), 'BPJP accepts 1% gap-up, >2x bids, and a daily M&A catalyst');
+    assert(!isStrictBpjpEligible({ ...strictBpjp, open: 100.99 }), 'BPJP rejects a gap below 1%');
+    assert(!isStrictBpjpEligible({ ...strictBpjp, totalBidVolume: 200 }), 'BPJP requires bids strictly greater than 2x offers');
+    assert(!isStrictBpjpEligible({ ...strictBpjp, hasDailyMaNews: false }), 'BPJP rejects rows without positive news or M&A');
+    assert(!isStrictBpjpEligible(undefined), 'BPJP safely rejects missing market data');
+    const strictIntraday = { isCurrentJakartaDay: true, runningTradeFrequencyPerMinute: 51, averageDailyTurnover: 20000000001, netBuyerPowerPct: 66 };
+    assert(isStrictIntradayEligible(strictIntraday), 'Intraday accepts a row meeting all three strict thresholds');
+    assert(!isStrictIntradayEligible({ ...strictIntraday, runningTradeFrequencyPerMinute: 50 }), 'Intraday frequency must be strictly greater than 50/min');
+    assert(!isStrictIntradayEligible({ ...strictIntraday, averageDailyTurnover: 20000000000 }), 'Intraday turnover must be strictly greater than Rp20bn');
+    assert(!isStrictIntradayEligible({ ...strictIntraday, netBuyerPowerPct: 65 }), 'Intraday buyer power must be strictly greater than 65%');
+    assert(!isStrictIntradayEligible([]), 'Intraday safely rejects empty-array market data');
+    const todayWib = new Date('2026-09-23T01:10:00.000Z');
+    const dailyCatalysts = getDailyCatalysts({ news: [
+        { ticker: 'GOTO', title: 'Laba tumbuh', pubDate: '2026-09-23T01:00:00.000Z' },
+        { ticker: 'BBCA', title: 'Laba tumbuh', pubDate: '2026-09-22T16:59:00.000Z' }
+    ] }, { deals: [{ tickers: ['BBRI'], pubDate: '2026-09-23T01:00:00.000Z' }] }, todayWib);
+    assert(dailyCatalysts.positiveNewsTickers.has('GOTO') && dailyCatalysts.maTickers.has('BBRI'), 'Daily positive news and M&A are matched in WIB');
+    assert(!dailyCatalysts.positiveNewsTickers.has('BBCA'), 'Catalyst from the previous WIB date is excluded');
+    assert(getDailyCatalysts(null, { deals: [] }, todayWib).maTickers.size === 0, 'Catalyst lookup safely accepts null and empty feeds');
+    const emptyCommandMessages = await testEmptyTelegramCommands();
+    assert(emptyCommandMessages.length === 7 && emptyCommandMessages.every(message => message === STRICT_EMPTY_ALERT), 'All Telegram screener commands return the Wait & See alert when no rows qualify');
+    assert(formatScreenerRows('test', null) === STRICT_EMPTY_ALERT && formatScreenerRows('test', [null]) === STRICT_EMPTY_ALERT, 'Telegram formatting handles null and malformed candidate arrays');
+
     // ── 3. Unit Tests: marketDataService ─────────────────────────
     console.log('\n▶ [3/7] Testing marketDataService...');
     const bbcaQuote = await get_stock_price('BBCA');
@@ -96,11 +157,11 @@ async function runAllTests() {
     const screenerDuration = Date.now() - startScreener;
     console.log(`  ⏱️ Screener finished in ${screenerDuration}ms (Target: < 10000ms cold start)`);
     assert(screenerDuration < 60000, `Screener completes quickly (${screenerDuration}ms vs former 61,000ms)`);
-    assert(screenerResult && Array.isArray(screenerResult.scalping) && screenerResult.scalping.length > 0, `Screener scalping has ${screenerResult?.scalping?.length} recommendations`);
-    assert(screenerResult && Array.isArray(screenerResult.daytrade) && screenerResult.daytrade.length > 0, `Screener daytrade has ${screenerResult?.daytrade?.length} recommendations`);
+    assert(screenerResult && Array.isArray(screenerResult.scalping), 'Strict scalping result is always an array');
+    assert(screenerResult && Array.isArray(screenerResult.daytrade), 'Strict intraday result is always an array');
     assert(screenerResult && Array.isArray(screenerResult.swing) && screenerResult.swing.length > 0, `Screener swing has ${screenerResult?.swing?.length} recommendations`);
-    assert(screenerResult && Array.isArray(screenerResult.bsjp) && screenerResult.bsjp.length > 0, `Screener BSJP has ${screenerResult?.bsjp?.length} recommendations`);
-    assert(screenerResult && Array.isArray(screenerResult.bpjp) && screenerResult.bpjp.length > 0, `Screener BPJP has ${screenerResult?.bpjp?.length} recommendations`);
+    assert(screenerResult && Array.isArray(screenerResult.bsjp), 'Strict BSJP result is always an array');
+    assert(screenerResult && Array.isArray(screenerResult.bpjp) && Array.isArray(screenerResult.bpjs), 'Strict BPJP/BPJS aliases are arrays');
     assert(screenerResult && Array.isArray(screenerResult.longterm) && screenerResult.longterm.length > 0, `Screener longterm has ${screenerResult?.longterm?.length} recommendations`);
 
     // ── 7. News & Deals Feeds ────────────────────────────────────
