@@ -1,7 +1,9 @@
 const { runScreener } = require('./screenerService');
 const { fetch_market_news, fetch_ma_deals } = require('./newsService');
 const { sendTelegramMessage } = require('./telegramService');
-const { getNewsAlertKey } = require('./newsAlertService');
+const { getNewsAlertKey, isStrategicCorporateAction } = require('./newsAlertService');
+const { formatJakartaDate, formatJakartaDateTime } = require('./dateTime');
+const { listTelegramUsers, recordTelegramUser } = require('./telegramUserStore');
 
 const seenUpdateIds = new Map();
 const MAX_SEEN_UPDATES = 2000;
@@ -39,18 +41,62 @@ async function processTelegramUpdate(update, dependencies = {}) {
     const message = update?.message || update?.edited_message;
     const chatId = message?.chat?.id;
     const text = String(message?.text || '').trim();
-    if (!chatId || !text) return;
+    const sendMessage = dependencies.sendTelegramMessage || sendTelegramMessage;
+    if (!chatId) return;
+
+    try {
+        await (dependencies.recordTelegramUser || recordTelegramUser)(message);
+    } catch (error) {
+        console.error('[telegram-user] persistence failed', error.message || error);
+    }
+    if (!text) return;
 
     const configuredAdminChatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
-    if (configuredAdminChatId && chatId.toString() !== configuredAdminChatId.toString()) {
-        console.warn('[telegram-webhook] ignored command from non-admin chat', chatId.toString());
+    const isAdmin = Boolean(configuredAdminChatId) && chatId.toString() === configuredAdminChatId.toString();
+    if (/^\/users(?:@\w+)?$/i.test(text)) {
+        if (!isAdmin) {
+            await sendMessage(chatId, 'Maaf, perintah ini hanya tersedia untuk admin bot.');
+            return;
+        }
+        try {
+            const directory = await (dependencies.listTelegramUsers || listTelegramUsers)();
+            if (!directory?.available) {
+                await sendMessage(chatId, 'Penyimpanan pengguna belum dikonfigurasi. Tambahkan KV_REST_API_URL dan KV_REST_API_TOKEN (atau UPSTASH_REDIS_REST_URL dan UPSTASH_REDIS_REST_TOKEN) di Environment Variables Vercel. Interaksi tetap tercatat di log sampai penyimpanan persisten diaktifkan.');
+                return;
+            }
+            const users = Array.isArray(directory.users) ? directory.users : [];
+            if (!users.length) {
+                await sendMessage(chatId, 'Total pengguna unik: 0\nBelum ada pengguna yang tercatat.');
+                return;
+            }
+            const lines = users.map((user, index) => {
+                const name = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Nama tidak tersedia';
+                const username = user.username ? `@${user.username}` : name;
+                const lastSeen = user.lastInteractionAt ? formatJakartaDateTime(user.lastInteractionAt) : '-';
+                return `${index + 1}. ${username} · ${name} · ID ${user.userId} · ${lastSeen} WIB`;
+            });
+            const chunks = [];
+            let current = `Total pengguna unik: ${users.length}\n\n`;
+            for (const line of lines) {
+                if (current.length + line.length + 1 > 3500) {
+                    chunks.push(current);
+                    current = '';
+                }
+                current += `${line}\n`;
+            }
+            if (current) chunks.push(current);
+            for (const chunk of chunks) await sendMessage(chatId, chunk.trim());
+        } catch (error) {
+            console.error('[telegram-users] unable to list users', error.message || error);
+            await sendMessage(chatId, 'Daftar pengguna belum dapat dimuat. Coba lagi nanti.');
+        }
         return;
     }
     const getScreener = dependencies.runScreener || runScreener;
 
     if (/^\/screener(?:@\w+)?$/i.test(text)) {
         const result = safeScreenerResult(await getScreener());
-        await sendTelegramMessage(chatId, formatScreenerRows('STOCKRADAR AI · Screener Swing', result.swing));
+        await sendMessage(chatId, formatScreenerRows('STOCKRADAR AI · Screener Swing', result.swing));
         return;
     }
     if (/^\/daytrade(?:@\w+)?$/i.test(text)) {
@@ -59,7 +105,7 @@ async function processTelegramUpdate(update, dependencies = {}) {
         const scalpingSesi1 = formatScreenerRows('Scalping Sesi 1', Array.isArray(result.scalpingSesi1) ? result.scalpingSesi1 : result.scalping);
         const scalpingSesi2 = formatScreenerRows('Scalping Sesi 2', result.scalpingSesi2);
         const sections = [daytrade, scalpingSesi1, scalpingSesi2].filter(message => message !== STRICT_EMPTY_ALERT);
-        await sendTelegramMessage(chatId, sections.length ? sections.join('\n\n') : STRICT_EMPTY_ALERT);
+        await sendMessage(chatId, sections.length ? sections.join('\n\n') : STRICT_EMPTY_ALERT);
         return;
     }
     if (/^\/(bsjp|bpjp|bpjs|scalping|intraday)(?:@\w+)?$/i.test(text)) {
@@ -74,11 +120,16 @@ async function processTelegramUpdate(update, dependencies = {}) {
             : command === '/bpjs' || command === '/bpjp' ? 'STOCKRADAR AI · BPJS/BPJP'
                 : command === '/scalping' ? 'STOCKRADAR AI · Scalping'
                     : 'STOCKRADAR AI · Intraday';
-        await sendTelegramMessage(chatId, formatScreenerRows(title, rows));
+        await sendMessage(chatId, formatScreenerRows(title, rows));
         return;
     }
     if (/^\/news(?:@\w+)?$/i.test(text)) {
-        const [marketValue, dealValue] = await Promise.all([fetch_market_news(), fetch_ma_deals()]);
+        const [marketResult, dealResult] = await Promise.allSettled([
+            (dependencies.fetchMarketNews || fetch_market_news)(),
+            (dependencies.fetchMaDeals || fetch_ma_deals)()
+        ]);
+        const marketValue = marketResult.status === 'fulfilled' ? marketResult.value : null;
+        const dealValue = dealResult.status === 'fulfilled' ? dealResult.value : null;
         const market = safeScreenerResult(marketValue);
         const deals = safeScreenerResult(dealValue);
         const combinedNews = [
@@ -86,7 +137,9 @@ async function processTelegramUpdate(update, dependencies = {}) {
             ...(Array.isArray(deals.deals) ? deals.deals : []).filter(item => item && typeof item === 'object')
         ].sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
         const seenNews = new Set();
-        const latestNews = combinedNews.filter(item => {
+        const today = formatJakartaDate();
+        const strategicToday = combinedNews.filter(item => isStrategicCorporateAction(item) && item.pubDate && formatJakartaDate(item.pubDate) === today);
+        const latestNews = strategicToday.filter(item => {
             const key = getNewsAlertKey(item);
             if (!key || seenNews.has(key)) return false;
             seenNews.add(key);
@@ -96,13 +149,16 @@ async function processTelegramUpdate(update, dependencies = {}) {
             const ticker = item.tickers?.[0] || item.ticker || 'IHSG';
             return `${index + 1}. $${ticker} · ${String(item.title || '').slice(0, 300)}\n${String(item.link || '').slice(0, 400)}`;
         });
-        await sendTelegramMessage(chatId, `STOCKRADAR AI · 5 Berita / M&A Terbaru\n\n${lines.join('\n\n') || 'Belum ada berita terbaru.'}`);
+        await sendMessage(chatId, lines.length
+            ? `STOCKRADAR AI · Berita Akuisisi / Merger Hari Ini\n\n${lines.join('\n\n')}`
+            : 'Saat ini belum ada berita atau sentimen akuisisi/merger terbaru di pasar modal.');
         return;
     }
     if (/^\/(start|help)(?:@\w+)?$/i.test(text)) {
-        await sendTelegramMessage(chatId, [
+        await sendMessage(chatId, [
             'STOCKRADAR AI · Perintah Bot',
-            '/news — 5 berita pasar dan M&A terbaru',
+            '/users — daftar pengguna unik (admin saja)',
+            '/news — hingga 5 berita akuisisi/merger terbaru hari ini',
             '/screener — rekomendasi Swing Trade',
             '/bsjp — screener Beli Sore Jual Pagi',
             '/bpjs atau /bpjp — screener Beli Pagi Jual Sore',

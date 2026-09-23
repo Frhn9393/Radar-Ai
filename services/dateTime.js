@@ -18,6 +18,10 @@ function formatJakartaDate(date = dayjs()) {
     return dayjs(date).tz(MARKET_TIME_ZONE).format(DATE_FORMAT);
 }
 
+function formatJakartaDateTime(date = dayjs()) {
+    return dayjs(date).tz(MARKET_TIME_ZONE).format('DD-MM-YYYY HH:mm:ss');
+}
+
 function daysAgoJakarta(days, base = nowJakarta()) {
     return dayjs(base).tz(MARKET_TIME_ZONE).subtract(days, 'day').format(DATE_FORMAT);
 }
@@ -40,4 +44,4 @@ function tradingDateBounds(startDate, endDate) {
     };
 }
 
-module.exports = { MARKET_TIME_ZONE, nowJakarta, formatJakartaDate, daysAgoJakarta, parseTradingDate, tradingDateBounds };
+module.exports = { MARKET_TIME_ZONE, nowJakarta, formatJakartaDate, formatJakartaDateTime, daysAgoJakarta, parseTradingDate, tradingDateBounds };

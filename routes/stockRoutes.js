@@ -92,11 +92,6 @@ router.post('/telegram-webhook', (req, res) => {
         console.log('[telegram-webhook] duplicate update ignored', updateId);
         return;
     }
-    if (!process.env.TELEGRAM_BOT_TOKEN) {
-        console.error('[telegram-webhook] cannot process update: TELEGRAM_BOT_TOKEN is not configured');
-        return;
-    }
-
     const backgroundTask = Promise.resolve().then(() => processTelegramUpdate(update)).catch(error => {
         console.error('Telegram webhook background task failed:', error.message || error);
     });

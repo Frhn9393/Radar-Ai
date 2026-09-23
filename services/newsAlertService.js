@@ -15,6 +15,11 @@ function getNewsAlertKey(item) {
     return '';
 }
 
+function isStrategicCorporateAction(item) {
+    const content = `${item?.title || ''} ${item?.summary || ''}`;
+    return /\b(?:akuisisi|acquisitions?|mergers?|pengambilalihan|tender\s+offers?|buybacks?|divestasi|rights?\s+issues?)\b/i.test(content);
+}
+
 function findNewNewsItems(items = [], previousItems = []) {
     if (!previousItems.length) return [];
     const previousKeys = new Set(previousItems.map(getNewsAlertKey));
@@ -70,9 +75,7 @@ function rememberKey(key) {
 
 function enqueueNewsAlerts(items = []) {
     for (const item of items) {
-        const sentiment = classifyNewsSentiment(item).label;
-        const isMaOrCorporateAction = /m&a|aksi korporasi|akuisisi|merger|buyback|rups/i.test(`${item?.category || ''} ${item?.title || ''}`);
-        if (sentiment === 'Netral / perlu verifikasi' && !isMaOrCorporateAction) continue;
+        if (!isStrategicCorporateAction(item)) continue;
         const key = getNewsAlertKey(item);
         if (!key || notifiedNews.has(key)) continue;
         rememberKey(key);
@@ -101,4 +104,4 @@ function enqueueNewsAlerts(items = []) {
     }
 }
 
-module.exports = { classifyNewsSentiment, enqueueNewsAlerts, findNewNewsItems, formatNewsAlert, getNewsAlertKey };
+module.exports = { classifyNewsSentiment, enqueueNewsAlerts, findNewNewsItems, formatNewsAlert, getNewsAlertKey, isStrategicCorporateAction };

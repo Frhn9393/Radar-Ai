@@ -4,7 +4,9 @@ const { search_stocks } = require('./services/searchService');
 const { get_stock_price, get_market_indices } = require('./services/marketDataService');
 const { get_technical_indicators } = require('./services/technicalService');
 const { fetch_market_news, fetch_ma_deals, extractNewsTicker } = require('./services/newsService');
-const { classifyNewsSentiment, findNewNewsItems, formatNewsAlert } = require('./services/newsAlertService');
+const { classifyNewsSentiment, findNewNewsItems, formatNewsAlert, isStrategicCorporateAction } = require('./services/newsAlertService');
+const { formatJakartaDate, formatJakartaDateTime } = require('./services/dateTime');
+const { listTelegramUsers, recordTelegramUser } = require('./services/telegramUserStore');
 const { isStrictBsjpEligible, isStrictBpjpEligible, isStrictIntradayEligible } = require('./services/strictScreenerFilters');
 const { processTelegramUpdate, formatScreenerRows, STRICT_EMPTY_ALERT } = require('./services/telegramWebhookService');
 const { fetchBrokerTop, requestBrokerTop, parseStockbitResponse, _clearCacheForTests } = require('./services/customMarketFeed');
@@ -50,6 +52,83 @@ async function testEmptyTelegramCommands() {
         else process.env.TELEGRAM_BOT_TOKEN = previousToken;
         if (previousChatId === undefined) delete process.env.TELEGRAM_ADMIN_CHAT_ID;
         else process.env.TELEGRAM_ADMIN_CHAT_ID = previousChatId;
+    }
+}
+
+async function testTelegramUserStore() {
+    const previousUrl = process.env.KV_REST_API_URL;
+    const previousToken = process.env.KV_REST_API_TOKEN;
+    const previousFetch = global.fetch;
+    const commands = [];
+    process.env.KV_REST_API_URL = 'https://redis.example.test';
+    process.env.KV_REST_API_TOKEN = 'test-kv-secret';
+    global.fetch = async (url, options) => {
+        commands.push({ url: String(url), options, command: JSON.parse(options.body) });
+        const [name] = JSON.parse(options.body);
+        return { ok: true, json: async () => ({ result: name === 'HGETALL' ? ['101', JSON.stringify({ userId: '101', username: 'sample', firstName: 'Sample', lastName: 'Trader', lastInteractionAt: '2026-09-24T00:00:00.000Z' })] : null }) };
+    };
+    try {
+        const nowSeconds = Math.floor(Date.now() / 1000);
+        const stored = await recordTelegramUser({ from: { id: 101, username: 'sample', first_name: 'Sample', last_name: 'Trader' }, date: nowSeconds });
+        const listed = await listTelegramUsers();
+        assert(stored.persisted && stored.user.userId === '101', 'Telegram interaction is persisted with a unique user ID');
+        assert(stored.user.username === 'sample' && stored.user.firstName === 'Sample' && stored.user.lastName === 'Trader', 'Telegram profile name and username are normalized');
+        assert(stored.user.lastInteractionAt === new Date(nowSeconds * 1000).toISOString(), 'Telegram interaction time is derived from msg.date');
+        assert(listed.available && listed.users.length === 1 && listed.users[0].username === 'sample', 'Admin directory reads persistent unique user records');
+        assert(commands.every(call => call.options.headers.Authorization === 'Bearer test-kv-secret') && commands.every(call => !call.url.includes('test-kv-secret')), 'KV credentials are sent only in Authorization headers');
+    } finally {
+        global.fetch = previousFetch;
+        if (previousUrl === undefined) delete process.env.KV_REST_API_URL; else process.env.KV_REST_API_URL = previousUrl;
+        if (previousToken === undefined) delete process.env.KV_REST_API_TOKEN; else process.env.KV_REST_API_TOKEN = previousToken;
+    }
+}
+
+async function testTelegramAdminAndCorporateNews() {
+    const previousAdminId = process.env.TELEGRAM_ADMIN_CHAT_ID;
+    process.env.TELEGRAM_ADMIN_CHAT_ID = '900';
+    const sent = [];
+    const tracked = [];
+    const dependencies = {
+        recordTelegramUser: async message => tracked.push(message.from.id),
+        sendTelegramMessage: async (chatId, text) => { sent.push({ chatId: String(chatId), text }); return true; },
+        listTelegramUsers: async () => ({ available: true, users: [{ userId: '900', username: 'admin', firstName: 'Bot', lastName: 'Admin', lastInteractionAt: '2026-09-24T00:00:00.000Z' }] })
+    };
+    const makeUpdate = (id, text, date = Math.floor(Date.now() / 1000)) => ({ message: { chat: { id }, from: { id, username: `user${id}`, first_name: 'Test' }, date, text } });
+    try {
+        await processTelegramUpdate(makeUpdate(12, '/users'), dependencies);
+        assert(sent.at(-1)?.chatId === '12' && sent.at(-1)?.text.includes('hanya tersedia untuk admin'), 'Non-admin /users request is politely denied');
+
+        await processTelegramUpdate(makeUpdate(900, '/users'), dependencies);
+        assert(sent.at(-1)?.text.includes('Total pengguna unik: 1') && sent.at(-1)?.text.includes('@admin'), 'Admin /users lists the unique user directory');
+        assert(sent.at(-1)?.text.includes(`${formatJakartaDateTime('2026-09-24T00:00:00.000Z')} WIB`), 'Admin user list includes last interaction time in WIB');
+
+        const today = formatJakartaDate();
+        const todayAt = new Date(`${today}T12:00:00+07:00`).toISOString();
+        const yesterdayAt = new Date(Date.now() - 2 * 86400000).toISOString();
+        dependencies.fetchMarketNews = async () => ({ news: [
+            { ticker: 'BBCA', title: 'Akuisisi bisnis strategis diumumkan', pubDate: todayAt, link: 'https://example.test/acquisition' },
+            { ticker: 'BBRI', title: 'Laba kuartalan meningkat', pubDate: todayAt, link: 'https://example.test/earnings' }
+        ] });
+        dependencies.fetchMaDeals = async () => ({ deals: [
+            { tickers: ['TLKM'], title: 'Rencana tender offer untuk emiten', pubDate: yesterdayAt, link: 'https://example.test/old' }
+        ] });
+        await processTelegramUpdate(makeUpdate(12, '/news'), dependencies);
+        assert(sent.at(-1)?.text.includes('$BBCA') && sent.at(-1)?.text.includes('Akuisisi') && !sent.at(-1)?.text.includes('Laba kuartalan'), '/news includes only today’s strategic corporate-action headlines');
+        assert(!sent.at(-1)?.text.includes('$TLKM'), '/news excludes strategic corporate-action headlines from prior Jakarta dates');
+
+        dependencies.fetchMarketNews = async () => ({ news: [{ title: 'Pasar bergerak stabil', pubDate: todayAt }] });
+        dependencies.fetchMaDeals = async () => ({ deals: [] });
+        await processTelegramUpdate(makeUpdate(12, '/news'), dependencies);
+        assert(sent.at(-1)?.text === 'Saat ini belum ada berita atau sentimen akuisisi/merger terbaru di pasar modal.', '/news uses the requested fallback when no qualifying item exists');
+
+        dependencies.fetchMarketNews = async () => { throw new Error('market feed unavailable'); };
+        dependencies.fetchMaDeals = async () => { throw new Error('deals feed unavailable'); };
+        await processTelegramUpdate(makeUpdate(12, '/news'), dependencies);
+        assert(sent.at(-1)?.text === 'Saat ini belum ada berita atau sentimen akuisisi/merger terbaru di pasar modal.', '/news returns the requested fallback when both news providers fail');
+        assert(tracked.length === 5 && tracked[0] === 12 && tracked[1] === 900, 'Each incoming command is tracked before access control');
+    } finally {
+        if (previousAdminId === undefined) delete process.env.TELEGRAM_ADMIN_CHAT_ID;
+        else process.env.TELEGRAM_ADMIN_CHAT_ID = previousAdminId;
     }
 }
 
@@ -149,6 +228,10 @@ async function runAllTests() {
     assert(classifyNewsSentiment({ title: 'Laba tumbuh dan dividen meningkat' }).label === 'Bullish', 'News alert recognizes positive headline sentiment');
     assert(classifyNewsSentiment({ title: 'Emiten catat rugi dan saham turun' }).label === 'Bearish', 'News alert recognizes negative headline sentiment');
     assert(classifyNewsSentiment({ title: 'Emiten umumkan akuisisi' }).label === 'Netral / perlu verifikasi', 'News alert avoids assuming M&A is bullish');
+    for (const keyword of ['akuisisi', 'acquisition', 'merger', 'pengambilalihan', 'tender offer', 'buyback', 'divestasi', 'right issue', 'rights issue']) {
+        assert(isStrategicCorporateAction({ title: `Berita ${keyword} emiten` }), `Strategic news filter accepts keyword: ${keyword}`);
+    }
+    assert(!isStrategicCorporateAction({ title: 'Laba meningkat dan dividen dibagikan', category: 'Aksi Korporasi' }), 'Strategic news filter rejects non-M&A sentiment even under broad corporate category');
     assert(findNewNewsItems([{ title: 'existing' }], []).length === 0, 'Cold-start feed establishes a baseline without sending a notification burst');
     assert(findNewNewsItems([{ title: 'new' }, { title: 'old' }], [{ title: 'old' }]).length === 1, 'Only items added since the previous feed poll trigger alerts');
     assert(extractNewsTicker('Kredit Bank Tumbuh Agustus, BI Sebut Permintaan Naik!') === null, 'Ticker parser ignores ordinary title-case words');
@@ -187,6 +270,8 @@ async function runAllTests() {
     assert(!isStrictBpjpEligible({ ...strictBpjp, isCurrentJakartaDay: false }), 'BPJP rejects stale Yahoo daily candle');
     assert(!isStrictIntradayEligible({ ...strictIntraday, isCurrentJakartaDay: false }), 'Scalping/Daytrade rejects stale Yahoo daily candle');
     const emptyCommandMessages = await testEmptyTelegramCommands();
+    await testTelegramUserStore();
+    await testTelegramAdminAndCorporateNews();
     assert(emptyCommandMessages.length === 7 && emptyCommandMessages.every(message => message === STRICT_EMPTY_ALERT), 'All Telegram screener commands return the Wait & See alert when no rows qualify');
     assert(formatScreenerRows('test', null) === STRICT_EMPTY_ALERT && formatScreenerRows('test', [null]) === STRICT_EMPTY_ALERT, 'Telegram formatting handles null and malformed candidate arrays');
 
