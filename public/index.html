@@ -1654,7 +1654,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 
                 <!-- Card 1: Valuasi & Harga Wajar -->
-                <div class="bg-[#090e1a] rounded-xl p-5 space-y-3 shadow-lg">
+                <div id="modal-valuation-card" class="bg-[#090e1a] rounded-xl p-5 space-y-3 shadow-lg hidden">
                     <div class="flex items-center justify-between  pb-2.5">
                         <h4 class="font-bold text-white text-sm">Valuasi & Harga Wajar</h4>
                         <span id="modal-val-status"
@@ -1707,7 +1707,7 @@
                 </div>
 
                 <!-- Card 3: Kesehatan Finansial -->
-                <div class="bg-[#090e1a] rounded-xl p-5 space-y-3 shadow-lg">
+                <div id="modal-financial-card" class="bg-[#090e1a] rounded-xl p-5 space-y-3 shadow-lg hidden">
                     <div class="flex items-center justify-between  pb-2.5">
                         <h4 class="font-bold text-white text-sm">Kesehatan Finansial</h4>
                         <span id="modal-fin-badge"
@@ -1770,7 +1770,7 @@
             <!-- AI Summary & Konsensus Analis Row -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <!-- AI Fundamental Summary -->
-                <div class="bg-[#071321]  rounded-xl p-5 shadow-lg space-y-2">
+                <div id="modal-financial-summary-card" class="bg-[#071321] rounded-xl p-5 shadow-lg space-y-2 hidden">
                     <div class="flex items-center justify-between">
                         <h4 class="text-cyan-400 font-bold text-sm flex items-center gap-2">
                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">

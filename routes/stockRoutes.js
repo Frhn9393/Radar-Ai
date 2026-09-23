@@ -10,6 +10,7 @@ const { fetchHistoricalData } = require('../services/backtestEngine');
 const { isDuplicateTelegramUpdate, processTelegramUpdate } = require('../services/telegramWebhookService');
 const {
     analyzeStock,
+    hasUsableRealtimeData,
     fetch_corporate_news,
     search_stocks,
     get_stock_price,
@@ -133,7 +134,7 @@ router.get('/analyze/:ticker', async (req, res) => {
     try {
         const ticker = (req.params.ticker || '').trim();
         const data = await analyzeStock(ticker);
-        if (!data?.realtime || !Number.isFinite(Number(data.realtime.lastPrice)) || Number(data.realtime.lastPrice) <= 0) {
+        if (!data || !hasUsableRealtimeData(data.realtime, { allowZeroVolume: data.ticker === 'IHSG' })) {
             return res.status(404).json({ error: 'Data realtime/historis emiten ini tidak tersedia di bursa saat ini.' });
         }
         res.json(data);

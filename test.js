@@ -9,7 +9,7 @@ const { isStrictBsjpEligible, isStrictBpjpEligible, isStrictIntradayEligible } =
 const { processTelegramUpdate, formatScreenerRows, STRICT_EMPTY_ALERT } = require('./services/telegramWebhookService');
 const { fetchBrokerTop, requestBrokerTop, parseStockbitResponse, _clearCacheForTests } = require('./services/customMarketFeed');
 const { fetchBroksum } = require('./services/broksumService');
-const { analyzeStock, runScreener } = require('./services/stockService');
+const { analyzeStock, runScreener, hasUsableRealtimeData } = require('./services/stockService');
 
 let totalTests = 0;
 let passedTests = 0;
@@ -213,6 +213,14 @@ async function runAllTests() {
 
     // ── 5. Integration Tests: stockService ───────────────────────
     console.log('\n▶ [5/7] Testing stockService.analyzeStock...');
+    const validModalQuote = { lastPrice: 100, high: 105, low: 95, volume: 1000 };
+    assert(hasUsableRealtimeData(validModalQuote), 'Detail modal accepts complete, positive OHLCV quote data');
+    assert(!hasUsableRealtimeData({ ...validModalQuote, lastPrice: 0 }), 'Detail modal rejects zero last price');
+    assert(!hasUsableRealtimeData({ ...validModalQuote, lastPrice: null }), 'Detail modal rejects null last price');
+    assert(!hasUsableRealtimeData({ ...validModalQuote, high: null }), 'Detail modal rejects missing OHLC data');
+    assert(!hasUsableRealtimeData({ ...validModalQuote, volume: 0 }), 'Detail modal rejects missing/zero market volume');
+    assert(hasUsableRealtimeData({ ...validModalQuote, volume: 0 }, { allowZeroVolume: true }), 'Market index quotes may legitimately have no traded volume');
+    assert(!hasUsableRealtimeData({ ...validModalQuote, high: 90, low: 95 }), 'Detail modal rejects inconsistent high/low range');
     const analysisBbca = await analyzeStock('$BBCA');
     assert(analysisBbca && analysisBbca.realtime && analysisBbca.trend, 'Full stock analysis for $BBCA returns realtime + trend data');
 

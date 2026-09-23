@@ -9,6 +9,14 @@ const { sanitizeTicker, getTickSize } = require('./utils');
 const { getForeignFlowData, getTickerForeignFlow } = require('./foreignFlowService');
 const { getRightsIssueData, calculateTheoreticalPrice, calculateDilution, calculateDiscount, calculateTebus } = require('./rightsIssueService');
 
+function hasUsableRealtimeData(realtime, { allowZeroVolume = false } = {}) {
+    if (!realtime) return false;
+    const values = [realtime.lastPrice, realtime.high, realtime.low, realtime.volume];
+    if (values.some(value => value === null || value === undefined || value === '' || !Number.isFinite(Number(value)))) return false;
+    const [price, high, low, volume] = values.map(Number);
+    return price > 0 && high > 0 && low > 0 && volume >= (allowZeroVolume ? 0 : 1) && high >= low && price >= low && price <= high;
+}
+
 const STOCK_SECTOR_MAP = new Map();
 if (Array.isArray(ALL_IDX_STOCKS)) {
     ALL_IDX_STOCKS.forEach(s => {
@@ -30,31 +38,31 @@ async function analyzeStock(ticker) {
     try {
         const [realtime, financialReport, trend, news, foreignFlow] = await Promise.all([
             get_stock_price(clean),
-            get_financial_report(clean),
-            get_technical_indicators(clean, '1d'),
-            fetch_corporate_news(clean),
-            getTickerForeignFlow(clean)
+            get_financial_report(clean).catch(() => null),
+            get_technical_indicators(clean, '1d').catch(() => null),
+            fetch_corporate_news(clean).catch(() => []),
+            getTickerForeignFlow(clean).catch(() => null)
         ]);
 
-        if (!realtime || !Number.isFinite(Number(realtime.lastPrice)) || Number(realtime.lastPrice) <= 0 ||
-            !financialReport?.valuation || !financialReport?.financials || !trend || typeof trend !== 'object') {
+        if (!hasUsableRealtimeData(realtime, { allowZeroVolume: clean === 'IHSG' })) {
             throw new Error('Market data unavailable');
         }
 
-        const { valuation, financials } = financialReport;
+        const valuation = financialReport?.valuation || null;
+        const financials = financialReport?.financials || null;
 
         // Dynamic adjustment based on realtime price vs EMA and Supertrend
-        if (trend.supertrend?.isBullish && realtime.lastPrice > (trend.ema20 || 0)) {
+        if (trend?.supertrend?.isBullish && realtime.lastPrice > (trend.ema20 || 0)) {
             trend.status = 'UPTREND';
-        } else if (!trend.supertrend?.isBullish && realtime.lastPrice < (trend.ema20 || Infinity)) {
+        } else if (trend && !trend.supertrend?.isBullish && realtime.lastPrice < (trend.ema20 || Infinity)) {
             trend.status = 'DOWNTREND';
         }
 
         const sector = STOCK_SECTOR_MAP.get(clean) || 'Bursa Efek Indonesia';
 
         // Banking sector override validation
-        const isBankingSector = sector.toLowerCase().includes('bank') || sector.toLowerCase().includes('finansial') || financials.isBanking;
-        if (isBankingSector && !financials.bankingMetrics) {
+        const isBankingSector = sector.toLowerCase().includes('bank') || sector.toLowerCase().includes('finansial') || financials?.isBanking;
+        if (financials && isBankingSector && !financials.bankingMetrics) {
             financials.isBanking = true;
             financials.bankingMetrics = {
                 car: '22.5%',
@@ -72,7 +80,7 @@ async function analyzeStock(ticker) {
         const defaultCapital = 10000000;
         const defaultRiskPct = 1.5;
         const entryPrice = realtime.lastPrice;
-        const stopLossPrice = trend.supertrend?.support ? Math.round(trend.supertrend.support) : Math.round(entryPrice * 0.975);
+        const stopLossPrice = trend?.supertrend?.support ? Math.round(trend.supertrend.support) : Math.round(entryPrice * 0.975);
         const riskPerShare = Math.max(1, entryPrice - stopLossPrice);
         const maxRiskRp = Math.round(defaultCapital * (defaultRiskPct / 100));
         let defaultLots = Math.max(1, Math.floor((maxRiskRp / riskPerShare) / 100));
@@ -108,6 +116,7 @@ const { runScreener, WATCHLIST_UNIVERSE, UNIQUE_WATCHLIST } = require('./screene
 
 
 module.exports = {
+    hasUsableRealtimeData,
     get_stock_price,
     get_sector_for_ticker: (ticker) => STOCK_SECTOR_MAP.get(sanitizeTicker(ticker)) || 'Emiten BEI',
     get_financial_report,

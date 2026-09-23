@@ -14,10 +14,10 @@ async function get_stock_price(ticker) {
 
     return {
         lastPrice: quote.regularMarketPrice,
-        high: quote.regularMarketDayHigh || quote.regularMarketPrice,
-        low: quote.regularMarketDayLow || quote.regularMarketPrice,
-        volume: quote.regularMarketVolume ? Math.floor(quote.regularMarketVolume / 100) : 0, // in Lot
-        value: quote.regularMarketVolume && quote.regularMarketPrice ? quote.regularMarketVolume * quote.regularMarketPrice : 0,
+        high: quote.regularMarketDayHigh ?? null,
+        low: quote.regularMarketDayLow ?? null,
+        volume: Number.isFinite(quote.regularMarketVolume) ? Math.floor(quote.regularMarketVolume / 100) : null, // in Lot
+        value: Number.isFinite(quote.regularMarketVolume) && quote.regularMarketPrice ? quote.regularMarketVolume * quote.regularMarketPrice : null,
         changePct: quote.regularMarketChangePercent || 0,
         marketStatus: quote.marketState === 'REGULAR' ? 'OPEN' : 'CLOSED',
         timestamp: new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }) + " WIB"

@@ -7,6 +7,75 @@
 //  4. DEEP STOCK ANALYSIS MODAL
 // ============================================================
 let stockAnalysisRequestId = 0;
+function isUsableNumber(value, { positive = false } = {}) {
+    if (value === null || value === undefined || value === '') return false;
+    const number = Number(value);
+    return Number.isFinite(number) && (!positive || number > 0);
+}
+
+function hasUsableRealtimeData(realtime, allowZeroVolume = false) {
+    if (!realtime || !isUsableNumber(realtime.lastPrice, { positive: true }) ||
+        !isUsableNumber(realtime.high, { positive: true }) ||
+        !isUsableNumber(realtime.low, { positive: true }) ||
+        !isUsableNumber(realtime.volume) || Number(realtime.volume) < (allowZeroVolume ? 0 : 1)) return false;
+
+    const price = Number(realtime.lastPrice);
+    const high = Number(realtime.high);
+    const low = Number(realtime.low);
+    return high >= low && price <= high && price >= low;
+}
+
+function hasUsableHistoricalData(trend) {
+    return Boolean(trend && isUsableNumber(trend.close, { positive: true }) &&
+        isUsableNumber(trend.ema20, { positive: true }) &&
+        isUsableNumber(trend.rsi14) && Number(trend.rsi14) >= 0 && Number(trend.rsi14) <= 100 &&
+        isUsableNumber(trend.rvol) && trend.supertrend && typeof trend.supertrend.isBullish === 'boolean');
+}
+
+function setModalMarketStatus(label, isUnavailable = false) {
+    const badge = document.getElementById('modal-market-status');
+    if (!badge) return;
+    badge.textContent = label;
+    badge.className = isUnavailable
+        ? 'px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-amber-500/15 text-amber-300 shadow-sm'
+        : label === 'OPEN'
+            ? 'px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-emerald-500/20 text-emerald-400 shadow-sm'
+            : 'px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-slate-800 text-slate-300 shadow-sm';
+}
+
+function resetModalAnalysisData({ unavailable = false } = {}) {
+    const setText = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
+    };
+    setModalMarketStatus(unavailable ? 'SUSPENDED / DELISTING' : 'MEMUAT DATA', unavailable);
+    setText('modal-price', unavailable ? 'N/A' : 'Memuat...');
+    setText('modal-change', '-');
+    setText('modal-high-low', '-');
+    setText('modal-volume', '-');
+    setText('modal-turnover', '-');
+    setText('modal-val-status', '-');
+    setText('modal-val-fair', '-');
+    setText('modal-val-per', '-');
+    setText('modal-val-pbv', '-');
+    setText('modal-val-eps', '-');
+    setText('modal-val-bvps', '-');
+    setText('modal-trend-status', '-');
+    setText('modal-trend-supertrend', '-');
+    setText('modal-trend-ma20-50', '-');
+    setText('modal-trend-rvol', '-');
+    setText('modal-trend-rsi', '-');
+    setText('modal-trend-macd-adx', '-');
+    setText('modal-fin-badge', '-');
+    setText('modal-fin-summary', unavailable
+        ? 'Data realtime/historis emiten ini tidak tersedia di bursa saat ini.'
+        : 'Memuat data emiten...');
+    document.getElementById('modal-valuation-card')?.classList.add('hidden');
+    document.getElementById('modal-financial-card')?.classList.add('hidden');
+    document.getElementById('modal-financial-summary-card')?.classList.add('hidden');
+    document.getElementById('modal-val-per-footnote')?.classList.add('hidden');
+}
+
 function updateModalWatchlistButton(ticker) {
     if (!btnModalToggleWatchlist || !textModalWatchlist) return;
     const isSaved = savedWatchlist.includes(ticker);
@@ -48,8 +117,7 @@ async function executeStockAnalysis(ticker) {
 
     document.getElementById('modal-stock-ticker').textContent = cleanTicker;
     document.getElementById('modal-ticker-icon').textContent = cleanTicker.charAt(0);
-    document.getElementById('modal-price').textContent = 'Memuat...';
-    document.getElementById('modal-change').textContent = '...';
+    resetModalAnalysisData();
     document.getElementById('modal-fin-summary').textContent = `Menghubungi bursa dan menganalisa indikator fundamental & teknikal untuk ${cleanTicker}...`;
     updateModalWatchlistButton(cleanTicker);
 
@@ -57,19 +125,14 @@ async function executeStockAnalysis(ticker) {
         const res = await fetch(`/api/analyze/${cleanTicker}`);
         const data = await res.json().catch(() => null);
         if (requestId !== stockAnalysisRequestId || currentActiveTicker !== cleanTicker) return;
-        if (!res.ok || !data || !data.realtime || !Number.isFinite(Number(data.realtime.lastPrice)) || Number(data.realtime.lastPrice) <= 0) {
+        if (!res.ok || !data || !hasUsableRealtimeData(data.realtime, data.ticker === 'IHSG')) {
             throw new Error('Data unavailable');
         }
 
         populateAnalysisModal(data);
     } catch {
         if (requestId !== stockAnalysisRequestId || currentActiveTicker !== cleanTicker) return;
-        document.getElementById('modal-price').textContent = 'N/A';
-        document.getElementById('modal-change').textContent = '-';
-        document.getElementById('modal-high-low').textContent = '-';
-        document.getElementById('modal-volume').textContent = '-';
-        document.getElementById('modal-turnover').textContent = '-';
-        document.getElementById('modal-fin-summary').textContent = 'Data realtime/historis emiten ini tidak tersedia di bursa saat ini.';
+        resetModalAnalysisData({ unavailable: true });
         rightsIssueContainer?.classList.add('hidden');
     }
 }
@@ -77,40 +140,44 @@ window.executeStockAnalysis = executeStockAnalysis;
 
 function populateAnalysisModal(data) {
     const rt = data.realtime;
-    const val = data.valuation;
-    const trend = data.trend;
-    const fin = data.financials;
-    if (!rt || !Number.isFinite(Number(rt.lastPrice)) || Number(rt.lastPrice) <= 0 || !val || !trend || !fin) {
+    const val = data.valuation || {};
+    const trend = data.trend || {};
+    const fin = data.financials || {};
+    if (!hasUsableRealtimeData(rt, data.ticker === 'IHSG')) {
         throw new Error('Data unavailable');
     }
+    const historyValid = hasUsableHistoricalData(trend);
+    document.getElementById('modal-valuation-card')?.classList.toggle('hidden', !historyValid);
+    document.getElementById('modal-financial-card')?.classList.toggle('hidden', !historyValid);
+    document.getElementById('modal-financial-summary-card')?.classList.toggle('hidden', !historyValid);
 
     // Header info
     document.getElementById('modal-stock-ticker').textContent = data.ticker;
     document.getElementById('modal-stock-timestamp').textContent = `Waktu Akses: ${rt.timestamp || 'Realtime'}`;
 
-    const mktStat = document.getElementById('modal-market-status');
-    mktStat.textContent = rt.marketStatus || 'OPEN';
-    mktStat.className = rt.marketStatus === 'OPEN' ? 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 shadow-sm' : 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-800 text-slate-300 shadow-sm';
+    setModalMarketStatus(rt.marketStatus || 'CLOSED');
 
     // Price ribbon
     document.getElementById('modal-price').textContent = fmtRp.format(rt.lastPrice);
     const chgEl = document.getElementById('modal-change');
-    chgEl.textContent = `${rt.changePct >= 0 ? '+' : ''}${rt.changePct.toFixed(2)}%`;
-    chgEl.className = `text-2xl font-bold font-mono ${rt.changePct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+    const changePct = isUsableNumber(rt.changePct) ? Number(rt.changePct) : null;
+    chgEl.textContent = changePct === null ? '-' : `${changePct >= 0 ? '+' : ''}${changePct.toFixed(2)}%`;
+    chgEl.className = `text-2xl font-bold font-mono ${changePct === null ? 'text-slate-400' : changePct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
 
     document.getElementById('modal-high-low').textContent = `${fmtRp.format(rt.high)} / ${fmtRp.format(rt.low)}`;
     document.getElementById('modal-volume').textContent = fmtNum.format(rt.volume);
-    document.getElementById('modal-turnover').textContent = fmtRp.format(rt.value);
+    document.getElementById('modal-turnover').textContent = isUsableNumber(rt.value) ? fmtRp.format(Number(rt.value)) : '-';
 
-    // Valuasi & Harga Wajar
+    if (historyValid) {
     // Valuasi & Harga Wajar
     const valStatusEl = document.getElementById('modal-val-status');
-    valStatusEl.textContent = val.status;
-    if (val.status === 'UNDERVALUED' || val.status.includes('UNDERVALUED')) {
+    const valuationStatus = String(val.status || 'N/A');
+    valStatusEl.textContent = valuationStatus;
+    if (valuationStatus === 'UNDERVALUED' || valuationStatus.includes('UNDERVALUED')) {
         valStatusEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-500/20 text-emerald-400 shadow-sm';
-    } else if (val.status === 'OVERVALUED') {
+    } else if (valuationStatus === 'OVERVALUED') {
         valStatusEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-rose-500/20 text-rose-400 shadow-sm';
-    } else if (val.status.includes('TURNAROUND')) {
+    } else if (valuationStatus.includes('TURNAROUND')) {
         valStatusEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-cyan-500/20 text-cyan-300 shadow-sm shadow-sm';
     } else {
         valStatusEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-amber-500/20 text-amber-400 shadow-sm';
@@ -149,7 +216,7 @@ function populateAnalysisModal(data) {
     if (stEl) {
         if (trend.supertrend) {
             const isB = trend.supertrend.isBullish;
-            const suppVal = trend.supertrend.value || trend.supertrend.support || trend.supertrend.resistance;
+        const suppVal = trend.supertrend.value ?? trend.supertrend.support ?? trend.supertrend.resistance;
             stEl.innerHTML = isB
                 ? `<span class="text-emerald-400 font-bold">BULLISH 🟢</span> <span class="text-slate-400 text-[10px]">(Supp: ${suppVal ? fmtRp.format(suppVal) : '-'})</span>`
                 : `<span class="text-rose-400 font-bold">BEARISH 🔴</span> <span class="text-slate-400 text-[10px]">(Res: ${suppVal ? fmtRp.format(suppVal) : '-'})</span>`;
@@ -160,8 +227,8 @@ function populateAnalysisModal(data) {
 
     const maEl = document.getElementById('modal-trend-ma20-50');
     if (maEl) {
-        const ma20 = trend.ema20 || trend.sma20;
-        const ma50 = trend.ema50 || trend.sma50;
+        const ma20 = isUsableNumber(trend.ema20, { positive: true }) ? Number(trend.ema20) : trend.sma20;
+        const ma50 = isUsableNumber(trend.ema50, { positive: true }) ? Number(trend.ema50) : trend.sma50;
         if (ma20 && ma50) {
             const isGolden = ma20 > ma50;
             maEl.innerHTML = `<span class="${isGolden ? 'text-cyan-300' : 'text-slate-300'} font-bold">${isGolden ? 'Golden Alignment 🟢' : 'Bearish / Netral ⚪'}</span> <span class="text-slate-400 text-[10px]">(${fmtRp.format(ma20)} / ${fmtRp.format(ma50)})</span>`;
@@ -172,14 +239,14 @@ function populateAnalysisModal(data) {
 
     const rvolEl = document.getElementById('modal-trend-rvol');
     if (rvolEl) {
-        const rvol = trend.rvol || 1.0;
+        const rvol = Number(trend.rvol);
         const color = rvol >= 1.5 ? 'text-amber-400' : rvol >= 1.1 ? 'text-emerald-400' : 'text-slate-300';
         rvolEl.innerHTML = `<span class="${color} font-bold font-mono">${rvol.toFixed(2)}x</span> <span class="text-[10px] text-slate-400">(${trend.volumeStatus || 'Normal'})</span>`;
     }
 
     const rsiEl = document.getElementById('modal-trend-rsi');
     if (rsiEl) {
-        const rsiVal = trend.rsi14 ? trend.rsi14.toFixed(1) : '50.0';
+        const rsiVal = isUsableNumber(trend.rsi14) ? Number(trend.rsi14).toFixed(1) : '-';
         const rsiNum = parseFloat(rsiVal);
         const rsiColor = rsiNum >= 70 ? 'text-rose-400' : rsiNum >= 50 ? 'text-emerald-400' : 'text-amber-400';
         rsiEl.innerHTML = `<span class="${rsiColor} font-bold font-mono">${rsiVal}</span> <span class="text-slate-400 text-[10px]">(${rsiNum > 70 ? 'Overbought' : rsiNum < 35 ? 'Oversold' : 'Sweet Zone'})</span>`;
@@ -188,10 +255,10 @@ function populateAnalysisModal(data) {
     const macdAdxEl = document.getElementById('modal-trend-macd-adx');
     if (macdAdxEl) {
         let macdTxt = 'Neutral';
-        if (trend.macd_line && trend.macd_signal) {
+        if (isUsableNumber(trend.macd_line) && isUsableNumber(trend.macd_signal)) {
             macdTxt = trend.macd_line > trend.macd_signal ? 'Bullish 🟢' : 'Bearish 🔴';
         }
-        const adxTxt = trend.adx14 ? `${trend.adx14.toFixed(1)}` : '-';
+        const adxTxt = isUsableNumber(trend.adx14) ? `${Number(trend.adx14).toFixed(1)}` : '-';
         macdAdxEl.innerHTML = `<span class="text-white font-mono">${macdTxt}</span> | <span class="text-cyan-300 font-mono">ADX ${adxTxt}</span>`;
     }
 
@@ -316,6 +383,16 @@ function populateAnalysisModal(data) {
         } else {
             sumBadgeEl.classList.add('hidden');
         }
+    }
+    } else {
+        document.getElementById('modal-trend-status').textContent = '-';
+        document.getElementById('modal-trend-supertrend').textContent = '-';
+        document.getElementById('modal-trend-ma20-50').textContent = '-';
+        document.getElementById('modal-trend-rvol').textContent = '-';
+        document.getElementById('modal-trend-rsi').textContent = '-';
+        document.getElementById('modal-trend-macd-adx').textContent = '-';
+        document.getElementById('modal-fin-summary').textContent = 'Data historis emiten ini tidak cukup valid untuk menghitung indikator dan valuasi.';
+        document.getElementById('modal-fin-summary-badge')?.classList.add('hidden');
     }
 
     // Konsensus Analis (BUG FIXED: always displayed properly!)
