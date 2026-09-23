@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { fetchBroksum } = require('../services/broksumService');
+const { GoApiError } = require('../services/goapi');
 const { formatJakartaDate, daysAgoJakarta, tradingDateBounds } = require('../services/dateTime');
 const { waitUntil } = require('@vercel/functions');
 const { isDuplicateTelegramUpdate, processTelegramUpdate } = require('../services/telegramWebhookService');
@@ -55,7 +56,13 @@ router.get('/broksum/:ticker', async (req, res) => {
     }
     try {
         res.json(await fetchBroksum(ticker, dateBounds));
-    } catch (_error) {
+    } catch (error) {
+        const failureType = error instanceof GoApiError
+            ? error.statusCode ? `UPSTREAM_HTTP_${error.statusCode}`
+                : error.message === 'GOAPI_KEY is not configured' ? 'MISSING_CREDENTIAL'
+                    : error.message === 'GoAPI request timed out' ? 'UPSTREAM_TIMEOUT' : 'UPSTREAM_RESPONSE_ERROR'
+            : 'BROKSUM_INTERNAL_ERROR';
+        console.warn('[broksum] provider request failed', { ticker, failureType });
         res.status(502).json({ error: 'Data broksum dari GoAPI sementara tidak tersedia.' });
     }
 });
