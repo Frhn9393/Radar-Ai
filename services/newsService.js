@@ -1,5 +1,6 @@
 const Parser = require('rss-parser');
 const { formatWibTime, formatWibDate, calcTimeAgo } = require('./utils');
+const { enqueueNewsAlerts, getNewsAlertKey } = require('./newsAlertService');
 
 const parser = new Parser();
 
@@ -17,6 +18,10 @@ function unescapeHtml(str) {
         .trim();
 }
 
+function cleanSnippet(value) {
+    return unescapeHtml(String(value || '').replace(/<[^>]*>/g, ' ')).replace(/\s+/g, ' ').trim();
+}
+
 // Regex XML extractor fallback if XML parsing fails due to non-standard tags
 function fallbackRegexExtract(xml) {
     const items = [];
@@ -26,11 +31,13 @@ function fallbackRegexExtract(xml) {
         const linkMatch = raw.match(/<link(?:\s+[^>]*)?>([\s\S]*?)<\/link>/i);
         const pubDateMatch = raw.match(/<pubDate(?:\s+[^>]*)?>([\s\S]*?)<\/pubDate>/i);
         const sourceMatch = raw.match(/<source(?:\s+[^>]*)?>([\s\S]*?)<\/source>/i);
+        const summaryMatch = raw.match(/<description(?:\s+[^>]*)?>([\s\S]*?)<\/description>/i);
         if (titleMatch) {
             items.push({
                 title: unescapeHtml(titleMatch[1]),
                 link: linkMatch ? unescapeHtml(linkMatch[1]) : '',
                 pubDate: pubDateMatch ? unescapeHtml(pubDateMatch[1]) : new Date().toISOString(),
+                summary: summaryMatch ? cleanSnippet(summaryMatch[1]) : '',
                 source: sourceMatch ? unescapeHtml(sourceMatch[1]) : ''
             });
         }
@@ -60,6 +67,7 @@ async function fetchFeed(url, timeoutMs = 6000) {
                 title: unescapeHtml(i.title),
                 link: i.link || i.guid || '',
                 pubDate: i.pubDate || new Date().toISOString(),
+                summary: cleanSnippet(i.contentSnippet || i.content || i.summary || ''),
                 source: i.source ? unescapeHtml(typeof i.source === 'string' ? i.source : i.source._ || '') : ''
             }));
         } catch (parseErr) {
@@ -74,6 +82,7 @@ async function fetchFeed(url, timeoutMs = 6000) {
 // ── In-Memory Caches ────────────────────────────────────────────────────────
 let marketNewsCache = null;
 let marketNewsCacheTime = 0;
+let marketNewsInFlight = null;
 const MARKET_NEWS_CACHE_TTL = 60 * 1000; // 60s for realtime news
 
 const corporateNewsCache = new Map();
@@ -81,6 +90,7 @@ const CORP_NEWS_CACHE_TTL = 3 * 60 * 1000;
 
 let dealsCache = null;
 let dealsCacheTime = 0;
+let dealsInFlight = null;
 const DEALS_CACHE_TTL = 60 * 1000;
 
 // ── Verified High-Speed Media Feeds ─────────────────────────────────────────
@@ -182,6 +192,22 @@ ALL_IDX_STOCKS.forEach(stock => {
     }
 });
 
+const KNOWN_TICKERS = new Set(ALL_IDX_STOCKS.map(stock => String(stock?.ticker || '').toUpperCase()).filter(Boolean));
+
+function extractNewsTicker(title) {
+    const upperTitle = String(title || '').toUpperCase();
+    const explicitTickers = upperTitle.match(/\$?([A-Z0-9]{3,5})(?:\.JK)?\b/g) || [];
+    for (const match of explicitTickers) {
+        const ticker = match.replace(/^\$/, '').replace(/\.JK$/, '');
+        if (KNOWN_TICKERS.has(ticker) && !STOP_TICKERS.has(ticker)) return ticker;
+    }
+    const lowerTitle = upperTitle.toLowerCase();
+    for (const [companyName, ticker] of Object.entries(KNOWN_EMITEN_DICT)) {
+        if (lowerTitle.includes(companyName)) return ticker;
+    }
+    return null;
+}
+
 const STOP_TICKERS = new Set([
     'IHSG', 'BEI', 'IDX', 'RUPS', 'BANK', 'EMIT', 'KURS', 'SBN', 'NET', 'PLUS', 'ASIA',
     'NEWS', 'INFO', 'POST', 'LIVE', 'YANG', 'DARI', 'PADA', 'AKAN', 'BISA', 'JUGA', 'SAAT',
@@ -198,7 +224,19 @@ async function fetch_market_news() {
     if (marketNewsCache && (Date.now() - marketNewsCacheTime < MARKET_NEWS_CACHE_TTL)) {
         return marketNewsCache;
     }
+    if (marketNewsInFlight) return marketNewsInFlight;
 
+    const previousItems = marketNewsCache?.news || [];
+    const request = fetchMarketNewsFresh(previousItems);
+    marketNewsInFlight = request;
+    try {
+        return await request;
+    } finally {
+        if (marketNewsInFlight === request) marketNewsInFlight = null;
+    }
+}
+
+async function fetchMarketNewsFresh(previousItems) {
     try {
         const fetchUrls = [
             ...DIRECT_FEEDS,
@@ -243,6 +281,8 @@ async function fetch_market_news() {
                 title,
                 source,
                 link,
+                ticker: extractNewsTicker(title) || 'IHSG',
+                summary: cleanSnippet(item.summary),
                 pubDate: pubDate.toISOString(),
                 timeAgo: calcTimeAgo(pubDate),
                 timeStr: formatWibTime(pubDate),
@@ -266,6 +306,9 @@ async function fetch_market_news() {
         const finalNews = unique.slice(0, 36);
 
         if (finalNews.length > 0) {
+            const previousKeys = new Set(previousItems.map(getNewsAlertKey));
+            enqueueNewsAlerts(finalNews.filter(item => !previousKeys.has(getNewsAlertKey(item))));
+
             const responseData = {
                 news: finalNews,
                 count: finalNews.length,
@@ -374,7 +417,19 @@ async function fetch_ma_deals() {
     if (dealsCache && (Date.now() - dealsCacheTime < DEALS_CACHE_TTL)) {
         return dealsCache;
     }
+    if (dealsInFlight) return dealsInFlight;
 
+    const previousDeals = dealsCache?.deals || [];
+    const request = fetchMaDealsFresh(previousDeals);
+    dealsInFlight = request;
+    try {
+        return await request;
+    } finally {
+        if (dealsInFlight === request) dealsInFlight = null;
+    }
+}
+
+async function fetchMaDealsFresh(previousDeals) {
     try {
         const queries = [
             'akuisisi saham emiten bursa',
@@ -505,6 +560,7 @@ async function fetch_ma_deals() {
                 tickers: tickers.slice(0, 3),
                 source,
                 title,
+                summary: cleanSnippet(item.summary),
                 dealValue,
                 impact,
                 pubDate: pubDateObj.toISOString(),
@@ -524,6 +580,8 @@ async function fetch_ma_deals() {
         };
 
         if (result.deals.length > 0) {
+            const previousKeys = new Set(previousDeals.map(getNewsAlertKey));
+            enqueueNewsAlerts(result.deals.filter(item => !previousKeys.has(getNewsAlertKey(item))));
             dealsCache = result;
             dealsCacheTime = Date.now();
             return result;

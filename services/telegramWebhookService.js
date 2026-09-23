@@ -1,4 +1,7 @@
 const { runScreener } = require('./screenerService');
+const { fetch_market_news, fetch_ma_deals } = require('./newsService');
+const { sendTelegramMessage } = require('./telegramService');
+const { getNewsAlertKey } = require('./newsAlertService');
 
 const seenUpdateIds = new Map();
 const MAX_SEEN_UPDATES = 2000;
@@ -15,19 +18,15 @@ function isDuplicateTelegramUpdate(updateId) {
     return false;
 }
 
-async function sendTelegramMessage(chatId, text) {
-    const token = process.env.TELEGRAM_BOT_TOKEN;
-    if (!token || !chatId) return;
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 7000);
-    try {
-        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ chat_id: chatId, text, disable_web_page_preview: true }),
-            signal: controller.signal
-        });
-    } finally { clearTimeout(timeout); }
+function formatScreenerRows(title, rows) {
+    const formatPrice = value => Number.isFinite(Number(value)) ? Number(value).toLocaleString('id-ID') : '—';
+    const picks = (rows || []).slice(0, 3).map(item => {
+        const target = item.targetProfit ?? item.targetPrice1 ?? item.target;
+        const stop = item.stopLoss ?? item.cutLoss;
+        const riskReward = item.riskReward ? ` | R:R ${item.riskReward}` : '';
+        return `$${item.ticker} | Rp ${formatPrice(item.price)} | TP ${formatPrice(target)} | SL ${formatPrice(stop)}${riskReward}`;
+    });
+    return `${title}\n${picks.join('\n') || 'Belum ada rekomendasi yang lolos filter.'}`;
 }
 
 async function processTelegramUpdate(update) {
@@ -44,12 +43,45 @@ async function processTelegramUpdate(update) {
 
     if (/^\/screener(?:@\w+)?$/i.test(text)) {
         const result = await runScreener();
-        const picks = (result.swing || []).slice(0, 3).map(item => `$${item.ticker} | Rp ${Number(item.price).toLocaleString('id-ID')} | R:R ${item.riskReward}`).join('\n');
-        await sendTelegramMessage(chatId, `STOCKRADAR AI · Screener Swing\n${picks || 'Belum ada rekomendasi yang lolos filter.'}`);
+        await sendTelegramMessage(chatId, formatScreenerRows('STOCKRADAR AI · Screener Swing', result.swing));
+        return;
+    }
+    if (/^\/daytrade(?:@\w+)?$/i.test(text)) {
+        const result = await runScreener();
+        const daytrade = formatScreenerRows('STOCKRADAR AI · Day Trade', result.daytrade);
+        const scalpingSesi1 = formatScreenerRows('Scalping Sesi 1', result.scalpingSesi1 || result.scalping);
+        const scalpingSesi2 = formatScreenerRows('Scalping Sesi 2', result.scalpingSesi2);
+        await sendTelegramMessage(chatId, `${daytrade}\n\n${scalpingSesi1}\n\n${scalpingSesi2}`);
+        return;
+    }
+    if (/^\/news(?:@\w+)?$/i.test(text)) {
+        const [market, deals] = await Promise.all([fetch_market_news(), fetch_ma_deals()]);
+        const combinedNews = [
+            ...(market.news || []).map(item => ({ ...item, tickers: [item.ticker || 'IHSG'] })),
+            ...(deals.deals || [])
+        ].sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+        const seenNews = new Set();
+        const latestNews = combinedNews.filter(item => {
+            const key = getNewsAlertKey(item);
+            if (!key || seenNews.has(key)) return false;
+            seenNews.add(key);
+            return true;
+        }).slice(0, 5);
+        const lines = latestNews.map((item, index) => {
+            const ticker = item.tickers?.[0] || item.ticker || 'IHSG';
+            return `${index + 1}. $${ticker} · ${String(item.title || '').slice(0, 300)}\n${String(item.link || '').slice(0, 400)}`;
+        });
+        await sendTelegramMessage(chatId, `STOCKRADAR AI · 5 Berita / M&A Terbaru\n\n${lines.join('\n\n') || 'Belum ada berita terbaru.'}`);
         return;
     }
     if (/^\/(start|help)(?:@\w+)?$/i.test(text)) {
-        await sendTelegramMessage(chatId, 'Perintah tersedia: /screener untuk ringkasan rekomendasi swing terbaru.');
+        await sendTelegramMessage(chatId, [
+            'STOCKRADAR AI · Perintah Bot',
+            '/news — 5 berita pasar dan M&A terbaru',
+            '/daytrade — rekomendasi Day Trade dan Scalping',
+            '/screener — rekomendasi Swing Trade',
+            '/help — daftar perintah'
+        ].join('\n'));
     }
 }
 

@@ -4,6 +4,7 @@ const { search_stocks } = require('./services/searchService');
 const { get_stock_price, get_market_indices } = require('./services/marketDataService');
 const { get_technical_indicators } = require('./services/technicalService');
 const { fetch_market_news, fetch_ma_deals } = require('./services/newsService');
+const { classifyNewsSentiment, formatNewsAlert } = require('./services/newsAlertService');
 const { analyzeStock, runScreener } = require('./services/stockService');
 
 let totalTests = 0;
@@ -46,6 +47,13 @@ async function runAllTests() {
 
     const unknownSuggest = search_stocks('ZZZZNOTEXIST');
     assert(unknownSuggest.length === 0, 'Unknown query returns empty array instead of fake emiten');
+
+    console.log('\n▶ Testing Telegram news alert formatting...');
+    assert(classifyNewsSentiment({ title: 'Laba tumbuh dan dividen meningkat' }).label === 'Bullish', 'News alert recognizes positive headline sentiment');
+    assert(classifyNewsSentiment({ title: 'Emiten catat rugi dan saham turun' }).label === 'Bearish', 'News alert recognizes negative headline sentiment');
+    assert(classifyNewsSentiment({ title: 'Emiten umumkan akuisisi' }).label === 'Netral / perlu verifikasi', 'News alert avoids assuming M&A is bullish');
+    const formattedAlert = formatNewsAlert({ ticker: 'BBRI', title: 'Laba tumbuh', link: 'https://example.com/news' });
+    assert(formattedAlert.includes('Emiten: $BBRI') && formattedAlert.includes('Link: https://example.com/news'), 'News alert includes issuer and source link');
 
     // ── 3. Unit Tests: marketDataService ─────────────────────────
     console.log('\n▶ [3/7] Testing marketDataService...');
