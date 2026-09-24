@@ -950,7 +950,7 @@ function populateAnalysisModal(data) {
     const eps = isUsableNumber(val.eps) ? Number(val.eps) : null;
     const deficitIssuer = eps !== null && eps < 0;
     document.getElementById('modal-val-fair').textContent = val.fairValue ? fmtRp.format(val.fairValue) : deficitIssuer ? 'N/A (Emiten Defisit)' : 'N/A';
-    document.getElementById('modal-val-per').textContent = val.per ? `${val.per}x` : 'N/A';
+    document.getElementById('modal-val-per').textContent = val.per ? `${val.per}x` : deficitIssuer ? 'N/A (Emiten Defisit)' : 'N/A';
 
     // PER Footnote (Aturan 6: Penjelasan jika PER tinggi akibat basis laba rendah masa turnaround)
     const footnoteEl = document.getElementById('modal-val-per-footnote');
@@ -998,7 +998,7 @@ function populateAnalysisModal(data) {
         if (ma20 && ma50) {
             const price = isUsableNumber(rt.lastPrice, { positive: true }) ? Number(rt.lastPrice) : null;
             const isGolden = ma20 > ma50 && price !== null && price > ma20;
-            const label = ma20 === ma50 ? 'NEUTRAL ⚪' : isGolden ? 'Golden Alignment 🟢' : 'Bearish / Netral ⚪';
+            const label = ma20 === ma50 ? 'NEUTRAL ⚪' : isGolden ? 'Golden Alignment 🟢' : ma20 > ma50 ? 'Bullish Cross 🟢' : 'Bearish / Netral ⚪';
             maEl.innerHTML = `<span class="${isGolden ? 'text-cyan-300' : 'text-slate-300'} font-bold">${label}</span> <span class="text-slate-400 text-[10px]">(${fmtRp.format(ma20)} / ${fmtRp.format(ma50)})</span>`;
         } else {
             maEl.textContent = 'N/A';

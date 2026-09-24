@@ -401,7 +401,7 @@ function processTechnicalData(quotes) {
     // MA Alignment Status
     let maAlignment = 'Netral';
     if (ema20 && ema50 && ema200) {
-        if (ema20 > ema50 && ema50 > ema200) maAlignment = 'Golden Alignment (Bullish) 🔥';
+        if (latest.close > ema20 && ema20 > ema50 && ema50 > ema200) maAlignment = 'Golden Alignment (Bullish) 🔥';
         else if (ema20 > ema50) maAlignment = 'Bullish Cross (MA20 > MA50) 🟢';
         else if (ema20 < ema50 && ema50 < ema200) maAlignment = 'Death Alignment (Bearish) 🔴';
         else if (ema20 < ema50) maAlignment = 'Bearish Cross (MA20 < MA50) 🔻';
@@ -512,7 +512,7 @@ function get_technical_indicators_python(ticker, timeframe = '1d') {
 
                 let maAlignment = 'Netral';
                 if (data.ema20 && data.ema50 && data.ema200) {
-                    if (data.ema20 > data.ema50 && data.ema50 > data.ema200) maAlignment = 'Golden Alignment (Bullish) 🔥';
+                    if (data.close > data.ema20 && data.ema20 > data.ema50 && data.ema50 > data.ema200) maAlignment = 'Golden Alignment (Bullish) 🔥';
                     else if (data.ema20 > data.ema50) maAlignment = 'Bullish Cross (MA20 > MA50) 🟢';
                     else if (data.ema20 < data.ema50 && data.ema50 < data.ema200) maAlignment = 'Death Alignment (Bearish) 🔴';
                     else if (data.ema20 < data.ema50) maAlignment = 'Bearish Cross (MA20 < MA50) 🔻';
