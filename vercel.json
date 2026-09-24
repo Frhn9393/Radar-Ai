@@ -7,7 +7,7 @@
   "crons": [
     {
       "path": "/api/cron/telegram-session-alerts",
-      "schedule": "0 3,7 * * 1-5"
+      "schedule": "50 1 * * *"
     }
   ],
   "routes": [
