@@ -119,35 +119,6 @@ async function processTelegramUpdate(update, dependencies = {}) {
         return;
     }
 
-    if (/^\/screener(?:@\w+)?$/i.test(text)) {
-        const result = safeScreenerResult(await getScreener());
-        await sendMessage(chatId, formatScreenerRows('STOCKRADAR AI · Screener Swing', result.swing));
-        return;
-    }
-    if (/^\/daytrade(?:@\w+)?$/i.test(text)) {
-        const result = safeScreenerResult(await getScreener());
-        const daytrade = formatScreenerRows('STOCKRADAR AI · Day Trade', result.daytrade);
-        const scalpingSesi1 = formatScreenerRows('Scalping Sesi 1', Array.isArray(result.scalpingSesi1) ? result.scalpingSesi1 : result.scalping);
-        const scalpingSesi2 = formatScreenerRows('Scalping Sesi 2', result.scalpingSesi2);
-        const sections = [daytrade, scalpingSesi1, scalpingSesi2].filter(message => message !== STRICT_EMPTY_ALERT);
-        await sendMessage(chatId, sections.length ? sections.join('\n\n') : STRICT_EMPTY_ALERT);
-        return;
-    }
-    if (/^\/(bsjp|bpjp|bpjs|scalping|intraday)(?:@\w+)?$/i.test(text)) {
-        const command = text.split('@')[0].toLowerCase();
-        const result = safeScreenerResult(await getScreener());
-        const rows = command === '/bsjp' ? result.bsjp
-            : command === '/bpjs' ? (result.bpjs || result.bpjp)
-                : command === '/bpjp' ? result.bpjp
-                    : command === '/scalping' ? [...(Array.isArray(result.scalpingSesi1) ? result.scalpingSesi1 : []), ...(Array.isArray(result.scalpingSesi2) ? result.scalpingSesi2 : [])]
-                        : result.daytrade;
-        const title = command === '/bsjp' ? 'STOCKRADAR AI · BSJP'
-            : command === '/bpjs' || command === '/bpjp' ? 'STOCKRADAR AI · BPJS/BPJP'
-                : command === '/scalping' ? 'STOCKRADAR AI · Scalping'
-                    : 'STOCKRADAR AI · Intraday';
-        await sendMessage(chatId, formatScreenerRows(title, rows));
-        return;
-    }
     if (/^\/news(?:@\w+)?$/i.test(text)) {
         const [marketResult, dealResult] = await Promise.allSettled([
             (dependencies.fetchMarketNews || fetch_market_news)(),
@@ -186,16 +157,10 @@ async function processTelegramUpdate(update, dependencies = {}) {
             console.warn('[telegram-commands] unable to update bot command menu', error.message || error);
         }
         await sendMessage(chatId, [
-            'STOCKRADAR AI · Perintah Bot',
-            '/users — daftar pengguna unik (admin saja)',
             '/radar — Ringkasan seluruh rekomendasi screener (Master Radar)',
-            '/news — hingga 5 berita akuisisi/merger terbaru hari ini',
-            '/screener — rekomendasi Swing Trade',
-            '/bsjp — screener Beli Sore Jual Pagi',
-            '/bpjs atau /bpjp — screener Beli Pagi Jual Sore',
-            '/scalping — screener scalping',
-            '/intraday atau /daytrade — screener intraday',
-            '/help — daftar perintah'
+            '/news — Berita akuisisi & merger terbaru hari ini',
+            '/users — Daftar pengguna unik (Khusus Admin)',
+            '/help — Tampilkan menu bantuan ini'
         ].join('\n'));
     }
 }

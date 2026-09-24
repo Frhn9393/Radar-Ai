@@ -35,16 +35,10 @@ async function sendTelegramAlert(message) {
 }
 
 const TELEGRAM_COMMANDS = [
-    { command: 'start', description: 'Mulai bot dan lihat daftar perintah' },
     { command: 'radar', description: 'Ringkasan seluruh rekomendasi screener (Master Radar)' },
-    { command: 'users', description: 'Daftar pengguna unik (admin saja)' },
-    { command: 'news', description: 'Berita akuisisi/merger terbaru hari ini' },
-    { command: 'screener', description: 'Rekomendasi Swing Trade' },
-    { command: 'bsjp', description: 'Screener Beli Sore Jual Pagi' },
-    { command: 'bpjp', description: 'Screener Beli Pagi Jual Sore' },
-    { command: 'scalping', description: 'Screener scalping' },
-    { command: 'daytrade', description: 'Screener intraday dan momentum' },
-    { command: 'help', description: 'Tampilkan daftar perintah' }
+    { command: 'news', description: 'Berita akuisisi & merger terbaru hari ini' },
+    { command: 'users', description: 'Daftar pengguna unik (Khusus Admin)' },
+    { command: 'help', description: 'Tampilkan menu bantuan ini' }
 ];
 
 async function setTelegramCommands() {

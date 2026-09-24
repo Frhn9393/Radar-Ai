@@ -9,6 +9,7 @@ const { formatJakartaDate, formatJakartaDateTime } = require('./services/dateTim
 const { listTelegramUsers, recordTelegramUser } = require('./services/telegramUserStore');
 const { isStrictBsjpEligible, isStrictBpjpEligible, isStrictIntradayEligible } = require('./services/strictScreenerFilters');
 const { processTelegramUpdate, formatScreenerRows, STRICT_EMPTY_ALERT } = require('./services/telegramWebhookService');
+const { TELEGRAM_COMMANDS } = require('./services/telegramService');
 const { fetchBrokerTop, requestBrokerTop, parseStockbitResponse, _clearCacheForTests } = require('./services/customMarketFeed');
 const { fetchBroksum } = require('./services/broksumService');
 const { analyzeStock, runScreener, hasUsableRealtimeData } = require('./services/stockService');
@@ -29,30 +30,14 @@ function assert(condition, testName, details = '') {
 }
 
 async function testEmptyTelegramCommands() {
-    const previousToken = process.env.TELEGRAM_BOT_TOKEN;
-    const previousChatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
-    const previousFetch = global.fetch;
     const sentMessages = [];
-    process.env.TELEGRAM_BOT_TOKEN = 'test-token';
-    process.env.TELEGRAM_ADMIN_CHAT_ID = '555';
-    global.fetch = async (_url, options) => {
-        sentMessages.push(JSON.parse(options.body).text);
-        return { ok: true, json: async () => ({ ok: true }) };
-    };
-    try {
-        for (const command of ['/screener', '/bsjp', '/bpjs', '/bpjp', '/scalping', '/intraday', '/daytrade']) {
-            await processTelegramUpdate({ message: { chat: { id: 555 }, text: command } }, {
-                runScreener: async () => ({ swing: [], bsjp: [], bpjs: [], bpjp: [], scalping: [], scalpingSesi1: [], scalpingSesi2: [], daytrade: [] })
-            });
-        }
-        return sentMessages;
-    } finally {
-        global.fetch = previousFetch;
-        if (previousToken === undefined) delete process.env.TELEGRAM_BOT_TOKEN;
-        else process.env.TELEGRAM_BOT_TOKEN = previousToken;
-        if (previousChatId === undefined) delete process.env.TELEGRAM_ADMIN_CHAT_ID;
-        else process.env.TELEGRAM_ADMIN_CHAT_ID = previousChatId;
+    for (const command of ['/screener', '/bsjp', '/bpjs', '/bpjp', '/scalping', '/intraday', '/daytrade']) {
+        await processTelegramUpdate({ message: { chat: { id: 555 }, from: { id: 555 }, text: command } }, {
+            sendTelegramMessage: async (_chatId, text) => sentMessages.push(text),
+            runScreener: async () => { throw new Error('Legacy screener command should not run'); }
+        });
     }
+    return sentMessages;
 }
 
 async function testTelegramUserStore() {
@@ -101,7 +86,16 @@ async function testRadarCommand() {
     assert(['Scalping / Intraday', 'Daytrade', 'BSJP', 'BPJP', 'Swing Trade'].every(section => text.includes(section)), '/radar summarizes every requested screener strategy');
     assert(['BBCA', 'BBRI', 'TLKM', 'ASII', 'BMRI'].every(ticker => text.includes(ticker)), '/radar includes qualifying ticker rows');
     await processTelegramUpdate({ message: { chat: { id: 321 }, from: { id: 321 }, text: '/help' } }, radar);
-    assert(commandsRegistered && sent.at(-1)?.text.includes('/radar — Ringkasan seluruh rekomendasi screener (Master Radar)'), '/help registers the Telegram command menu and lists /radar');
+    const helpText = [
+        '/radar — Ringkasan seluruh rekomendasi screener (Master Radar)',
+        '/news — Berita akuisisi & merger terbaru hari ini',
+        '/users — Daftar pengguna unik (Khusus Admin)',
+        '/help — Tampilkan menu bantuan ini'
+    ].join('\n');
+    assert(commandsRegistered && sent.at(-1)?.text === helpText, '/help registers menu and replies with exactly the four official commands');
+    await processTelegramUpdate({ message: { chat: { id: 321 }, from: { id: 321 }, text: '/start' } }, radar);
+    assert(sent.at(-1)?.text === helpText, '/start replies with the same four-command help structure');
+    assert(TELEGRAM_COMMANDS.length === 4 && TELEGRAM_COMMANDS.map(item => item.command).join(',') === 'radar,news,users,help', 'Telegram popup menu contains only the four official commands');
 }
 
 async function testTelegramAdminAndCorporateNews() {
@@ -294,7 +288,7 @@ async function runAllTests() {
     await testRadarCommand();
     await testTelegramUserStore();
     await testTelegramAdminAndCorporateNews();
-    assert(emptyCommandMessages.length === 7 && emptyCommandMessages.every(message => message === STRICT_EMPTY_ALERT), 'All Telegram screener commands return the Wait & See alert when no rows qualify');
+    assert(emptyCommandMessages.length === 0, 'Legacy standalone screener commands are no longer handled');
     assert(formatScreenerRows('test', null) === STRICT_EMPTY_ALERT && formatScreenerRows('test', [null]) === STRICT_EMPTY_ALERT, 'Telegram formatting handles null and malformed candidate arrays');
 
     // ── 3. Unit Tests: marketDataService ─────────────────────────
