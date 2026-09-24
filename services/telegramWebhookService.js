@@ -157,10 +157,11 @@ async function processTelegramUpdate(update, dependencies = {}) {
             console.warn('[telegram-commands] unable to update bot command menu', error.message || error);
         }
         await sendMessage(chatId, [
-            '/radar — Ringkasan seluruh rekomendasi screener (Master Radar)',
-            '/news — Berita akuisisi & merger terbaru hari ini',
-            '/users — Daftar pengguna unik (Khusus Admin)',
-            '/help — Tampilkan menu bantuan ini'
+            'STOCKRADAR AI · Perintah Bot',
+            '/radar — ringkasan seluruh rekomendasi screener (Master Radar)',
+            '/news — hingga 5 berita akuisisi/merger terbaru hari ini',
+            '/users — daftar pengguna unik (admin saja)',
+            '/help — daftar perintah'
         ].join('\n'));
     }
 }

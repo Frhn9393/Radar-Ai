@@ -87,10 +87,11 @@ async function testRadarCommand() {
     assert(['BBCA', 'BBRI', 'TLKM', 'ASII', 'BMRI'].every(ticker => text.includes(ticker)), '/radar includes qualifying ticker rows');
     await processTelegramUpdate({ message: { chat: { id: 321 }, from: { id: 321 }, text: '/help' } }, radar);
     const helpText = [
-        '/radar — Ringkasan seluruh rekomendasi screener (Master Radar)',
-        '/news — Berita akuisisi & merger terbaru hari ini',
-        '/users — Daftar pengguna unik (Khusus Admin)',
-        '/help — Tampilkan menu bantuan ini'
+        'STOCKRADAR AI · Perintah Bot',
+        '/radar — ringkasan seluruh rekomendasi screener (Master Radar)',
+        '/news — hingga 5 berita akuisisi/merger terbaru hari ini',
+        '/users — daftar pengguna unik (admin saja)',
+        '/help — daftar perintah'
     ].join('\n');
     assert(commandsRegistered && sent.at(-1)?.text === helpText, '/help registers menu and replies with exactly the four official commands');
     await processTelegramUpdate({ message: { chat: { id: 321 }, from: { id: 321 }, text: '/start' } }, radar);
