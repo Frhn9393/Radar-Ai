@@ -1,6 +1,6 @@
 const { runScreener } = require('./screenerService');
 const { fetch_market_news, fetch_ma_deals } = require('./newsService');
-const { sendTelegramMessage } = require('./telegramService');
+const { sendTelegramMessage, setTelegramCommands } = require('./telegramService');
 const { getNewsAlertKey, isStrategicCorporateAction } = require('./newsAlertService');
 const { formatJakartaDate, formatJakartaDateTime } = require('./dateTime');
 const { listTelegramUsers, recordTelegramUser } = require('./telegramUserStore');
@@ -31,6 +31,25 @@ function formatScreenerRows(title, rows) {
         return `$${item.ticker} | Rp ${formatPrice(item.price)} | TP ${formatPrice(target)} | SL ${formatPrice(stop)}${riskReward}`;
     });
     return picks.length ? `${title}\n${picks.join('\n')}` : STRICT_EMPTY_ALERT;
+}
+
+function formatRadarSummary(result) {
+    const scalpingRows = [
+        ...(Array.isArray(result.scalpingSesi1) ? result.scalpingSesi1 : Array.isArray(result.scalping) ? result.scalping : []),
+        ...(Array.isArray(result.scalpingSesi2) ? result.scalpingSesi2 : [])
+    ];
+    const strategies = [
+        ['⚡ Scalping / Intraday', scalpingRows],
+        ['🚀 Daytrade · Momentum Bullish', result.daytrade],
+        ['🌆 BSJP · Beli Sore Jual Pagi', result.bsjp],
+        ['🌅 BPJP · Beli Pagi Jual Sore', result.bpjs || result.bpjp],
+        ['📈 Swing Trade', result.swing]
+    ];
+    const sections = strategies.map(([title, rows]) => {
+        const formatted = formatScreenerRows(title, rows);
+        return formatted === STRICT_EMPTY_ALERT ? `${title}\n• Belum ada sinyal yang memenuhi kriteria.` : formatted;
+    });
+    return `🛰️ STOCKRADAR AI · MASTER RADAR\n\n${sections.join('\n\n━━━━━━━━━━━━━━\n\n')}`;
 }
 
 function safeScreenerResult(result) {
@@ -94,6 +113,12 @@ async function processTelegramUpdate(update, dependencies = {}) {
     }
     const getScreener = dependencies.runScreener || runScreener;
 
+    if (/^\/radar(?:@\w+)?$/i.test(text)) {
+        const result = safeScreenerResult(await getScreener());
+        await sendMessage(chatId, formatRadarSummary(result));
+        return;
+    }
+
     if (/^\/screener(?:@\w+)?$/i.test(text)) {
         const result = safeScreenerResult(await getScreener());
         await sendMessage(chatId, formatScreenerRows('STOCKRADAR AI · Screener Swing', result.swing));
@@ -155,9 +180,15 @@ async function processTelegramUpdate(update, dependencies = {}) {
         return;
     }
     if (/^\/(start|help)(?:@\w+)?$/i.test(text)) {
+        try {
+            await (dependencies.setTelegramCommands || setTelegramCommands)();
+        } catch (error) {
+            console.warn('[telegram-commands] unable to update bot command menu', error.message || error);
+        }
         await sendMessage(chatId, [
             'STOCKRADAR AI · Perintah Bot',
             '/users — daftar pengguna unik (admin saja)',
+            '/radar — Ringkasan seluruh rekomendasi screener (Master Radar)',
             '/news — hingga 5 berita akuisisi/merger terbaru hari ini',
             '/screener — rekomendasi Swing Trade',
             '/bsjp — screener Beli Sore Jual Pagi',
@@ -169,4 +200,4 @@ async function processTelegramUpdate(update, dependencies = {}) {
     }
 }
 
-module.exports = { isDuplicateTelegramUpdate, processTelegramUpdate, formatScreenerRows, STRICT_EMPTY_ALERT };
+module.exports = { isDuplicateTelegramUpdate, processTelegramUpdate, formatRadarSummary, formatScreenerRows, STRICT_EMPTY_ALERT };

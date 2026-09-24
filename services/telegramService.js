@@ -34,4 +34,30 @@ async function sendTelegramAlert(message) {
     return sendTelegramMessage(adminChatId.toString(), message);
 }
 
-module.exports = { sendTelegramAlert, sendTelegramMessage };
+const TELEGRAM_COMMANDS = [
+    { command: 'start', description: 'Mulai bot dan lihat daftar perintah' },
+    { command: 'radar', description: 'Ringkasan seluruh rekomendasi screener (Master Radar)' },
+    { command: 'users', description: 'Daftar pengguna unik (admin saja)' },
+    { command: 'news', description: 'Berita akuisisi/merger terbaru hari ini' },
+    { command: 'screener', description: 'Rekomendasi Swing Trade' },
+    { command: 'bsjp', description: 'Screener Beli Sore Jual Pagi' },
+    { command: 'bpjp', description: 'Screener Beli Pagi Jual Sore' },
+    { command: 'scalping', description: 'Screener scalping' },
+    { command: 'daytrade', description: 'Screener intraday dan momentum' },
+    { command: 'help', description: 'Tampilkan daftar perintah' }
+];
+
+async function setTelegramCommands() {
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    if (!token) return false;
+    const response = await fetch(`https://api.telegram.org/bot${token}/setMyCommands`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ commands: TELEGRAM_COMMANDS })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.ok === false) throw new Error(result.description || `Telegram API HTTP ${response.status}`);
+    return true;
+}
+
+module.exports = { sendTelegramAlert, sendTelegramMessage, setTelegramCommands, TELEGRAM_COMMANDS };

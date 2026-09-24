@@ -83,6 +83,27 @@ async function testTelegramUserStore() {
     }
 }
 
+async function testRadarCommand() {
+    const sent = [];
+    let commandsRegistered = false;
+    const radar = {
+        sendTelegramMessage: async (chatId, text) => { sent.push({ chatId: String(chatId), text }); return true; },
+        setTelegramCommands: async () => { commandsRegistered = true; return true; },
+        runScreener: async () => ({
+            scalpingSesi1: [{ ticker: 'BBCA', price: 9000 }], scalpingSesi2: [],
+            daytrade: [{ ticker: 'BBRI', price: 4000 }], bsjp: [{ ticker: 'TLKM', price: 3000 }],
+            bpjs: [{ ticker: 'ASII', price: 5000 }], swing: [{ ticker: 'BMRI', price: 6000 }]
+        })
+    };
+    await processTelegramUpdate({ message: { chat: { id: 321 }, from: { id: 321 }, text: '/radar' } }, radar);
+    const text = sent[0]?.text || '';
+    assert(sent.length === 1 && sent[0].chatId === '321', '/radar replies in a single Telegram message');
+    assert(['Scalping / Intraday', 'Daytrade', 'BSJP', 'BPJP', 'Swing Trade'].every(section => text.includes(section)), '/radar summarizes every requested screener strategy');
+    assert(['BBCA', 'BBRI', 'TLKM', 'ASII', 'BMRI'].every(ticker => text.includes(ticker)), '/radar includes qualifying ticker rows');
+    await processTelegramUpdate({ message: { chat: { id: 321 }, from: { id: 321 }, text: '/help' } }, radar);
+    assert(commandsRegistered && sent.at(-1)?.text.includes('/radar — Ringkasan seluruh rekomendasi screener (Master Radar)'), '/help registers the Telegram command menu and lists /radar');
+}
+
 async function testTelegramAdminAndCorporateNews() {
     const previousAdminId = process.env.TELEGRAM_ADMIN_CHAT_ID;
     process.env.TELEGRAM_ADMIN_CHAT_ID = '900';
@@ -270,6 +291,7 @@ async function runAllTests() {
     assert(!isStrictBpjpEligible({ ...strictBpjp, isCurrentJakartaDay: false }), 'BPJP rejects stale Yahoo daily candle');
     assert(!isStrictIntradayEligible({ ...strictIntraday, isCurrentJakartaDay: false }), 'Scalping/Daytrade rejects stale Yahoo daily candle');
     const emptyCommandMessages = await testEmptyTelegramCommands();
+    await testRadarCommand();
     await testTelegramUserStore();
     await testTelegramAdminAndCorporateNews();
     assert(emptyCommandMessages.length === 7 && emptyCommandMessages.every(message => message === STRICT_EMPTY_ALERT), 'All Telegram screener commands return the Wait & See alert when no rows qualify');
