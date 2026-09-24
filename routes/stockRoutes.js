@@ -8,6 +8,8 @@ const { waitUntil } = require('@vercel/functions');
 const { sendTelegramAlert } = require('../services/telegramService');
 const { fetchHistoricalData } = require('../services/backtestEngine');
 const { isDuplicateTelegramUpdate, processTelegramUpdate } = require('../services/telegramWebhookService');
+const { fetch_market_news, fetch_ma_deals } = require('../services/newsService');
+const { enqueueNewsAlerts, isStrategicCorporateAction } = require('../services/newsAlertService');
 const {
     analyzeStock,
     hasUsableRealtimeData,
@@ -16,6 +18,54 @@ const {
     get_stock_price,
     get_sector_for_ticker
 } = require('../services/stockService');
+const { runScreener } = require('../services/screenerService');
+
+// Vercel Cron hits this endpoint at Indonesian session open times (weekdays).
+router.get('/cron/telegram-session-alerts', async (req, res) => {
+    const secret = String(process.env.CRON_SECRET || '').trim();
+    const authorization = String(req.get('authorization') || '').trim();
+    if (!secret || authorization !== `Bearer ${secret}`) {
+        return res.status(401).json({ ok: false, error: 'Unauthorized' });
+    }
+    if (!process.env.TELEGRAM_BOT_TOKEN || !process.env.TELEGRAM_ADMIN_CHAT_ID) {
+        return res.status(503).json({ ok: false, error: 'Telegram alert configuration unavailable' });
+    }
+
+    try {
+        const [screener, marketNews, maNews] = await Promise.all([
+            runScreener(), fetch_market_news().catch(() => null), fetch_ma_deals().catch(() => null)
+        ]);
+        for (const [strategy, rows] of [['BSJP', screener?.allCandidates?.bsjp], ['BPJS', screener?.allCandidates?.bpjs]]) {
+            for (const row of Array.isArray(rows) ? rows : []) {
+                if (!row?.ticker) continue;
+                const { claimAlert, releaseAlert } = require('../services/alertDedupeStore');
+                const dedupeKey = `cron:${new Date().toISOString().slice(0, 10)}:${strategy}:${row.ticker}`;
+                if (!await claimAlert(dedupeKey)) continue;
+                const message = [
+                    `📡 [SCREENER ${strategy}]`, `Emiten: $${row.ticker}`,
+                    `Harga: Rp ${Number(row.price || 0).toLocaleString('id-ID')}`,
+                    `Perubahan: ${row.changePct || '0.00'}%`,
+                    `Strategi: ${row.backtest?.strategy || strategy}`, 'Sumber: Yahoo Finance OHLCV'
+                ].join('\n');
+                try {
+                    if (!await sendTelegramAlert(message)) await releaseAlert(dedupeKey);
+                } catch (error) {
+                    await releaseAlert(dedupeKey);
+                    throw error;
+                }
+            }
+        }
+        const newsItems = [
+            ...(Array.isArray(marketNews?.news) ? marketNews.news : []),
+            ...(Array.isArray(maNews?.deals) ? maNews.deals : [])
+        ].filter(isStrategicCorporateAction);
+        enqueueNewsAlerts(newsItems);
+        return res.json({ ok: true, screenerUpdated: Boolean(screener), newsItems: newsItems.length });
+    } catch (error) {
+        console.error('[cron:telegram-session-alerts] failed', error.message || error);
+        return res.status(500).json({ ok: false, error: 'Scheduled alert run failed' });
+    }
+});
 
 // API: Search / Autocomplete suggestions
 router.get('/search-suggest', (req, res) => {

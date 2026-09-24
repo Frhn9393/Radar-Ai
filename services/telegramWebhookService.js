@@ -61,7 +61,7 @@ async function processTelegramUpdate(update, dependencies = {}) {
         try {
             const directory = await (dependencies.listTelegramUsers || listTelegramUsers)();
             if (!directory?.available) {
-                await sendMessage(chatId, 'Penyimpanan pengguna belum dikonfigurasi. Tambahkan KV_REST_API_URL dan KV_REST_API_TOKEN (atau UPSTASH_REDIS_REST_URL dan UPSTASH_REDIS_REST_TOKEN) di Environment Variables Vercel. Interaksi tetap tercatat di log sampai penyimpanan persisten diaktifkan.');
+                await sendMessage(chatId, 'Daftar pengguna belum tersedia. Penyimpanan pengguna belum terhubung.');
                 return;
             }
             const users = Array.isArray(directory.users) ? directory.users : [];

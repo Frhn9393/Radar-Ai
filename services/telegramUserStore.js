@@ -1,28 +1,39 @@
 const USERS_KEY = 'stockradar:telegram:users:v1';
 
 function getRedisConfig() {
-    const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-    const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-    return url && token ? { url: url.replace(/\/+$/, ''), token } : null;
+    const url = String(process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || '').trim();
+    const token = String(process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || '').trim();
+    if (!url || !token) return null;
+    try {
+        const parsed = new URL(url);
+        if (parsed.protocol !== 'https:' || !parsed.hostname) return null;
+        return { url: parsed.toString().replace(/\/+$/, ''), token };
+    } catch {
+        return null;
+    }
 }
 
 async function redisCommand(command) {
     const config = getRedisConfig();
     if (!config) throw new Error('Telegram user storage is not configured');
 
-    const response = await fetch(config.url, {
-        method: 'POST',
-        headers: {
-            Authorization: `Bearer ${config.token}`,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(command)
-    });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok || payload.error) {
-        throw new Error(payload.error || `KV request failed (${response.status})`);
+    try {
+        const response = await fetch(config.url, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${config.token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(command)
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload.error) {
+            throw new Error(payload.error || `KV request failed (${response.status})`);
+        }
+        return payload.result;
+    } catch (error) {
+        throw new Error(`KV request failed: ${error?.message || 'unknown error'}`);
     }
-    return payload.result;
 }
 
 function normalizeTelegramUser(message) {

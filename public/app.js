@@ -947,7 +947,9 @@ function populateAnalysisModal(data) {
         valStatusEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-amber-500/20 text-amber-400 shadow-sm';
     }
 
-    document.getElementById('modal-val-fair').textContent = val.fairValue ? fmtRp.format(val.fairValue) : 'N/A';
+    const eps = isUsableNumber(val.eps) ? Number(val.eps) : null;
+    const deficitIssuer = eps !== null && eps < 0;
+    document.getElementById('modal-val-fair').textContent = val.fairValue ? fmtRp.format(val.fairValue) : deficitIssuer ? 'N/A (Emiten Defisit)' : 'N/A';
     document.getElementById('modal-val-per').textContent = val.per ? `${val.per}x` : 'N/A';
 
     // PER Footnote (Aturan 6: Penjelasan jika PER tinggi akibat basis laba rendah masa turnaround)
@@ -962,7 +964,7 @@ function populateAnalysisModal(data) {
     }
 
     document.getElementById('modal-val-pbv').textContent = val.pbv ? `${val.pbv}x` : 'N/A';
-    document.getElementById('modal-val-eps').textContent = val.eps ? fmtRp.format(val.eps) : 'N/A';
+    document.getElementById('modal-val-eps').textContent = eps !== null ? fmtRp.format(eps) : 'N/A';
     document.getElementById('modal-val-bvps').textContent = val.bvps ? fmtRp.format(val.bvps) : 'N/A';
 
     // Analisa Teknikal
@@ -994,8 +996,10 @@ function populateAnalysisModal(data) {
         const ma20 = isUsableNumber(trend.ema20, { positive: true }) ? Number(trend.ema20) : trend.sma20;
         const ma50 = isUsableNumber(trend.ema50, { positive: true }) ? Number(trend.ema50) : trend.sma50;
         if (ma20 && ma50) {
-            const isGolden = ma20 > ma50;
-            maEl.innerHTML = `<span class="${isGolden ? 'text-cyan-300' : 'text-slate-300'} font-bold">${isGolden ? 'Golden Alignment 🟢' : 'Bearish / Netral ⚪'}</span> <span class="text-slate-400 text-[10px]">(${fmtRp.format(ma20)} / ${fmtRp.format(ma50)})</span>`;
+            const price = isUsableNumber(rt.lastPrice, { positive: true }) ? Number(rt.lastPrice) : null;
+            const isGolden = ma20 > ma50 && price !== null && price > ma20;
+            const label = ma20 === ma50 ? 'NEUTRAL ⚪' : isGolden ? 'Golden Alignment 🟢' : 'Bearish / Netral ⚪';
+            maEl.innerHTML = `<span class="${isGolden ? 'text-cyan-300' : 'text-slate-300'} font-bold">${label}</span> <span class="text-slate-400 text-[10px]">(${fmtRp.format(ma20)} / ${fmtRp.format(ma50)})</span>`;
         } else {
             maEl.textContent = 'N/A';
         }
