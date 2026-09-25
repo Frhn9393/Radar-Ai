@@ -35,26 +35,6 @@ router.get('/cron/telegram-session-alerts', async (req, res) => {
         const [screener, marketNews, maNews] = await Promise.all([
             runScreener(), fetch_market_news().catch(() => null), fetch_ma_deals().catch(() => null)
         ]);
-        for (const [strategy, rows] of [['BSJP', screener?.allCandidates?.bsjp], ['BPJS', screener?.allCandidates?.bpjs]]) {
-            for (const row of Array.isArray(rows) ? rows : []) {
-                if (!row?.ticker) continue;
-                const { claimAlert, releaseAlert } = require('../services/alertDedupeStore');
-                const dedupeKey = `cron:${new Date().toISOString().slice(0, 10)}:${strategy}:${row.ticker}`;
-                if (!await claimAlert(dedupeKey)) continue;
-                const message = [
-                    `📡 [SCREENER ${strategy}]`, `Emiten: $${row.ticker}`,
-                    `Harga: Rp ${Number(row.price || 0).toLocaleString('id-ID')}`,
-                    `Perubahan: ${row.changePct || '0.00'}%`,
-                    `Strategi: ${row.backtest?.strategy || strategy}`, 'Sumber: Yahoo Finance OHLCV'
-                ].join('\n');
-                try {
-                    if (!await sendTelegramAlert(message)) await releaseAlert(dedupeKey);
-                } catch (error) {
-                    await releaseAlert(dedupeKey);
-                    throw error;
-                }
-            }
-        }
         const newsItems = [
             ...(Array.isArray(marketNews?.news) ? marketNews.news : []),
             ...(Array.isArray(maNews?.deals) ? maNews.deals : [])

@@ -7,7 +7,8 @@ const { fetch_market_news, fetch_ma_deals, extractNewsTicker } = require('./serv
 const { classifyNewsSentiment, findNewNewsItems, formatNewsAlert, isStrategicCorporateAction } = require('./services/newsAlertService');
 const { formatJakartaDate, formatJakartaDateTime } = require('./services/dateTime');
 const { listTelegramUsers, recordTelegramUser } = require('./services/telegramUserStore');
-const { isStrictBsjpEligible, isStrictBpjpEligible, isStrictIntradayEligible } = require('./services/strictScreenerFilters');
+const { isStrictBsjpEligible, isStrictBpjpEligible, isStrictIntradayEligible, isScalpingOpeningSurgeEligible } = require('./services/strictScreenerFilters');
+const { formatScreenerAlertBatch } = require('./services/screenerAlertFormatter');
 const { processTelegramUpdate, formatScreenerRows, STRICT_EMPTY_ALERT } = require('./services/telegramWebhookService');
 const { TELEGRAM_COMMANDS } = require('./services/telegramService');
 const { analyzeCandlesticks, getCandlePatterns, FEATURE_NAMES } = require('./services/candlestickAiEngine');
@@ -72,19 +73,21 @@ async function testTelegramUserStore() {
 async function testRadarCommand() {
     const sent = [];
     let commandsRegistered = false;
+    let radarOptions;
     const radar = {
         sendTelegramMessage: async (chatId, text) => { sent.push({ chatId: String(chatId), text }); return true; },
         setTelegramCommands: async () => { commandsRegistered = true; return true; },
-        runScreener: async () => ({
+        runScreener: async options => { radarOptions = options; return ({
             scalpingSesi1: [{ ticker: 'BBCA', price: 9000 }], scalpingSesi2: [],
             daytrade: [{ ticker: 'BBRI', price: 4000 }], bsjp: [{ ticker: 'TLKM', price: 3000 }],
             bpjs: [{ ticker: 'ASII', price: 5000 }], swing: [{ ticker: 'BMRI', price: 6000 }],
             candlestickAi: [{ score: 70, item: { ticker: 'UNTR', candlestickAi: { decision: 'BUY', confidencePct: 70, targetPrice: 1100, stopLoss: 950, patterns: ['Hammer'] } } }]
-        })
+        }); }
     };
     await processTelegramUpdate({ message: { chat: { id: 321 }, from: { id: 321 }, text: '/radar' } }, radar);
     const text = sent[0]?.text || '';
     assert(sent.length === 1 && sent[0].chatId === '321', '/radar replies in a single Telegram message');
+    assert(radarOptions?.sendAlerts === false, '/radar suppresses the separate background ticker alert and returns one Master Radar message');
     assert(['Scalping / Intraday', 'Daytrade', 'BSJP', 'BPJP', 'Swing Trade'].every(section => text.includes(section)), '/radar summarizes every requested screener strategy');
     assert(['BBCA', 'BBRI', 'TLKM', 'ASII', 'BMRI'].every(ticker => text.includes(ticker)), '/radar includes qualifying ticker rows');
     assert(text.includes('AI Candlestick') && text.includes('$UNTR') && text.includes('70%'), '/radar includes the trained candlestick model signal and confidence');
@@ -302,6 +305,10 @@ async function runAllTests() {
     assert(!isStrictBpjpEligible(undefined), 'BPJP safely rejects missing market data');
     const strictIntraday = { isCurrentJakartaDay: true, high: 104, low: 100, volumeToday: 181, ma5Volume: 100 };
     assert(isStrictIntradayEligible(strictIntraday), 'Scalping/Daytrade accepts >3% daily volatility and >1.8x MA5 volume');
+    assert(isScalpingOpeningSurgeEligible(strictIntraday, 2.01), 'Opening Surge requires a valid intraday setup and change strictly above +2%');
+    assert(!isScalpingOpeningSurgeEligible(strictIntraday, 2), 'Opening Surge rejects change exactly +2%');
+    assert(!isScalpingOpeningSurgeEligible(strictIntraday, 0), 'Opening Surge rejects neutral change');
+    assert(!isScalpingOpeningSurgeEligible(strictIntraday, -1), 'Opening Surge rejects negative change');
     assert(!isStrictIntradayEligible({ ...strictIntraday, high: 103 }), 'Scalping/Daytrade requires volatility strictly above 3%');
     assert(!isStrictIntradayEligible({ ...strictIntraday, volumeToday: 180 }), 'Scalping/Daytrade requires volume strictly above 1.8x MA5');
     assert(!isStrictIntradayEligible([]), 'Intraday safely rejects empty-array market data');
@@ -309,6 +316,12 @@ async function runAllTests() {
     assert(!isStrictBpjpEligible({ ...strictBpjp, isCurrentJakartaDay: false }), 'BPJP rejects stale Yahoo daily candle');
     assert(!isStrictIntradayEligible({ ...strictIntraday, isCurrentJakartaDay: false }), 'Scalping/Daytrade rejects stale Yahoo daily candle');
     const emptyCommandMessages = await testEmptyTelegramCommands();
+    const batchMessage = formatScreenerAlertBatch([
+        { strategy: 'BSJP', row: { ticker: 'BBCA', price: 1000, changePct: '2.10', targetProfit: 1050, stopLoss: 980 } },
+        { strategy: 'BSJP', row: { ticker: 'BBRI', price: 2000, changePct: '2.50', targetProfit: 2100, stopLoss: 1950 } },
+        { strategy: 'DAYTRADE', row: { ticker: 'TLKM', price: 3000, changePct: '3.00', targetProfit: 3150, stopLoss: 2900 } }
+    ]);
+    assert(batchMessage.includes('MASTER RADAR') && batchMessage.includes('BSJP') && batchMessage.includes('DAYTRADE') && ['BBCA', 'BBRI', 'TLKM'].every(ticker => batchMessage.includes(ticker)), 'Screener Telegram alert formatter groups multiple tickers and strategies into one Master Radar message');
     await testRadarCommand();
     testCandlestickAiEngine();
     await testTelegramUserStore();

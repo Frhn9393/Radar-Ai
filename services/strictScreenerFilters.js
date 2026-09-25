@@ -34,4 +34,8 @@ function isStrictIntradayEligible(metrics = {}) {
         Number(volumeToday) > 1.8 * Number(ma5Volume);
 }
 
-module.exports = { isStrictBsjpEligible, isStrictBpjpEligible, isStrictIntradayEligible };
+function isScalpingOpeningSurgeEligible(metrics = {}, changePct) {
+    return isStrictIntradayEligible(metrics) && finite(changePct) && Number(changePct) > 2;
+}
+
+module.exports = { isStrictBsjpEligible, isStrictBpjpEligible, isStrictIntradayEligible, isScalpingOpeningSurgeEligible };

@@ -128,7 +128,7 @@ async function processTelegramUpdate(update, dependencies = {}) {
     const getScreener = dependencies.runScreener || runScreener;
 
     if (/^\/radar(?:@\w+)?$/i.test(text)) {
-        const result = safeScreenerResult(await getScreener());
+        const result = safeScreenerResult(await getScreener({ sendAlerts: false }));
         await sendMessage(chatId, formatRadarSummary(result));
         return;
     }

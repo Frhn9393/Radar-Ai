@@ -7,8 +7,9 @@ const { getTickSize } = require('./utils');
 const { formatJakartaDate } = require('./dateTime');
 const { sendTelegramAlert } = require('./telegramService');
 const { claimAlert, releaseAlert } = require('./alertDedupeStore');
-const { isStrictBsjpEligible, isStrictBpjpEligible, isStrictIntradayEligible } = require('./strictScreenerFilters');
+const { isStrictBsjpEligible, isStrictBpjpEligible, isStrictIntradayEligible, isScalpingOpeningSurgeEligible } = require('./strictScreenerFilters');
 const { analyzeCandlesticks } = require('./candlestickAiEngine');
+const { formatScreenerAlertBatch } = require('./screenerAlertFormatter');
 
 const STOCK_SECTOR_MAP = new Map();
 if (Array.isArray(ALL_IDX_STOCKS)) {
@@ -88,7 +89,7 @@ function getTechnicalStatus(isSupertrendBullish, rsi, fallbackLabel) {
     return fallbackLabel;
 }
 
-async function runScreener() {
+async function runScreener(options = {}) {
     if (screenerCache && (Date.now() - screenerCacheTime < SCREENER_CACHE_TTL)) {
         const hasCachedStrictSignals = [
             screenerCache.scalpingSesi1, screenerCache.scalpingSesi2, screenerCache.daytrade,
@@ -187,7 +188,7 @@ async function runScreener() {
             const tpSesi1 = Math.round(price + Math.max(2 * tick, Math.round(price * 0.02)));
             const slSesi1 = Math.round(price - Math.max(2 * tick, Math.round(price * 0.012)));
 
-            if (strictIntradayEligible) candidates.scalpingSesi1.push({
+            if (isScalpingOpeningSurgeEligible(strictIntradayMetrics, changePct)) candidates.scalpingSesi1.push({
                 score: scalpScore,
                 item: {
                     ticker, sector, price, changePct: changePct.toFixed(2),
@@ -520,29 +521,31 @@ async function runScreener() {
     }
     previousAlertSignals.clear();
     currentSignals.forEach(key => previousAlertSignals.add(key));
-    if (newlyQualified.length && process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_ADMIN_CHAT_ID) {
-        const alertTask = Promise.all(newlyQualified.map(async ({ key, strategy, row }) => {
-            const dedupeKey = `signal:${key}`;
-            if (!await claimAlert(dedupeKey)) return;
-            const message = [
-                `📡 [SCREENER ${strategy}]`,
-                `Emiten: $${row.ticker}`,
-                `Harga: Rp ${Number(row.price || 0).toLocaleString('id-ID')}`,
-                `Perubahan: ${row.changePct || '0.00'}%`,
-                `Strategi: ${row.backtest?.strategy || strategy}`,
-                'Sumber: Yahoo Finance OHLCV'
-            ].join('\n');
+    if (options.sendAlerts !== false && newlyQualified.length && process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_ADMIN_CHAT_ID) {
+        const alertTask = (async () => {
+            const claimedSignals = [];
+            for (const signal of newlyQualified) {
+                const dedupeKey = `signal:${signal.key}`;
+                if (await claimAlert(dedupeKey)) claimedSignals.push({ ...signal, dedupeKey });
+            }
+            if (!claimedSignals.length) return;
+
             try {
-                if (!await sendTelegramAlert(message)) {
-                    previousAlertSignals.delete(key);
-                    await releaseAlert(dedupeKey);
+                const delivered = await sendTelegramAlert(formatScreenerAlertBatch(claimedSignals));
+                if (!delivered) {
+                    for (const { key, dedupeKey } of claimedSignals) {
+                        previousAlertSignals.delete(key);
+                        await releaseAlert(dedupeKey);
+                    }
                 }
             } catch (error) {
-                previousAlertSignals.delete(key);
-                await releaseAlert(dedupeKey).catch(() => {});
+                for (const { key, dedupeKey } of claimedSignals) {
+                    previousAlertSignals.delete(key);
+                    await releaseAlert(dedupeKey).catch(() => {});
+                }
                 throw error;
             }
-        })).catch(error => console.error('[screener-alert] Telegram delivery failed:', error.message || error));
+        })().catch(error => console.error('[screener-alert] Telegram delivery failed:', error.message || error));
         try { require('@vercel/functions').waitUntil(alertTask); } catch { alertTask.catch(() => {}); }
     }
 
