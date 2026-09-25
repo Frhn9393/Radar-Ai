@@ -9,7 +9,7 @@ const { formatJakartaDate, formatJakartaDateTime } = require('./services/dateTim
 const { listTelegramUsers, recordTelegramUser } = require('./services/telegramUserStore');
 const { isStrictBsjpEligible, isStrictBpjpEligible, isStrictIntradayEligible, isScalpingOpeningSurgeEligible, isBullishIntradaySurgeEligible } = require('./services/strictScreenerFilters');
 const { formatScreenerAlertBatch } = require('./services/screenerAlertFormatter');
-const { processTelegramUpdate, formatScreenerRows, STRICT_EMPTY_ALERT, RADAR_BUSY_MESSAGE } = require('./services/telegramWebhookService');
+const { processTelegramUpdate, formatRadarSummary, formatScreenerRows, STRICT_EMPTY_ALERT, RADAR_BUSY_MESSAGE } = require('./services/telegramWebhookService');
 const { TELEGRAM_COMMANDS } = require('./services/telegramService');
 const { analyzeCandlesticks, getCandlePatterns, FEATURE_NAMES } = require('./services/candlestickAiEngine');
 const { fetchBrokerTop, requestBrokerTop, parseStockbitResponse, _clearCacheForTests } = require('./services/customMarketFeed');
@@ -93,6 +93,8 @@ async function testRadarCommand() {
     assert(['Scalping / Intraday', 'Daytrade', 'BSJP', 'BPJP', 'Swing Trade'].every(section => text.includes(section)), '/radar summarizes every requested screener strategy');
     assert(['BBCA', 'BBRI', 'TLKM', 'ASII', 'BMRI'].every(ticker => text.includes(ticker)), '/radar includes qualifying ticker rows');
     assert(text.includes('AI Candlestick') && text.includes('$UNTR') && text.includes('70%'), '/radar includes the trained candlestick model signal and confidence');
+    const flattenedRadar = formatRadarSummary({ candlestickAi: [{ ticker: 'BBCA', candlestickAi: { decision: 'NEUTRAL', patterns: ['Hammer'] } }] });
+    assert(flattenedRadar.includes('$BBCA') && flattenedRadar.includes('Hammer'), '/radar safely formats screener AI rows after rankAndPick flattens candidate items');
     await processTelegramUpdate({ message: { chat: { id: 321 }, from: { id: 321 }, text: '/help' } }, radar);
     const helpText = [
         'STOCKRADAR AI · Perintah Bot',

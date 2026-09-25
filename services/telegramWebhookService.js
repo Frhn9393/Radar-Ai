@@ -62,18 +62,21 @@ function formatRadarSummary(result) {
         return formatted === STRICT_EMPTY_ALERT ? `${title}\n• Belum ada sinyal yang memenuhi kriteria.` : formatted;
     });
     const aiRows = Array.isArray(result.candlestickAi) ? result.candlestickAi : [];
-    const aiValidation = aiRows[0]?.item?.candlestickAi?.validation;
+    const firstAiRow = aiRows[0]?.item && typeof aiRows[0].item === 'object' ? aiRows[0].item : aiRows[0];
+    const aiValidation = firstAiRow?.candlestickAi?.validation;
     const oosLine = Number.isFinite(aiValidation?.observedStrongBuyWinRatePct) && aiValidation.predictedStrongBuySamples > 0
         ? `🧪 Holdout Strong Buy win rate: ${aiValidation.observedStrongBuyWinRatePct}% (n=${aiValidation.predictedStrongBuySamples})`
         : '🧪 Holdout Strong Buy win rate: belum ada sinyal terukur';
     const aiSection = aiRows.length
-        ? `🧠 AI Candlestick · probabilitas model (${aiRows.length})\n${oosLine}\n${aiRows.slice(0, 5).map(({ item }) => {
-            const ai = item?.candlestickAi || {};
+        ? `🧠 AI Candlestick · probabilitas model (${aiRows.length})\n${oosLine}\n${aiRows.slice(0, 5).map(row => {
+            const item = row?.item && typeof row.item === 'object' ? row.item : row;
+            if (!item || typeof item !== 'object' || !item.ticker) return null;
+            const ai = item.candlestickAi || {};
             const confidence = ai.confidencePct !== null && ai.confidencePct !== undefined && Number.isFinite(Number(ai.confidencePct)) ? `${ai.confidencePct}%` : 'belum tervalidasi';
             const target = Number.isFinite(Number(ai.targetPrice)) ? Number(ai.targetPrice).toLocaleString('id-ID') : '—';
             const stop = Number.isFinite(Number(ai.stopLoss)) ? Number(ai.stopLoss).toLocaleString('id-ID') : '—';
             return `• $${item.ticker} · ${ai.decision || 'NEUTRAL'} (${confidence}) · TP ${target} · SL ${stop} · ${(ai.patterns || []).join(', ') || item.candlestick || 'Pola belum terdeteksi'}`;
-        }).join('\n')}`
+        }).filter(Boolean).join('\n') || '• Belum ada pola candlestick terdeteksi.'}`
         : `🧠 AI Candlestick · probabilitas model\n${oosLine}\n• Belum ada pola candlestick terdeteksi.`;
     return `🛰️ STOCKRADAR AI · MASTER RADAR\n\n${sections.join('\n\n━━━━━━━━━━━━━━\n\n')}\n\n━━━━━━━━━━━━━━\n\n${aiSection}`;
 }
