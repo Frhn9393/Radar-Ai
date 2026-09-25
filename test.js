@@ -10,6 +10,7 @@ const { listTelegramUsers, recordTelegramUser } = require('./services/telegramUs
 const { isStrictBsjpEligible, isStrictBpjpEligible, isStrictIntradayEligible } = require('./services/strictScreenerFilters');
 const { processTelegramUpdate, formatScreenerRows, STRICT_EMPTY_ALERT } = require('./services/telegramWebhookService');
 const { TELEGRAM_COMMANDS } = require('./services/telegramService');
+const { analyzeCandlesticks, getCandlePatterns, FEATURE_NAMES } = require('./services/candlestickAiEngine');
 const { fetchBrokerTop, requestBrokerTop, parseStockbitResponse, _clearCacheForTests } = require('./services/customMarketFeed');
 const { fetchBroksum } = require('./services/broksumService');
 const { analyzeStock, runScreener, hasUsableRealtimeData } = require('./services/stockService');
@@ -77,7 +78,8 @@ async function testRadarCommand() {
         runScreener: async () => ({
             scalpingSesi1: [{ ticker: 'BBCA', price: 9000 }], scalpingSesi2: [],
             daytrade: [{ ticker: 'BBRI', price: 4000 }], bsjp: [{ ticker: 'TLKM', price: 3000 }],
-            bpjs: [{ ticker: 'ASII', price: 5000 }], swing: [{ ticker: 'BMRI', price: 6000 }]
+            bpjs: [{ ticker: 'ASII', price: 5000 }], swing: [{ ticker: 'BMRI', price: 6000 }],
+            candlestickAi: [{ score: 70, item: { ticker: 'UNTR', candlestickAi: { decision: 'BUY', confidencePct: 70, targetPrice: 1100, stopLoss: 950, patterns: ['Hammer'] } } }]
         })
     };
     await processTelegramUpdate({ message: { chat: { id: 321 }, from: { id: 321 }, text: '/radar' } }, radar);
@@ -85,6 +87,7 @@ async function testRadarCommand() {
     assert(sent.length === 1 && sent[0].chatId === '321', '/radar replies in a single Telegram message');
     assert(['Scalping / Intraday', 'Daytrade', 'BSJP', 'BPJP', 'Swing Trade'].every(section => text.includes(section)), '/radar summarizes every requested screener strategy');
     assert(['BBCA', 'BBRI', 'TLKM', 'ASII', 'BMRI'].every(ticker => text.includes(ticker)), '/radar includes qualifying ticker rows');
+    assert(text.includes('AI Candlestick') && text.includes('$UNTR') && text.includes('70%'), '/radar includes the trained candlestick model signal and confidence');
     await processTelegramUpdate({ message: { chat: { id: 321 }, from: { id: 321 }, text: '/help' } }, radar);
     const helpText = [
         'STOCKRADAR AI · Perintah Bot',
@@ -97,6 +100,26 @@ async function testRadarCommand() {
     await processTelegramUpdate({ message: { chat: { id: 321 }, from: { id: 321 }, text: '/start' } }, radar);
     assert(sent.at(-1)?.text === helpText, '/start replies with the same four-command help structure');
     assert(TELEGRAM_COMMANDS.length === 4 && TELEGRAM_COMMANDS.map(item => item.command).join(',') === 'radar,news,users,help', 'Telegram popup menu contains only the four official commands');
+}
+
+function testCandlestickAiEngine() {
+    const candles = [];
+    let close = 1000;
+    for (let i = 0; i < 230; i++) {
+        const open = close;
+        close += 1 + (i % 3) * 0.1;
+        candles.push({ date: new Date(Date.UTC(2025, 0, i + 1)), open, high: close + 2, low: open - 2, close, volume: 100_000 + i * 10 });
+    }
+    const prediction = analyzeCandlesticks(candles);
+    assert(FEATURE_NAMES.length === 11, 'Candlestick engine uses the declared OHLCV, volume, pattern and trend feature schema');
+    assert(['STRONG BUY', 'BUY', 'NEUTRAL'].includes(prediction.decision), 'Candlestick engine returns a supported decision label');
+    assert(prediction.targetPrice > candles.at(-1).close && prediction.stopLoss < candles.at(-1).close, 'Candlestick engine computes TP and SL from latest close');
+    assert(prediction.targetRule.includes('10 sesi bursa'), 'Candlestick engine exposes its forward-label horizon');
+    const reversal = candles.slice(0, 200).concat([
+        { date: new Date(), open: 1002, high: 1004, low: 989, close: 990, volume: 100_000 },
+        { date: new Date(), open: 988, high: 1006, low: 987, close: 1005, volume: 180_000 }
+    ]);
+    assert(getCandlePatterns(reversal, reversal.length - 1).bullishEngulfing === 1, 'Candlestick feature extractor detects a bullish engulfing pattern');
 }
 
 async function testTelegramAdminAndCorporateNews() {
@@ -287,6 +310,7 @@ async function runAllTests() {
     assert(!isStrictIntradayEligible({ ...strictIntraday, isCurrentJakartaDay: false }), 'Scalping/Daytrade rejects stale Yahoo daily candle');
     const emptyCommandMessages = await testEmptyTelegramCommands();
     await testRadarCommand();
+    testCandlestickAiEngine();
     await testTelegramUserStore();
     await testTelegramAdminAndCorporateNews();
     assert(emptyCommandMessages.length === 0, 'Legacy standalone screener commands are no longer handled');

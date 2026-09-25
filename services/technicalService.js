@@ -466,7 +466,9 @@ async function get_technical_indicators(ticker, timeframe = '1d') {
         if (!chart || !chart.quotes || chart.quotes.length === 0) {
             throw new Error(`Data grafik history untuk ${clean} tidak ditemukan.`);
         }
-        return processTechnicalData(chart.quotes);
+        const technical = processTechnicalData(chart.quotes);
+        technical.candlestickAi = require('./candlestickAiEngine').analyzeCandlesticks(chart.quotes);
+        return technical;
     } catch (nodeErr) {
         // Fallback to Python engine if needed
         return get_technical_indicators_python(clean, timeframe);

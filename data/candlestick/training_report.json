@@ -1,0 +1,682 @@
+{
+  "rowCount": 230750,
+  "tickerCount": 129,
+  "fileBytes": 26146227,
+  "patternCounts": {
+    "bullishEngulfing": 13127,
+    "hammer": 13712,
+    "morningStar": 7426,
+    "threeWhiteSoldiers": 904,
+    "piercingLine": 3253,
+    "breakoutVolume": 6693
+  },
+  "patternTargetMet": {
+    "bullishEngulfing": true,
+    "hammer": true,
+    "morningStar": true,
+    "threeWhiteSoldiers": false,
+    "piercingLine": true,
+    "breakoutVolume": true
+  },
+  "validation": {
+    "method": "chronological holdout: last 2 years of bullish candlestick-pattern events; training labels end 30 days before holdout; TP +3% before SL -2% within 10 trading sessions, timeout uses horizon close",
+    "cutoffDate": "2024-09-25",
+    "samples": 10772,
+    "accuracyPct": 64.72,
+    "majorityClassBaselineAccuracyPct": 64.72,
+    "accuracyLiftOverMajorityBaselinePct": 0,
+    "precisionPct": null,
+    "baselineWinRatePct": 35.28,
+    "brierScore": 0.2286,
+    "predictedStrongBuySamples": 0,
+    "observedStrongBuyWinRatePct": null,
+    "confidenceTarget80Met": false
+  },
+  "selectedTickers": [
+    {
+      "ticker": "BBCA",
+      "avgTurnover20": 792519135875,
+      "splitEvents": 1
+    },
+    {
+      "ticker": "BUMI",
+      "avgTurnover20": 680680292785,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "BBRI",
+      "avgTurnover20": 652702132300,
+      "splitEvents": 1
+    },
+    {
+      "ticker": "BMRI",
+      "avgTurnover20": 602186682650,
+      "splitEvents": 2
+    },
+    {
+      "ticker": "AMMN",
+      "avgTurnover20": 410455330700,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "ANTM",
+      "avgTurnover20": 366947741900,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "TLKM",
+      "avgTurnover20": 300473345250,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "TPIA",
+      "avgTurnover20": 264801958775,
+      "splitEvents": 2
+    },
+    {
+      "ticker": "PTRO",
+      "avgTurnover20": 234347681875,
+      "splitEvents": 1
+    },
+    {
+      "ticker": "BRMS",
+      "avgTurnover20": 223058609625,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "TINS",
+      "avgTurnover20": 217842257250,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "ASII",
+      "avgTurnover20": 215513600150,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "CPIN",
+      "avgTurnover20": 191406952200,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "DEWA",
+      "avgTurnover20": 191142695370,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "ISAT",
+      "avgTurnover20": 163519850300,
+      "splitEvents": 1
+    },
+    {
+      "ticker": "PTBA",
+      "avgTurnover20": 155880792350,
+      "splitEvents": 1
+    },
+    {
+      "ticker": "BBNI",
+      "avgTurnover20": 150549279950,
+      "splitEvents": 1
+    },
+    {
+      "ticker": "KOTA",
+      "avgTurnover20": 148748268050,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "AADI",
+      "avgTurnover20": 142226479750,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "ADRO",
+      "avgTurnover20": 131941131400,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "MDKA",
+      "avgTurnover20": 119900438500,
+      "splitEvents": 1
+    },
+    {
+      "ticker": "BRPT",
+      "avgTurnover20": 110125160300,
+      "splitEvents": 4
+    },
+    {
+      "ticker": "UNTR",
+      "avgTurnover20": 107288399000,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "MEDC",
+      "avgTurnover20": 102246965400,
+      "splitEvents": 1
+    },
+    {
+      "ticker": "ERAA",
+      "avgTurnover20": 93483039400,
+      "splitEvents": 1
+    },
+    {
+      "ticker": "INCO",
+      "avgTurnover20": 80088242200,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "ESSA",
+      "avgTurnover20": 78931673000,
+      "splitEvents": 1
+    },
+    {
+      "ticker": "MBMA",
+      "avgTurnover20": 73390143025,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "INDY",
+      "avgTurnover20": 71699604750,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "VKTR",
+      "avgTurnover20": 71198438200,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "DMAS",
+      "avgTurnover20": 69488776590,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "KIJA",
+      "avgTurnover20": 64029883025,
+      "splitEvents": 1
+    },
+    {
+      "ticker": "TAPG",
+      "avgTurnover20": 63989394650,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "ADMR",
+      "avgTurnover20": 58447289850,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "KLBF",
+      "avgTurnover20": 57772072950,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "PGAS",
+      "avgTurnover20": 52011183850,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "ARCI",
+      "avgTurnover20": 51998250875,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "SMGR",
+      "avgTurnover20": 51997178700,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "RAJA",
+      "avgTurnover20": 51789473850,
+      "splitEvents": 1
+    },
+    {
+      "ticker": "NCKL",
+      "avgTurnover20": 47101291375,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "AMRT",
+      "avgTurnover20": 45403014250,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "INDF",
+      "avgTurnover20": 43834916125,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "INKP",
+      "avgTurnover20": 42904201625,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "ICBP",
+      "avgTurnover20": 42455372375,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "BREN",
+      "avgTurnover20": 42287429200,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "WIFI",
+      "avgTurnover20": 41078320775,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "SSIA",
+      "avgTurnover20": 40772717500,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "SGER",
+      "avgTurnover20": 39245332725,
+      "splitEvents": 3
+    },
+    {
+      "ticker": "ITMG",
+      "avgTurnover20": 39216451750,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "PANI",
+      "avgTurnover20": 38874819175,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "PSAB",
+      "avgTurnover20": 37834444775,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "BRIS",
+      "avgTurnover20": 36503164175,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "UNVR",
+      "avgTurnover20": 34124918150,
+      "splitEvents": 1
+    },
+    {
+      "ticker": "AKRA",
+      "avgTurnover20": 31927108950,
+      "splitEvents": 1
+    },
+    {
+      "ticker": "RMKE",
+      "avgTurnover20": 31853378140,
+      "splitEvents": 1
+    },
+    {
+      "ticker": "JPFA",
+      "avgTurnover20": 30746692600,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "MYOR",
+      "avgTurnover20": 29374276775,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "LSIP",
+      "avgTurnover20": 28247097625,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "TOWR",
+      "avgTurnover20": 27569939270,
+      "splitEvents": 1
+    },
+    {
+      "ticker": "TKIM",
+      "avgTurnover20": 23213568125,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "BUKA",
+      "avgTurnover20": 21859618370,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "NICL",
+      "avgTurnover20": 21425519655,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "BBTN",
+      "avgTurnover20": 19982745350,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "WIRG",
+      "avgTurnover20": 19790635150,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "BSDE",
+      "avgTurnover20": 19527482375,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "AALI",
+      "avgTurnover20": 19090759625,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "HRTA",
+      "avgTurnover20": 18834063200,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "EXCL",
+      "avgTurnover20": 18752194800,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "CMRY",
+      "avgTurnover20": 17749069400,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "MARK",
+      "avgTurnover20": 17473155800,
+      "splitEvents": 1
+    },
+    {
+      "ticker": "HEAL",
+      "avgTurnover20": 16473162800,
+      "splitEvents": 1
+    },
+    {
+      "ticker": "ELSA",
+      "avgTurnover20": 15890263750,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "MTEL",
+      "avgTurnover20": 15807448080,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "SMRA",
+      "avgTurnover20": 15652779770,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "SSMS",
+      "avgTurnover20": 14936443800,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "CYBR",
+      "avgTurnover20": 14644812275,
+      "splitEvents": 1
+    },
+    {
+      "ticker": "SMDR",
+      "avgTurnover20": 14332650070,
+      "splitEvents": 2
+    },
+    {
+      "ticker": "BBYB",
+      "avgTurnover20": 13932578130,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "PGEO",
+      "avgTurnover20": 13908934250,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "HRUM",
+      "avgTurnover20": 13049191800,
+      "splitEvents": 1
+    },
+    {
+      "ticker": "BBHI",
+      "avgTurnover20": 12413644800,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "AUTO",
+      "avgTurnover20": 11931435650,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "MSJA",
+      "avgTurnover20": 11741746430,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "MAPI",
+      "avgTurnover20": 10917958850,
+      "splitEvents": 1
+    },
+    {
+      "ticker": "LPKR",
+      "avgTurnover20": 10396809745,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "BDMN",
+      "avgTurnover20": 10208458500,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "DSNG",
+      "avgTurnover20": 9887321700,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "PWON",
+      "avgTurnover20": 9628383310,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "ELIT",
+      "avgTurnover20": 9619286720,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "MAPA",
+      "avgTurnover20": 9027537175,
+      "splitEvents": 1
+    },
+    {
+      "ticker": "HATM",
+      "avgTurnover20": 8923372775,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "SIDO",
+      "avgTurnover20": 8309144270,
+      "splitEvents": 2
+    },
+    {
+      "ticker": "NISP",
+      "avgTurnover20": 8008909450,
+      "splitEvents": 1
+    },
+    {
+      "ticker": "BTPS",
+      "avgTurnover20": 7958505950,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "ASSA",
+      "avgTurnover20": 7731229300,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "MIKA",
+      "avgTurnover20": 6999397500,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "CTRA",
+      "avgTurnover20": 6972851700,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "TOBA",
+      "avgTurnover20": 6900272900,
+      "splitEvents": 1
+    },
+    {
+      "ticker": "ACES",
+      "avgTurnover20": 6770397260,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "NEST",
+      "avgTurnover20": 6755689050,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "INTP",
+      "avgTurnover20": 6315946375,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "BNGA",
+      "avgTurnover20": 6040004350,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "CLEO",
+      "avgTurnover20": 5935322900,
+      "splitEvents": 2
+    },
+    {
+      "ticker": "BJBR",
+      "avgTurnover20": 5924005475,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "SMSM",
+      "avgTurnover20": 5815455950,
+      "splitEvents": 1
+    },
+    {
+      "ticker": "AVIA",
+      "avgTurnover20": 4615421440,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "DKFT",
+      "avgTurnover20": 4320110325,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "SILO",
+      "avgTurnover20": 3211417700,
+      "splitEvents": 1
+    },
+    {
+      "ticker": "APLN",
+      "avgTurnover20": 2889398890,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "BJTM",
+      "avgTurnover20": 2703348525,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "PNBN",
+      "avgTurnover20": 2632622400,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "PTPP",
+      "avgTurnover20": 1692654150,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "UNTD",
+      "avgTurnover20": 1432203155,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "TBLA",
+      "avgTurnover20": 1342768425,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "MAIN",
+      "avgTurnover20": 1319352875,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "DOID",
+      "avgTurnover20": 1278895320,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "CFIN",
+      "avgTurnover20": 1203520940,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "TMAS",
+      "avgTurnover20": 1188489230,
+      "splitEvents": 2
+    },
+    {
+      "ticker": "MTDL",
+      "avgTurnover20": 1127900875,
+      "splitEvents": 2
+    },
+    {
+      "ticker": "BIRD",
+      "avgTurnover20": 1094153275,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "ASRI",
+      "avgTurnover20": 1017260345,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "IPCC",
+      "avgTurnover20": 904438575,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "AREA",
+      "avgTurnover20": 896927020,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "DAAZ",
+      "avgTurnover20": 866449150,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "DRMA",
+      "avgTurnover20": 823265975,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "WEGE",
+      "avgTurnover20": 691649660,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "BOAT",
+      "avgTurnover20": 636676900,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "GOTO",
+      "avgTurnover20": 574728250,
+      "splitEvents": 0
+    },
+    {
+      "ticker": "ALII",
+      "avgTurnover20": 523975750,
+      "splitEvents": 0
+    }
+  ]
+}

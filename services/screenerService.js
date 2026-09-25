@@ -8,6 +8,7 @@ const { formatJakartaDate } = require('./dateTime');
 const { sendTelegramAlert } = require('./telegramService');
 const { claimAlert, releaseAlert } = require('./alertDedupeStore');
 const { isStrictBsjpEligible, isStrictBpjpEligible, isStrictIntradayEligible } = require('./strictScreenerFilters');
+const { analyzeCandlesticks } = require('./candlestickAiEngine');
 
 const STOCK_SECTOR_MAP = new Map();
 if (Array.isArray(ALL_IDX_STOCKS)) {
@@ -100,6 +101,7 @@ async function runScreener() {
         scalpingSesi1: [],
         scalpingSesi2: [],
         daytrade: [],
+        candlestickAi: [],
         swing: [],
         bsjp: [],
         bpjp: [],
@@ -117,6 +119,7 @@ async function runScreener() {
 
             const trendData = processTechnicalData(chart.quotes);
             const validQuotes = chart.quotes.filter(q => q && q.close !== null);
+            const candlestickAi = analyzeCandlesticks(validQuotes);
             const latest = validQuotes[validQuotes.length - 1];
             const prev = validQuotes.length > 1 ? validQuotes[validQuotes.length - 2] : latest;
             const priorFiveVolumes = validQuotes.slice(-6, -1).map(quote => Number(quote.volume)).filter(volumeValue => Number.isFinite(volumeValue) && volumeValue > 0);
@@ -153,6 +156,12 @@ async function runScreener() {
             const ema200 = trendData.ema200 || (price * 0.95);
 
             const sector = STOCK_SECTOR_MAP.get(ticker) || 'Bursa Efek Indonesia';
+            if (candlestickAi.patterns.length) {
+                candidates.candlestickAi.push({
+                    score: candlestickAi.confidencePct || 0,
+                    item: { ticker, price, candlestickAi, candlestick: trendData.candlestick?.pattern || 'Netral' }
+                });
+            }
             const smartMoney = trendData.smartMoney || { score: 0, status: 'DATA TIDAK TERSEDIA', badge: 'Smart Money: N/A' };
             const pivots = trendData.pivots?.classic || null;
             const candlestick = trendData.candlestick?.pattern || 'N/A';
@@ -474,6 +483,7 @@ async function runScreener() {
         bpjp: rankAndPick(candidates.bpjp, 3),
         bpjs: rankAndPick(candidates.bpjp, 3),
         longterm: rankAndPick(candidates.longterm, 3),
+        candlestickAi: rankAndPick(candidates.candlestickAi, 5),
         allCandidates: {
             scalpingSesi1: rankAndPick(candidates.scalpingSesi1, 10),
             scalpingSesi2: rankAndPick(candidates.scalpingSesi2, 10),

@@ -9,6 +9,7 @@
     "build": "node scripts/build-frontend.js",
     "pretest": "node scripts/build-frontend.js",
     "test": "node test.js",
+    "train:candlestick": "node scripts/train-candlestick-model.js",
     "backtest": "node scratch/test_backtest.js"
   },
   "keywords": [],

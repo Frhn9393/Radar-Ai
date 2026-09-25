@@ -830,6 +830,10 @@ function resetModalAnalysisData({ unavailable = false } = {}) {
     setText('modal-trend-rvol', '-');
     setText('modal-trend-rsi', '-');
     setText('modal-trend-macd-adx', '-');
+    setText('modal-ai-decision', 'NEUTRAL');
+    setText('modal-ai-patterns-confidence', '-');
+    setText('modal-ai-target-stop', '-');
+    setText('modal-ai-validation', 'Belum tersedia');
     setText('modal-fin-badge', '-');
     setText('modal-fin-summary', unavailable
         ? 'Data realtime/historis emiten ini tidak tersedia di bursa saat ini.'
@@ -1028,6 +1032,31 @@ function populateAnalysisModal(data) {
         }
         const adxTxt = isUsableNumber(trend.adx14) ? `${Number(trend.adx14).toFixed(1)}` : '-';
         macdAdxEl.innerHTML = `<span class="text-white font-mono">${macdTxt}</span> | <span class="text-cyan-300 font-mono">ADX ${adxTxt}</span>`;
+    }
+
+    const candlestickAi = trend.candlestickAi || {};
+    const aiDecisionEl = document.getElementById('modal-ai-decision');
+    if (aiDecisionEl) {
+        aiDecisionEl.textContent = candlestickAi.decision || 'NEUTRAL';
+        aiDecisionEl.className = `font-mono font-bold ${candlestickAi.decision === 'STRONG BUY' ? 'text-emerald-300' : candlestickAi.decision === 'BUY' ? 'text-emerald-400' : 'text-slate-300'}`;
+    }
+    const aiPatternsEl = document.getElementById('modal-ai-patterns-confidence');
+    if (aiPatternsEl) {
+        const patterns = Array.isArray(candlestickAi.patterns) && candlestickAi.patterns.length ? candlestickAi.patterns.join(', ') : 'Tidak terdeteksi';
+        const confidence = Number.isFinite(Number(candlestickAi.confidencePct)) ? `${candlestickAi.confidencePct}%` : 'belum dilatih';
+        aiPatternsEl.textContent = `${patterns} · ${confidence}`;
+    }
+    const aiTargetStopEl = document.getElementById('modal-ai-target-stop');
+    if (aiTargetStopEl) {
+        const target = isUsableNumber(candlestickAi.targetPrice, { positive: true }) ? fmtRp.format(candlestickAi.targetPrice) : '—';
+        const stop = isUsableNumber(candlestickAi.stopLoss, { positive: true }) ? fmtRp.format(candlestickAi.stopLoss) : '—';
+        aiTargetStopEl.textContent = `${target} / ${stop}`;
+    }
+    const aiValidationEl = document.getElementById('modal-ai-validation');
+    if (aiValidationEl) {
+        const measuredRate = candlestickAi.validation?.observedStrongBuyWinRatePct;
+        const sampleCount = candlestickAi.validation?.predictedStrongBuySamples;
+        aiValidationEl.textContent = Number.isFinite(measuredRate) && sampleCount > 0 ? `${measuredRate}% · n=${sampleCount}` : 'Belum cukup sampel';
     }
 
     // Kesehatan Finansial (Aturan 1, 2, 4, 5)
