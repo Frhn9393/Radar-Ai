@@ -262,15 +262,7 @@ async function runScreenerFresh(options = {}) {
                     stopLoss: slSesi1,
                     supertrendBadge, rvolBadge, confidence, label,
                     smartMoney, pivots, candlestick,
-                    backtest: {
-                        winRate: '76.4%',
-                        profitFactor: '2.45',
-                        riskReward: '1:2.2',
-                        avgHolding: '0.5 - 2 Jam',
-                        strategy: 'Scalping Opening Surge',
-                        sampleSize: '412 Sinyal'
                     }
-                }
             });
 
             if (pullbackFromHigh <= 5.0) {
@@ -289,15 +281,7 @@ async function runScreenerFresh(options = {}) {
                         stopLoss: slSesi2,
                         supertrendBadge, rvolBadge, confidence, label,
                         smartMoney, pivots, candlestick,
-                        backtest: {
-                            winRate: '73.1%',
-                            profitFactor: '2.20',
-                            riskReward: '1:2.0',
-                            avgHolding: '45 - 90 Menit',
-                            strategy: 'Scalping Sesi 2 Breakout',
-                            sampleSize: '368 Sinyal'
                         }
-                    }
                 });
             }
 
@@ -325,15 +309,7 @@ async function runScreenerFresh(options = {}) {
                     stopLoss: dayStop,
                     supertrendBadge, rvolBadge, confidence, label: technicalStatus,
                     smartMoney, pivots, candlestick,
-                    backtest: {
-                        winRate: '71.8%',
-                        profitFactor: '2.35',
-                        riskReward: '1:2.0',
-                        avgHolding: 'Intraday (1 Hari)',
-                        strategy: 'Momentum Bullish Daytrade',
-                        sampleSize: '520 Sinyal'
                     }
-                }
             });
 
             // 3. SWING TRADE CANDIDATES (Multi-Day Breakout / Trend Pullback)
@@ -368,15 +344,7 @@ async function runScreenerFresh(options = {}) {
                     riskReward: swingRR.label,
                     supertrendBadge, rvolBadge, confidence, label: technicalStatus,
                     smartMoney, pivots, candlestick,
-                    backtest: {
-                        winRate: '74.2%',
-                        profitFactor: '2.70',
-                        riskReward: swingRR.label,
-                        avgHolding: '3 - 10 Hari',
-                        strategy: 'VCP & MA Pullback Swing',
-                        sampleSize: '294 Sinyal'
                     }
-                }
                 });
             }
 
@@ -418,15 +386,7 @@ async function runScreenerFresh(options = {}) {
                     riskReward: '1:2',
                     supertrendBadge, rvolBadge, confidence, label: technicalStatus,
                     smartMoney, pivots, candlestick,
-                    backtest: {
-                        winRate: '79.2%',
-                        profitFactor: '2.85',
-                        riskReward: '1:2.5',
-                        avgHolding: '16 - 18 Jam',
-                        strategy: 'Pre-Closing Accumulation BSJP',
-                        sampleSize: '480 Sinyal'
                     }
-                }
             });
 
             // 5. BPJP (Beli Pagi Jual Pagi / Sore)
@@ -463,15 +423,7 @@ async function runScreenerFresh(options = {}) {
                     estimasiGain: '2-3.5%',
                     supertrendBadge, rvolBadge, confidence, label: technicalStatus,
                     smartMoney, pivots, candlestick,
-                    backtest: {
-                        winRate: '72.0%',
-                        profitFactor: '2.18',
-                        riskReward: '1:2.2',
-                        avgHolding: 'Opening - 12:00 WIB',
-                        strategy: 'Morning Momentum Rebound BPJP',
-                        sampleSize: '390 Sinyal'
                     }
-                }
             });
 
             // 6. INVESTASI JANGKA PANJANG (Golden Alignment)
@@ -503,15 +455,7 @@ async function runScreenerFresh(options = {}) {
                     sinyalEntri: isSupertrendBullish ? 'Golden Alignment + ST ✓' : 'Trend Support Rebound',
                     supertrendBadge, confidence, label,
                     smartMoney, pivots, candlestick,
-                    backtest: {
-                        winRate: '82.5%',
-                        profitFactor: '3.40',
-                        riskReward: '1:4.0',
-                        avgHolding: '6 - 12 Bulan',
-                        strategy: 'Golden Trend Alignment & Value',
-                        sampleSize: '145 Sinyal'
                     }
-                }
             });
         } catch (e) {
             // gracefully skip individual error
@@ -564,8 +508,8 @@ async function runScreenerFresh(options = {}) {
             longterm: rankAndPick(candidates.longterm, 10)
         },
         backtestMetadata: {
-            methodology: "Battle-tested Multi-Month Quant Backtest (IDX)",
-            auditStatus: "STRICT_FAIL_CLOSED",
+            methodology: "Live screener scan; per-strategy historical backtest metrics are not calculated here.",
+            auditStatus: "BACKTEST_METRICS_NOT_COMPUTED",
             timestamp: new Date().toISOString()
         },
         dataSources: { prices: 'Yahoo Finance', indicators: 'Yahoo Finance OHLCV' }

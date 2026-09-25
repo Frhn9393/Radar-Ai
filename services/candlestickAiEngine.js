@@ -132,18 +132,23 @@ function analyzeCandlesticks(quotes) {
         const key = PATTERN_NAMES.find(([, name]) => name === label)?.[0];
         return key && Number(model?.patternCounts?.[key] || 0) >= 2000;
     });
-    const decision = probability === null || !hasPattern || !trendConfirmed || !patternSupport ? 'NEUTRAL'
-        : probability >= 0.8 ? 'STRONG BUY' : probability >= 0.6 ? 'BUY' : 'NEUTRAL';
+    const validation = model?.validation || null;
+    const statisticallySupported = Boolean(validation?.confidenceTarget80Met &&
+        Number(validation?.predictedStrongBuySamples) >= 30 &&
+        Number(validation?.observedStrongBuyWinRatePct) >= 80);
+    const decision = probability === null || probability < 0.6 || !hasPattern || !trendConfirmed || !patternSupport ? 'NEUTRAL'
+        : probability >= 0.8 && statisticallySupported ? 'STRONG BUY'
+            : probability >= 0.6 && statisticallySupported ? 'BUY' : 'NEUTRAL';
     return {
         decision,
-        confidencePct: probability === null ? null : Number((probability * 100).toFixed(1)),
+        confidencePct: probability === null || !statisticallySupported ? null : Number((probability * 100).toFixed(1)),
         targetPrice: latest ? Number((latest.close * 1.03).toFixed(2)) : null,
         stopLoss: latest ? Number((latest.close * 0.98).toFixed(2)) : null,
         patterns,
         trendConfirmed,
         patternSupport,
         modelTrained: Boolean(model),
-        validation: model?.validation || null,
+        validation,
         targetRule: 'TP +3%, SL -2%; label dievaluasi selama 10 sesi bursa'
     };
 }

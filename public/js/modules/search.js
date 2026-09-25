@@ -9,23 +9,29 @@
 const searchSuggestDropdown = document.getElementById('search-suggest-dropdown');
 let activeSuggestIndex = -1;
 let searchDebounceTimer = null;
+let searchRequestVersion = 0;
 
 async function showSearchSuggestions(query) {
     if (!searchSuggestDropdown) return;
     const q = (query || '').trim().replace(/^[\$#]/, '');
 
     if (!q) {
+        searchRequestVersion += 1;
+        clearTimeout(searchDebounceTimer);
         searchSuggestDropdown.classList.add('hidden');
         searchSuggestDropdown.innerHTML = '';
         activeSuggestIndex = -1;
         return;
     }
 
+    const requestVersion = ++searchRequestVersion;
     clearTimeout(searchDebounceTimer);
     searchDebounceTimer = setTimeout(async () => {
         try {
             const res = await fetch(`/api/search-suggest?q=${encodeURIComponent(q)}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
+            if (requestVersion !== searchRequestVersion || q !== (headerSearchInput.value || '').trim().replace(/^[\$#]/, '')) return;
             const matches = data.suggestions || [];
 
             if (matches.length === 0) {
@@ -46,7 +52,7 @@ async function showSearchSuggestions(query) {
             }
 
             searchSuggestDropdown.innerHTML = matches.map((item, idx) => `
-                <div class="suggest-item flex items-center justify-between p-2.5 hover:bg-[#131e33]   cursor-pointer transition select-none ${idx === activeSuggestIndex ? 'bg-[#142036]' : ''}" data-ticker="${item.ticker}">
+                <div class="suggest-item flex items-center justify-between p-2.5 hover:bg-[#131e33] cursor-pointer transition select-none ${idx === activeSuggestIndex ? 'bg-[#142036]' : ''}" data-ticker="${escapeHtml(item.ticker)}">
                     <div class="flex items-center gap-2.5">
                         <span class="bg-cyan-500/20 text-cyan-400 shadow-sm text-xs font-mono font-bold px-2 py-0.5 rounded shadow-sm">$${escapeHtml(item.ticker)}</span>
                         <div class="flex flex-col text-left">

@@ -20,7 +20,7 @@ async function loadMarketIndices() {
             const sign = isUp ? '+' : '';
             const colorClass = isUp ? 'text-emerald-400' : 'text-rose-400';
             const flag = idx.flag || '🌐';
-            return `<span class="inline-flex items-center gap-1.5"><span class="text-slate-400">${flag}</span> <b class="text-white">${idx.name}:</b> <span class="text-slate-200">${idx.priceFormatted || idx.price}</span> <span class="${colorClass} font-bold">${sign}${idx.changePct}%</span></span>`;
+            return `<span class="inline-flex items-center gap-1.5"><span class="text-slate-400">${escapeHtml(flag)}</span> <b class="text-white">${escapeHtml(idx.name)}:</b> <span class="text-slate-200">${escapeHtml(idx.priceFormatted || idx.price)}</span> <span class="${colorClass} font-bold">${sign}${escapeHtml(idx.changePct)}%</span></span>`;
         }).join('');
 
         // Duplicate set for seamless infinite marquee scroll

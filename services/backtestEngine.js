@@ -36,6 +36,8 @@ function generateScreenerSignal(strategy, bars, index) {
         return gap >= 1 && gap <= 3 && (bar.close > bar.open || change > 2);
     }
     if (strategy === 'DAYTRADE' || strategy === 'SCALPING') {
+        const changePct = previous.close > 0 ? ((bar.close - previous.close) / previous.close) * 100 : Number.NEGATIVE_INFINITY;
+        if (changePct <= 2) return false;
         const volatility = bar.low > 0 ? ((bar.high - bar.low) / bar.low) * 100 : 0;
         return volatility > 3 && bar.volume > 1.8 * meanVolume;
     }
@@ -674,13 +676,8 @@ async function quickAudit(ticker) {
         return {
             ticker: sanitizeTicker(ticker),
             strategy: 'Radar-AI Multi-Factor Quant Model',
-            winRate: '75.4%',
-            profitFactor: '2.40',
-            netReturn: '+24.5%',
-            benchmarkReturn: '+5.2%',
-            totalTrades: 18,
-            maxDrawdown: '-4.8%',
-            riskReward: '1:2.3'
+            unavailable: true,
+            error: 'Data historis belum tersedia untuk menghitung metrik backtest.'
         };
     }
 }

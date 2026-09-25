@@ -98,6 +98,13 @@ router.get('/broksum/:ticker', async (req, res) => {
 });
 
 router.post('/telegram-webhook', (req, res) => {
+    const expectedSecret = String(process.env.TELEGRAM_WEBHOOK_SECRET || '').trim();
+    const suppliedSecret = String(req.get('x-telegram-bot-api-secret-token') || '').trim();
+    if (!expectedSecret || suppliedSecret !== expectedSecret) {
+        console.warn('[telegram-webhook] rejected request: missing or invalid secret token');
+        return res.status(401).send('Unauthorized');
+    }
+
     const update = req.body || {};
     const message = update.message || update.edited_message;
     const chatId = message?.chat?.id;
@@ -111,13 +118,6 @@ router.post('/telegram-webhook', (req, res) => {
     // Telegram retries requests that take too long; acknowledge before all processing.
     res.status(200).send('OK');
 
-    const expectedSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
-    const suppliedSecret = req.get('x-telegram-bot-api-secret-token');
-    const authorized = !expectedSecret || suppliedSecret === expectedSecret;
-    if (!authorized) {
-        console.warn('[telegram-webhook] rejected request: secret token mismatch');
-        return;
-    }
     if (isDuplicateTelegramUpdate(updateId)) {
         console.log('[telegram-webhook] duplicate update ignored', updateId);
         return;

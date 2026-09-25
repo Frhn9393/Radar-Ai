@@ -7,6 +7,7 @@
 //  SHARED SCREENER HELPERS
 // ============================================================
 function confCell(confidence, label) {
+    confidence = Math.max(0, Math.min(100, Number.isFinite(Number(confidence)) ? Number(confidence) : 0));
     const color = confidence >= 75 ? 'text-emerald-400' : confidence >= 55 ? 'text-amber-400' : 'text-orange-400';
     const barColor = confidence >= 75 ? 'bg-emerald-400' : confidence >= 55 ? 'bg-amber-400' : 'bg-orange-400';
     const isCounterTrend = /rebound|oversold/i.test(label || '');
@@ -120,24 +121,24 @@ function renderScalpingTable(session = 'sesi1') {
         const antrean = row.antreanBeli || (session === 'sesi1' ? `Antre Bid Rp ${fmtRp.format(row.price - tick)} - Rp ${fmtRp.format(row.price)} (Bid 1-2)` : `Antre Bid Rp ${fmtRp.format(row.price - 2 * tick)} - Rp ${fmtRp.format(row.price - tick)} (Bid 2-3)`);
         const jam = row.jamEksekusi || (session === 'sesi1' ? '09:00 - 09:30 WIB' : '13:30 - 14:15 WIB');
         const rankBadge = getRankBadge(row);
-        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
-        const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${row.rvolBadge}</span>` : '';
+        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${escapeHtml(row.supertrendBadge)}</span>` : '';
+        const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${escapeHtml(row.rvolBadge)}</span>` : '';
 
         return `
-            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${escapeHtml(row.ticker)}">
                 <td class="p-3 font-mono">
                     <div class="flex items-center gap-1.5">
-                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${escapeHtml(row.ticker)}</span>
                         ${rankBadge}
                         ${broksumAction(row.ticker)}
                     </div>
                     <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
                 </td>
                 <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
-                <td class="p-3 font-mono font-bold ${parseFloat(row.changePct) >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${parseFloat(row.changePct) >= 0 ? '+' : ''}${row.changePct}%</td>
-                <td class="p-3 font-mono text-slate-300">${row.range}%</td>
-                <td class="p-3 font-mono font-bold text-cyan-300 whitespace-nowrap"><span class="bg-cyan-950/40 shadow-sm px-2 py-0.5 rounded text-xs">${antrean}</span></td>
-                <td class="p-3 font-mono text-amber-300 font-semibold whitespace-nowrap text-xs">🕒 ${jam}</td>
+                <td class="p-3 font-mono font-bold ${parseFloat(row.changePct) >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${escapeHtml(row.changePct)}%</td>
+                <td class="p-3 font-mono text-slate-300">${escapeHtml(row.range)}%</td>
+                <td class="p-3 font-mono font-bold text-cyan-300 whitespace-nowrap"><span class="bg-cyan-950/40 shadow-sm px-2 py-0.5 rounded text-xs">${escapeHtml(antrean)}</span></td>
+                <td class="p-3 font-mono text-amber-300 font-semibold whitespace-nowrap text-xs">🕒 ${escapeHtml(jam)}</td>
                 <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetProfit)}</td>
                 <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.stopLoss)}</td>
                 ${confCell(row.confidence, row.label)}
@@ -255,21 +256,21 @@ function renderScreenerResults(data) {
         } else {
             tbodyDay.innerHTML = dayList.map(row => {
                 const rankBadge = getRankBadge(row);
-                const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
-                const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${row.rvolBadge}</span>` : '';
+                const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${escapeHtml(row.supertrendBadge)}</span>` : '';
+                const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${escapeHtml(row.rvolBadge)}</span>` : '';
 
                 return `
-                    <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+                    <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${escapeHtml(row.ticker)}">
                         <td class="p-3 font-mono">
                             <div class="flex items-center gap-1.5">
-                                <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                                <span class="font-bold text-cyan-400 hover:underline text-sm">$${escapeHtml(row.ticker)}</span>
                                 ${rankBadge}
                                 ${broksumAction(row.ticker)}
                             </div>
                             <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
                         </td>
                         <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
-                        <td class="p-3 font-mono font-bold ${parseFloat(row.changePct) >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${parseFloat(row.changePct) >= 0 ? '+' : ''}${row.changePct}%</td>
+                        <td class="p-3 font-mono font-bold ${parseFloat(row.changePct) >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${parseFloat(row.changePct) >= 0 ? '+' : ''}${escapeHtml(row.changePct)}%</td>
                 <td class="p-3 font-mono text-slate-300">${formatRange(row.entryZoneLow, row.entryZoneHigh, row.entryZone)}</td>
                 <td class="p-3 font-mono font-semibold text-emerald-400">${formatPrice(row.targetProfit)}</td>
                 <td class="p-3 font-mono text-rose-400">${formatPrice(row.stopLoss)}</td>
@@ -289,14 +290,14 @@ function renderScreenerResults(data) {
         } else {
             tbodySwing.innerHTML = swingList.map(row => {
                 const rankBadge = getRankBadge(row);
-                const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
-                const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${row.rvolBadge}</span>` : '';
+                const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${escapeHtml(row.supertrendBadge)}</span>` : '';
+                const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${escapeHtml(row.rvolBadge)}</span>` : '';
 
                 return `
-                    <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+                    <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${escapeHtml(row.ticker)}">
                         <td class="p-3 font-mono">
                             <div class="flex items-center gap-1.5">
-                                <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                                <span class="font-bold text-cyan-400 hover:underline text-sm">$${escapeHtml(row.ticker)}</span>
                                 ${rankBadge}
                                 ${broksumAction(row.ticker)}
                             </div>
@@ -307,7 +308,7 @@ function renderScreenerResults(data) {
                         <td class="p-3 font-mono font-semibold text-emerald-400">${formatPrice(row.targetPrice1)}</td>
                         <td class="p-3 font-mono font-semibold text-emerald-400">${formatPrice(row.targetPrice2)}</td>
                         <td class="p-3 font-mono text-rose-400">${formatPrice(row.cutLoss)}</td>
-                        <td class="p-3 font-mono font-bold text-purple-400">${row.riskReward}</td>
+                        <td class="p-3 font-mono font-bold text-purple-400">${escapeHtml(row.riskReward)}</td>
                         ${confCell(row.confidence, row.label)}
                     </tr>
                 `;
@@ -324,23 +325,23 @@ function renderScreenerResults(data) {
         } else {
             tbodyBsjp.innerHTML = bsjpList.map(row => {
                 const rankBadge = getRankBadge(row);
-                const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
-                const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${row.rvolBadge}</span>` : '';
+                const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${escapeHtml(row.supertrendBadge)}</span>` : '';
+                const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${escapeHtml(row.rvolBadge)}</span>` : '';
 
                 return `
-                    <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+                    <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${escapeHtml(row.ticker)}">
                         <td class="p-3 font-mono">
                             <div class="flex items-center gap-1.5">
-                                <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                                <span class="font-bold text-cyan-400 hover:underline text-sm">$${escapeHtml(row.ticker)}</span>
                                 ${rankBadge}
                                 ${broksumAction(row.ticker)}
                             </div>
                             <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
                         </td>
                         <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
-                        <td class="p-3 font-mono font-semibold ${parseFloat(row.rsi) > 60 ? 'text-amber-400' : 'text-emerald-400'}">${row.rsi}</td>
-                        <td class="p-3 font-mono text-slate-300">${row.pullbackFromHigh}%</td>
-                        <td class="p-3 text-amber-400 text-xs">${row.beliSore}</td>
+                        <td class="p-3 font-mono font-semibold ${parseFloat(row.rsi) > 60 ? 'text-amber-400' : 'text-emerald-400'}">${escapeHtml(row.rsi)}</td>
+                        <td class="p-3 font-mono text-slate-300">${escapeHtml(row.pullbackFromHigh)}%</td>
+                        <td class="p-3 text-amber-400 text-xs">${escapeHtml(row.beliSore)}</td>
                         <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetPagi)}</td>
                         <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.stopLoss)}</td>
                         ${confCell(row.confidence, row.label)}
@@ -359,24 +360,24 @@ function renderScreenerResults(data) {
         } else {
             tbodyBpjp.innerHTML = bpjpList.map(row => {
                 const rankBadge = getRankBadge(row);
-                const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
-                const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${row.rvolBadge}</span>` : '';
+                const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${escapeHtml(row.supertrendBadge)}</span>` : '';
+                const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${escapeHtml(row.rvolBadge)}</span>` : '';
 
                 return `
-                    <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+                    <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${escapeHtml(row.ticker)}">
                         <td class="p-3 font-mono">
                             <div class="flex items-center gap-1.5">
-                                <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                                <span class="font-bold text-cyan-400 hover:underline text-sm">$${escapeHtml(row.ticker)}</span>
                                 ${rankBadge}
                                 ${broksumAction(row.ticker)}
                             </div>
                             <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
                         </td>
                         <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
-                        <td class="p-3 font-mono font-semibold text-emerald-400">${row.rsi} <span class="text-[10px] text-cyan-300 font-sans">(${row.rsiStatus || 'Bounce'})</span></td>
-                        <td class="p-3 font-mono text-purple-400">${row.adx}</td>
-                        <td class="p-3 font-mono text-slate-300">${row.macd}</td>
-                        <td class="p-3 text-pink-400 text-xs">${row.entryPagi}</td>
+                        <td class="p-3 font-mono font-semibold text-emerald-400">${escapeHtml(row.rsi)} <span class="text-[10px] text-cyan-300 font-sans">(${escapeHtml(row.rsiStatus || 'Bounce')})</span></td>
+                        <td class="p-3 font-mono text-purple-400">${escapeHtml(row.adx)}</td>
+                        <td class="p-3 font-mono text-slate-300">${escapeHtml(row.macd)}</td>
+                        <td class="p-3 text-pink-400 text-xs">${escapeHtml(row.entryPagi)}</td>
                         <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.target)}</td>
                         <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.stopLoss)}</td>
                         ${confCell(row.confidence, row.label)}
@@ -395,20 +396,20 @@ function renderScreenerResults(data) {
         } else {
             tbodyLong.innerHTML = longList.map(row => {
                 const rankBadge = getRankBadge(row);
-                const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
+                const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${escapeHtml(row.supertrendBadge)}</span>` : '';
 
                 return `
-                    <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+                    <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${escapeHtml(row.ticker)}">
                         <td class="p-3 font-mono">
                             <div class="flex items-center gap-1.5">
-                                <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                                <span class="font-bold text-cyan-400 hover:underline text-sm">$${escapeHtml(row.ticker)}</span>
                                 ${rankBadge}
                                 ${broksumAction(row.ticker)}
                             </div>
                             <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge}</div>
                         </td>
                         <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
-                        <td class="p-3 font-mono font-semibold text-amber-400">${row.rsi}</td>
+                        <td class="p-3 font-mono font-semibold text-amber-400">${escapeHtml(row.rsi)}</td>
                         <td class="p-3 font-mono text-slate-300">${fmtRp.format(row.ema200)}</td>
                         <td class="p-3 font-mono text-slate-400">${fmtRp.format(row.support)}</td>
                         <td class="p-3 font-mono font-semibold text-emerald-400">${formatPrice(row.targetKonservatif)}</td>

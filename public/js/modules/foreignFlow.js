@@ -1,10 +1,10 @@
 // ============================================================
 //  MODULE: foreignFlow.js
-//  Foreign flow tracking: daily, weekly, monthly, and consecutive streak
+//  Estimated price and volume proxy: daily, weekly, monthly, and consecutive streak
 // ============================================================
 
 // ============================================================
-//  5B. PELACAKAN TOP FOREIGN BUY & SELL ENGINE
+//  5B. PROXY HARGA DAN VOLUME
 // ============================================================
 
 function fmtRpMiliar(val) {
@@ -77,9 +77,11 @@ async function loadForeignFlowData(forceRefresh = false) {
     try {
         const url = forceRefresh ? '/api/foreign-flow?force=true' : '/api/foreign-flow';
         const res = await fetch(url);
-        if (!res.ok) throw new Error('Gagal mengambil data aliran asing');
+        if (!res.ok) throw new Error('Gagal mengambil estimasi proxy harga dan volume');
         const data = await res.json();
         allForeignData = data;
+        const flowDisclaimer = document.getElementById('foreign-flow-disclaimer');
+        if (flowDisclaimer) flowDisclaimer.textContent = data.macro?.dataDisclaimer || 'Estimasi proxy berbasis harga dan volume, bukan catatan transaksi aktual investor asing.';
 
         if (data.macro) {
             if (foreignMacroNetval) {
@@ -88,7 +90,7 @@ async function loadForeignFlowData(forceRefresh = false) {
                 foreignMacroNetval.className = `text-lg font-black font-mono ${val >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
             }
             if (foreignMacroParticipation) {
-                foreignMacroParticipation.textContent = `${data.macro.foreignParticipationPct}%`;
+                foreignMacroParticipation.textContent = `${data.macro.estimatedParticipationPct ?? '—'}% est.`;
             }
             if (foreignMacroSentiment) {
                 foreignMacroSentiment.textContent = data.macro.sentiment;
@@ -156,13 +158,13 @@ function renderForeignDailyTables() {
             const sellVal = row.foreignSellVal ? fmtRpMiliar(row.foreignSellVal) : null;
 
             return `
-                <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+                <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${escapeHtml(row.ticker)}">
                     <td class="p-3 font-mono">
                         <div class="flex items-center gap-2">
                             ${getForeignRankBadge(idx + 1)}
-                            <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                            <span class="font-bold text-cyan-400 hover:underline text-sm">${escapeHtml(row.ticker)}</span>
                         </div>
-                        <p class="text-[10px] text-slate-400 truncate max-w-[150px] sm:max-w-[200px] mt-0.5">${row.sector || 'IDX'}</p>
+                        <p class="text-[10px] text-slate-400 truncate max-w-[150px] sm:max-w-[200px] mt-0.5">${escapeHtml(row.sector || 'IDX')}</p>
                     </td>
                     <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.currentPrice || row.price)}</td>
                     <td class="p-3 font-mono font-bold ${chgColor}">${sign}${chg.toFixed(2)}%</td>
@@ -185,7 +187,7 @@ function renderForeignDailyTables() {
                         </div>
                     </td>
                     <td class="p-3">
-                        <span class="text-[10px] px-2 py-0.5 rounded shadow-sm ${statusBadge}">${row.status || 'AKUMULASI 🟢'}</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded shadow-sm ${statusBadge}">${escapeHtml(row.status || 'PROXY')}</span>
                     </td>
                 </tr>
             `;
@@ -211,13 +213,13 @@ function renderForeignDailyTables() {
             const sellVal = row.foreignSellVal ? fmtRpMiliar(row.foreignSellVal) : null;
 
             return `
-                <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+                <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${escapeHtml(row.ticker)}">
                     <td class="p-3 font-mono">
                         <div class="flex items-center gap-2">
                             ${getForeignRankBadge(idx + 1)}
-                            <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                            <span class="font-bold text-cyan-400 hover:underline text-sm">${escapeHtml(row.ticker)}</span>
                         </div>
-                        <p class="text-[10px] text-slate-400 truncate max-w-[150px] sm:max-w-[200px] mt-0.5">${row.sector || 'IDX'}</p>
+                        <p class="text-[10px] text-slate-400 truncate max-w-[150px] sm:max-w-[200px] mt-0.5">${escapeHtml(row.sector || 'IDX')}</p>
                     </td>
                     <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.currentPrice || row.price)}</td>
                     <td class="p-3 font-mono font-bold ${chgColor}">${sign}${chg.toFixed(2)}%</td>
@@ -240,7 +242,7 @@ function renderForeignDailyTables() {
                         </div>
                     </td>
                     <td class="p-3">
-                        <span class="text-[10px] px-2 py-0.5 rounded shadow-sm ${statusBadge}">${row.status || 'DISTRIBUSI 🔴'}</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded shadow-sm ${statusBadge}">${escapeHtml(row.status || 'PROXY')}</span>
                     </td>
                 </tr>
             `;
@@ -288,13 +290,13 @@ function renderForeignWeeklyTable() {
         }
 
         return `
-            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${escapeHtml(row.ticker)}">
                 <td class="p-3 font-mono">
                     <div class="flex items-center gap-2">
                         ${getForeignRankBadge(idx + 1)}
-                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                        <span class="font-bold text-cyan-400 hover:underline text-sm">${escapeHtml(row.ticker)}</span>
                     </div>
-                    <p class="text-[10px] text-slate-400 truncate max-w-[150px] sm:max-w-[200px] mt-0.5">${row.sector || 'IDX'}</p>
+                    <p class="text-[10px] text-slate-400 truncate max-w-[150px] sm:max-w-[200px] mt-0.5">${escapeHtml(row.sector || 'IDX')}</p>
                 </td>
                 <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.currentPrice || row.price)}</td>
                 <td class="p-3 font-mono font-bold ${retColor}">${sign}${ret.toFixed(2)}%</td>
@@ -339,13 +341,13 @@ function renderForeignMonthlyTable() {
         }
 
         return `
-            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${escapeHtml(row.ticker)}">
                 <td class="p-3 font-mono">
                     <div class="flex items-center gap-2">
                         ${getForeignRankBadge(idx + 1)}
-                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                        <span class="font-bold text-cyan-400 hover:underline text-sm">${escapeHtml(row.ticker)}</span>
                     </div>
-                    <p class="text-[10px] text-slate-400 truncate max-w-[150px] sm:max-w-[200px] mt-0.5">${row.sector || 'IDX'}</p>
+                    <p class="text-[10px] text-slate-400 truncate max-w-[150px] sm:max-w-[200px] mt-0.5">${escapeHtml(row.sector || 'IDX')}</p>
                 </td>
                 <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.currentPrice || row.price)}</td>
                 <td class="p-3 font-mono font-bold ${retColor}">${sign}${ret.toFixed(2)}%</td>
@@ -395,18 +397,14 @@ function renderForeignStreakTable() {
         } else if (!trailingStop || trailingStop === '-') {
             trailingStop = currentPrice > 0 ? fmtRp.format(Math.round(currentPrice * 0.97)) : '-';
         }
-
-        const winRate = row.backtestWinRate || row.backtest?.winRate || '78.4%';
-        const profitFactor = row.profitFactor || row.backtest?.profitFactor || '2.80';
-
         return `
-            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${escapeHtml(row.ticker)}">
                 <td class="p-3 font-mono">
                     <div class="flex items-center gap-2">
                         ${getForeignRankBadge(idx + 1)}
-                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                        <span class="font-bold text-cyan-400 hover:underline text-sm">${escapeHtml(row.ticker)}</span>
                     </div>
-                    <p class="text-[10px] text-slate-400 truncate max-w-[150px] sm:max-w-[200px] mt-0.5">${row.sector || 'IDX'}</p>
+                    <p class="text-[10px] text-slate-400 truncate max-w-[150px] sm:max-w-[200px] mt-0.5">${escapeHtml(row.sector || 'IDX')}</p>
                 </td>
                 <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(currentPrice)}</td>
                 <td class="p-3">
@@ -419,14 +417,14 @@ function renderForeignStreakTable() {
                 <td class="p-3 font-mono font-bold ${gainColor}">${gain >= 0 ? '+' : ''}${gain.toFixed(2)}%</td>
                 <td class="p-3">
                     <span class="bg-purple-950/80 shadow-sm text-purple-300 font-extrabold text-[10px] px-2 py-0.5 rounded">
-                        ${conviction}
+                        ${escapeHtml(conviction)}
                     </span>
                 </td>
-                <td class="p-3 font-mono text-emerald-400 font-semibold">${entryZone}</td>
+                <td class="p-3 font-mono text-emerald-400 font-semibold">${escapeHtml(entryZone)}</td>
                 <td class="p-3 font-mono text-rose-400 font-semibold">${trailingStop}</td>
                 <td class="p-3">
                     <span class="bg-emerald-950/80 shadow-sm text-emerald-400 px-2 py-0.5 rounded text-[11px] font-mono font-bold whitespace-nowrap">
-                        Win ${winRate} | PF ${profitFactor}
+                        Estimasi berbasis harga dan volume
                     </span>
                 </td>
             </tr>

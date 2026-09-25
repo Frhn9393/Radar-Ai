@@ -436,12 +436,12 @@ async function loadDeals() {
         const res = await fetch('/api/deals');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        if (data.deals && data.deals.length > 0) {
+        if (Array.isArray(data.deals)) {
             allDeals = data.deals;
             if (badgeTotalDeals) badgeTotalDeals.textContent = `${allDeals.length} DEAL TERDETEKSI`;
             if (countFilterAll) countFilterAll.textContent = allDeals.length;
-            if (data.lastUpdated && statLastUpdate) {
-                statLastUpdate.textContent = data.lastUpdated;
+            if (statLastUpdate) {
+                statLastUpdate.textContent = data.lastUpdated || 'Belum diperbarui';
             }
             renderDeals();
         }
@@ -514,7 +514,7 @@ function renderDeals() {
                     <div class="flex items-center gap-1.5 text-right shrink-0">
                         <span class="text-xs text-slate-400 font-medium truncate max-w-[100px]">${escapeHtml(deal.source)}</span>
                         <span class="text-slate-600 text-xs">•</span>
-                        <span class="inline-flex items-center gap-1 text-[11px] text-emerald-400/90 font-mono font-bold bg-[#071d22] shadow-sm px-1.5 py-0.5 rounded" title="Waktu Tayang: ${deal.timeStr} (${deal.dateStr})">
+                        <span class="inline-flex items-center gap-1 text-[11px] text-emerald-400/90 font-mono font-bold bg-[#071d22] shadow-sm px-1.5 py-0.5 rounded" title="Waktu Tayang: ${escapeHtml(deal.timeStr)} (${escapeHtml(deal.dateStr)})">
                             <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2"/></svg>
                             <span>${escapeHtml(deal.timeAgo || 'Baru saja')}</span>
                             <span class="text-slate-400 font-normal hidden sm:inline">(${escapeHtml(deal.timeStr)})</span>
@@ -553,7 +553,7 @@ function renderDeals() {
                             <span>Baca Berita</span>
                         </a>
                         <!-- Analyze stock button -->
-                        <button class="btn-inspect-deal text-amber-400 hover:text-amber-300 font-bold text-xs flex items-center gap-1 transition shrink-0" data-ticker="${primaryTicker}">
+                        <button class="btn-inspect-deal text-amber-400 hover:text-amber-300 font-bold text-xs flex items-center gap-1 transition shrink-0" data-ticker="${escapeHtml(primaryTicker)}">
                             <span>Analisis</span>
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                         </button>
@@ -618,7 +618,7 @@ async function loadMarketNews() {
         const res = await fetch('/api/market-news');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        if (data.news && data.news.length > 0) {
+        if (Array.isArray(data.news)) {
             allMarketNews = data.news;
 
             // Update stats
@@ -626,13 +626,13 @@ async function loadMarketNews() {
                 const dealsLen = typeof allDeals !== 'undefined' && Array.isArray(allDeals) ? allDeals.length : 0;
                 statTotalNews.textContent = `${allMarketNews.length + dealsLen} Total Berita Terkumpul`;
             }
-            if (data.lastUpdated && statLastUpdate) {
-                statLastUpdate.textContent = data.lastUpdated;
+            if (statLastUpdate) {
+                statLastUpdate.textContent = data.lastUpdated || 'Belum diperbarui';
             }
 
             renderMarketNews();
             renderCorporateNewsTicker();
-            if (typeof playSoundChime === 'function') playSoundChime();
+            if (allMarketNews.length && typeof playSoundChime === 'function') playSoundChime();
         }
     } catch (err) {
         console.error('Gagal memuat berita pasar:', err);
@@ -655,17 +655,18 @@ function renderCorporateNewsTicker() {
         item.className = 'inline-flex items-center gap-2 text-slate-300 whitespace-nowrap cursor-pointer hover:text-white transition';
 
         let tag = 'IDX';
-        if (news.category) tag = news.category.toUpperCase().substring(0, 5);
+        if (news.category) tag = String(news.category).toUpperCase().substring(0, 5);
 
         item.innerHTML = `
-            <span class="bg-[#101929] text-cyan-400 text-[10px] font-bold px-1.5 py-0.5 rounded font-mono shadow-sm">[${tag}]</span>
-            <span class="bg-emerald-950/70 text-emerald-400 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded shadow-sm">${news.timeStr || news.timeAgo}</span>
+            <span class="bg-[#101929] text-cyan-400 text-[10px] font-bold px-1.5 py-0.5 rounded font-mono shadow-sm">[${escapeHtml(tag)}]</span>
+            <span class="bg-emerald-950/70 text-emerald-400 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded shadow-sm">${escapeHtml(news.timeStr || news.timeAgo || '')}</span>
             <span class="font-medium text-xs">${escapeHtml(news.title)}</span>
             <span class="text-emerald-400 font-bold text-xs ml-1">↗</span>
             <span class="text-slate-700 ml-3">•</span>
         `;
         item.addEventListener('click', () => {
-            if (news.link) window.open(news.link, '_blank', 'noopener,noreferrer');
+            const safeLink = safeExternalUrl(news.link);
+            if (safeLink !== '#') window.open(safeLink, '_blank', 'noopener,noreferrer');
         });
         groupEl.appendChild(item);
         });
@@ -1013,7 +1014,7 @@ function populateAnalysisModal(data) {
     if (rvolEl) {
         const rvol = Number(trend.rvol);
         const color = rvol >= 1.5 ? 'text-amber-400' : rvol >= 1.1 ? 'text-emerald-400' : 'text-slate-300';
-        rvolEl.innerHTML = `<span class="${color} font-bold font-mono">${rvol.toFixed(2)}x</span> <span class="text-[10px] text-slate-400">(${trend.volumeStatus || 'Normal'})</span>`;
+        rvolEl.innerHTML = `<span class="${color} font-bold font-mono">${rvol.toFixed(2)}x</span> <span class="text-[10px] text-slate-400">(${escapeHtml(trend.volumeStatus || 'Normal')})</span>`;
     }
 
     const rsiEl = document.getElementById('modal-trend-rsi');
@@ -1043,7 +1044,7 @@ function populateAnalysisModal(data) {
     const aiPatternsEl = document.getElementById('modal-ai-patterns-confidence');
     if (aiPatternsEl) {
         const patterns = Array.isArray(candlestickAi.patterns) && candlestickAi.patterns.length ? candlestickAi.patterns.join(', ') : 'Tidak terdeteksi';
-        const confidence = Number.isFinite(Number(candlestickAi.confidencePct)) ? `${candlestickAi.confidencePct}%` : 'belum dilatih';
+        const confidence = candlestickAi.confidencePct !== null && candlestickAi.confidencePct !== undefined && Number.isFinite(Number(candlestickAi.confidencePct)) ? `${candlestickAi.confidencePct}%` : 'belum tervalidasi';
         aiPatternsEl.textContent = `${patterns} · ${confidence}`;
     }
     const aiTargetStopEl = document.getElementById('modal-ai-target-stop');
@@ -1292,14 +1293,14 @@ function populateAnalysisModal(data) {
             item.innerHTML = `
                 <div>
                     <div class="flex items-center justify-between text-[10px] text-slate-500 mb-1">
-                        <span class="text-cyan-400 font-bold">${n.source}</span>
-                        <span class="text-emerald-400 font-mono font-semibold">🕒 ${n.date || n.timeAgo}</span>
+                        <span class="text-cyan-400 font-bold">${escapeHtml(n.source)}</span>
+                        <span class="text-emerald-400 font-mono font-semibold">🕒 ${escapeHtml(n.date || n.timeAgo)}</span>
                     </div>
-                    <h5 class="text-xs font-semibold text-slate-200 group-hover:text-amber-300 leading-snug">${n.title}</h5>
-                    <p class="text-[10px] text-slate-400 italic mt-1">${n.impact}</p>
+                    <h5 class="text-xs font-semibold text-slate-200 group-hover:text-amber-300 leading-snug">${escapeHtml(n.title)}</h5>
+                    <p class="text-[10px] text-slate-400 italic mt-1">${escapeHtml(n.impact)}</p>
                 </div>
                 <div class="flex justify-end pt-1">
-                    <a href="${n.link}" target="_blank" rel="noopener noreferrer"
+                    <a href="${safeExternalUrl(n.link)}" target="_blank" rel="noopener noreferrer"
                        class="inline-flex items-center gap-1 text-[11px] font-bold text-sky-300 hover:text-sky-100 bg-sky-950/60 hover:bg-sky-900/80 shadow-sm px-2.5 py-1 rounded transition">
                         <span>Baca Berita Lengkap</span>
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
@@ -1554,23 +1555,29 @@ if (tickerBadge) tickerBadgeObserver.observe(tickerBadge, { childList: true, cha
 const searchSuggestDropdown = document.getElementById('search-suggest-dropdown');
 let activeSuggestIndex = -1;
 let searchDebounceTimer = null;
+let searchRequestVersion = 0;
 
 async function showSearchSuggestions(query) {
     if (!searchSuggestDropdown) return;
     const q = (query || '').trim().replace(/^[\$#]/, '');
 
     if (!q) {
+        searchRequestVersion += 1;
+        clearTimeout(searchDebounceTimer);
         searchSuggestDropdown.classList.add('hidden');
         searchSuggestDropdown.innerHTML = '';
         activeSuggestIndex = -1;
         return;
     }
 
+    const requestVersion = ++searchRequestVersion;
     clearTimeout(searchDebounceTimer);
     searchDebounceTimer = setTimeout(async () => {
         try {
             const res = await fetch(`/api/search-suggest?q=${encodeURIComponent(q)}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
+            if (requestVersion !== searchRequestVersion || q !== (headerSearchInput.value || '').trim().replace(/^[\$#]/, '')) return;
             const matches = data.suggestions || [];
 
             if (matches.length === 0) {
@@ -1591,7 +1598,7 @@ async function showSearchSuggestions(query) {
             }
 
             searchSuggestDropdown.innerHTML = matches.map((item, idx) => `
-                <div class="suggest-item flex items-center justify-between p-2.5 hover:bg-[#131e33]   cursor-pointer transition select-none ${idx === activeSuggestIndex ? 'bg-[#142036]' : ''}" data-ticker="${item.ticker}">
+                <div class="suggest-item flex items-center justify-between p-2.5 hover:bg-[#131e33] cursor-pointer transition select-none ${idx === activeSuggestIndex ? 'bg-[#142036]' : ''}" data-ticker="${escapeHtml(item.ticker)}">
                     <div class="flex items-center gap-2.5">
                         <span class="bg-cyan-500/20 text-cyan-400 shadow-sm text-xs font-mono font-bold px-2 py-0.5 rounded shadow-sm">$${escapeHtml(item.ticker)}</span>
                         <div class="flex flex-col text-left">
@@ -1708,6 +1715,7 @@ btnClearSearch.addEventListener('click', () => {
 //  SHARED SCREENER HELPERS
 // ============================================================
 function confCell(confidence, label) {
+    confidence = Math.max(0, Math.min(100, Number.isFinite(Number(confidence)) ? Number(confidence) : 0));
     const color = confidence >= 75 ? 'text-emerald-400' : confidence >= 55 ? 'text-amber-400' : 'text-orange-400';
     const barColor = confidence >= 75 ? 'bg-emerald-400' : confidence >= 55 ? 'bg-amber-400' : 'bg-orange-400';
     const isCounterTrend = /rebound|oversold/i.test(label || '');
@@ -1821,24 +1829,24 @@ function renderScalpingTable(session = 'sesi1') {
         const antrean = row.antreanBeli || (session === 'sesi1' ? `Antre Bid Rp ${fmtRp.format(row.price - tick)} - Rp ${fmtRp.format(row.price)} (Bid 1-2)` : `Antre Bid Rp ${fmtRp.format(row.price - 2 * tick)} - Rp ${fmtRp.format(row.price - tick)} (Bid 2-3)`);
         const jam = row.jamEksekusi || (session === 'sesi1' ? '09:00 - 09:30 WIB' : '13:30 - 14:15 WIB');
         const rankBadge = getRankBadge(row);
-        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
-        const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${row.rvolBadge}</span>` : '';
+        const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${escapeHtml(row.supertrendBadge)}</span>` : '';
+        const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${escapeHtml(row.rvolBadge)}</span>` : '';
 
         return `
-            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${escapeHtml(row.ticker)}">
                 <td class="p-3 font-mono">
                     <div class="flex items-center gap-1.5">
-                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${escapeHtml(row.ticker)}</span>
                         ${rankBadge}
                         ${broksumAction(row.ticker)}
                     </div>
                     <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
                 </td>
                 <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
-                <td class="p-3 font-mono font-bold ${parseFloat(row.changePct) >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${parseFloat(row.changePct) >= 0 ? '+' : ''}${row.changePct}%</td>
-                <td class="p-3 font-mono text-slate-300">${row.range}%</td>
-                <td class="p-3 font-mono font-bold text-cyan-300 whitespace-nowrap"><span class="bg-cyan-950/40 shadow-sm px-2 py-0.5 rounded text-xs">${antrean}</span></td>
-                <td class="p-3 font-mono text-amber-300 font-semibold whitespace-nowrap text-xs">🕒 ${jam}</td>
+                <td class="p-3 font-mono font-bold ${parseFloat(row.changePct) >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${escapeHtml(row.changePct)}%</td>
+                <td class="p-3 font-mono text-slate-300">${escapeHtml(row.range)}%</td>
+                <td class="p-3 font-mono font-bold text-cyan-300 whitespace-nowrap"><span class="bg-cyan-950/40 shadow-sm px-2 py-0.5 rounded text-xs">${escapeHtml(antrean)}</span></td>
+                <td class="p-3 font-mono text-amber-300 font-semibold whitespace-nowrap text-xs">🕒 ${escapeHtml(jam)}</td>
                 <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetProfit)}</td>
                 <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.stopLoss)}</td>
                 ${confCell(row.confidence, row.label)}
@@ -1956,21 +1964,21 @@ function renderScreenerResults(data) {
         } else {
             tbodyDay.innerHTML = dayList.map(row => {
                 const rankBadge = getRankBadge(row);
-                const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
-                const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${row.rvolBadge}</span>` : '';
+                const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${escapeHtml(row.supertrendBadge)}</span>` : '';
+                const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${escapeHtml(row.rvolBadge)}</span>` : '';
 
                 return `
-                    <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+                    <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${escapeHtml(row.ticker)}">
                         <td class="p-3 font-mono">
                             <div class="flex items-center gap-1.5">
-                                <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                                <span class="font-bold text-cyan-400 hover:underline text-sm">$${escapeHtml(row.ticker)}</span>
                                 ${rankBadge}
                                 ${broksumAction(row.ticker)}
                             </div>
                             <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
                         </td>
                         <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
-                        <td class="p-3 font-mono font-bold ${parseFloat(row.changePct) >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${parseFloat(row.changePct) >= 0 ? '+' : ''}${row.changePct}%</td>
+                        <td class="p-3 font-mono font-bold ${parseFloat(row.changePct) >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${parseFloat(row.changePct) >= 0 ? '+' : ''}${escapeHtml(row.changePct)}%</td>
                 <td class="p-3 font-mono text-slate-300">${formatRange(row.entryZoneLow, row.entryZoneHigh, row.entryZone)}</td>
                 <td class="p-3 font-mono font-semibold text-emerald-400">${formatPrice(row.targetProfit)}</td>
                 <td class="p-3 font-mono text-rose-400">${formatPrice(row.stopLoss)}</td>
@@ -1990,14 +1998,14 @@ function renderScreenerResults(data) {
         } else {
             tbodySwing.innerHTML = swingList.map(row => {
                 const rankBadge = getRankBadge(row);
-                const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
-                const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${row.rvolBadge}</span>` : '';
+                const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${escapeHtml(row.supertrendBadge)}</span>` : '';
+                const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${escapeHtml(row.rvolBadge)}</span>` : '';
 
                 return `
-                    <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+                    <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${escapeHtml(row.ticker)}">
                         <td class="p-3 font-mono">
                             <div class="flex items-center gap-1.5">
-                                <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                                <span class="font-bold text-cyan-400 hover:underline text-sm">$${escapeHtml(row.ticker)}</span>
                                 ${rankBadge}
                                 ${broksumAction(row.ticker)}
                             </div>
@@ -2008,7 +2016,7 @@ function renderScreenerResults(data) {
                         <td class="p-3 font-mono font-semibold text-emerald-400">${formatPrice(row.targetPrice1)}</td>
                         <td class="p-3 font-mono font-semibold text-emerald-400">${formatPrice(row.targetPrice2)}</td>
                         <td class="p-3 font-mono text-rose-400">${formatPrice(row.cutLoss)}</td>
-                        <td class="p-3 font-mono font-bold text-purple-400">${row.riskReward}</td>
+                        <td class="p-3 font-mono font-bold text-purple-400">${escapeHtml(row.riskReward)}</td>
                         ${confCell(row.confidence, row.label)}
                     </tr>
                 `;
@@ -2025,23 +2033,23 @@ function renderScreenerResults(data) {
         } else {
             tbodyBsjp.innerHTML = bsjpList.map(row => {
                 const rankBadge = getRankBadge(row);
-                const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
-                const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${row.rvolBadge}</span>` : '';
+                const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${escapeHtml(row.supertrendBadge)}</span>` : '';
+                const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${escapeHtml(row.rvolBadge)}</span>` : '';
 
                 return `
-                    <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+                    <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${escapeHtml(row.ticker)}">
                         <td class="p-3 font-mono">
                             <div class="flex items-center gap-1.5">
-                                <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                                <span class="font-bold text-cyan-400 hover:underline text-sm">$${escapeHtml(row.ticker)}</span>
                                 ${rankBadge}
                                 ${broksumAction(row.ticker)}
                             </div>
                             <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
                         </td>
                         <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
-                        <td class="p-3 font-mono font-semibold ${parseFloat(row.rsi) > 60 ? 'text-amber-400' : 'text-emerald-400'}">${row.rsi}</td>
-                        <td class="p-3 font-mono text-slate-300">${row.pullbackFromHigh}%</td>
-                        <td class="p-3 text-amber-400 text-xs">${row.beliSore}</td>
+                        <td class="p-3 font-mono font-semibold ${parseFloat(row.rsi) > 60 ? 'text-amber-400' : 'text-emerald-400'}">${escapeHtml(row.rsi)}</td>
+                        <td class="p-3 font-mono text-slate-300">${escapeHtml(row.pullbackFromHigh)}%</td>
+                        <td class="p-3 text-amber-400 text-xs">${escapeHtml(row.beliSore)}</td>
                         <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetPagi)}</td>
                         <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.stopLoss)}</td>
                         ${confCell(row.confidence, row.label)}
@@ -2060,24 +2068,24 @@ function renderScreenerResults(data) {
         } else {
             tbodyBpjp.innerHTML = bpjpList.map(row => {
                 const rankBadge = getRankBadge(row);
-                const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
-                const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${row.rvolBadge}</span>` : '';
+                const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${escapeHtml(row.supertrendBadge)}</span>` : '';
+                const rvBadge = row.rvolBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 shadow-sm font-sans font-semibold">${escapeHtml(row.rvolBadge)}</span>` : '';
 
                 return `
-                    <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+                    <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${escapeHtml(row.ticker)}">
                         <td class="p-3 font-mono">
                             <div class="flex items-center gap-1.5">
-                                <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                                <span class="font-bold text-cyan-400 hover:underline text-sm">$${escapeHtml(row.ticker)}</span>
                                 ${rankBadge}
                                 ${broksumAction(row.ticker)}
                             </div>
                             <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge} ${rvBadge}</div>
                         </td>
                         <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
-                        <td class="p-3 font-mono font-semibold text-emerald-400">${row.rsi} <span class="text-[10px] text-cyan-300 font-sans">(${row.rsiStatus || 'Bounce'})</span></td>
-                        <td class="p-3 font-mono text-purple-400">${row.adx}</td>
-                        <td class="p-3 font-mono text-slate-300">${row.macd}</td>
-                        <td class="p-3 text-pink-400 text-xs">${row.entryPagi}</td>
+                        <td class="p-3 font-mono font-semibold text-emerald-400">${escapeHtml(row.rsi)} <span class="text-[10px] text-cyan-300 font-sans">(${escapeHtml(row.rsiStatus || 'Bounce')})</span></td>
+                        <td class="p-3 font-mono text-purple-400">${escapeHtml(row.adx)}</td>
+                        <td class="p-3 font-mono text-slate-300">${escapeHtml(row.macd)}</td>
+                        <td class="p-3 text-pink-400 text-xs">${escapeHtml(row.entryPagi)}</td>
                         <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.target)}</td>
                         <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.stopLoss)}</td>
                         ${confCell(row.confidence, row.label)}
@@ -2096,20 +2104,20 @@ function renderScreenerResults(data) {
         } else {
             tbodyLong.innerHTML = longList.map(row => {
                 const rankBadge = getRankBadge(row);
-                const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${row.supertrendBadge}</span>` : '';
+                const stBadge = row.supertrendBadge ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 shadow-sm font-sans font-semibold">${escapeHtml(row.supertrendBadge)}</span>` : '';
 
                 return `
-                    <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+                    <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${escapeHtml(row.ticker)}">
                         <td class="p-3 font-mono">
                             <div class="flex items-center gap-1.5">
-                                <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                                <span class="font-bold text-cyan-400 hover:underline text-sm">$${escapeHtml(row.ticker)}</span>
                                 ${rankBadge}
                                 ${broksumAction(row.ticker)}
                             </div>
                             <div class="flex flex-wrap items-center gap-1 mt-1">${stBadge}</div>
                         </td>
                         <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.price)}</td>
-                        <td class="p-3 font-mono font-semibold text-amber-400">${row.rsi}</td>
+                        <td class="p-3 font-mono font-semibold text-amber-400">${escapeHtml(row.rsi)}</td>
                         <td class="p-3 font-mono text-slate-300">${fmtRp.format(row.ema200)}</td>
                         <td class="p-3 font-mono text-slate-400">${fmtRp.format(row.support)}</td>
                         <td class="p-3 font-mono font-semibold text-emerald-400">${formatPrice(row.targetKonservatif)}</td>
@@ -2380,11 +2388,11 @@ document.getElementById('btn-export-screener-pdf')?.addEventListener('click', ex
 // --- START MODULE: foreignFlow.js ---
 // ============================================================
 //  MODULE: foreignFlow.js
-//  Foreign flow tracking: daily, weekly, monthly, and consecutive streak
+//  Estimated price and volume proxy: daily, weekly, monthly, and consecutive streak
 // ============================================================
 
 // ============================================================
-//  5B. PELACAKAN TOP FOREIGN BUY & SELL ENGINE
+//  5B. PROXY HARGA DAN VOLUME
 // ============================================================
 
 function fmtRpMiliar(val) {
@@ -2457,9 +2465,11 @@ async function loadForeignFlowData(forceRefresh = false) {
     try {
         const url = forceRefresh ? '/api/foreign-flow?force=true' : '/api/foreign-flow';
         const res = await fetch(url);
-        if (!res.ok) throw new Error('Gagal mengambil data aliran asing');
+        if (!res.ok) throw new Error('Gagal mengambil estimasi proxy harga dan volume');
         const data = await res.json();
         allForeignData = data;
+        const flowDisclaimer = document.getElementById('foreign-flow-disclaimer');
+        if (flowDisclaimer) flowDisclaimer.textContent = data.macro?.dataDisclaimer || 'Estimasi proxy berbasis harga dan volume, bukan catatan transaksi aktual investor asing.';
 
         if (data.macro) {
             if (foreignMacroNetval) {
@@ -2468,7 +2478,7 @@ async function loadForeignFlowData(forceRefresh = false) {
                 foreignMacroNetval.className = `text-lg font-black font-mono ${val >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
             }
             if (foreignMacroParticipation) {
-                foreignMacroParticipation.textContent = `${data.macro.foreignParticipationPct}%`;
+                foreignMacroParticipation.textContent = `${data.macro.estimatedParticipationPct ?? '—'}% est.`;
             }
             if (foreignMacroSentiment) {
                 foreignMacroSentiment.textContent = data.macro.sentiment;
@@ -2536,13 +2546,13 @@ function renderForeignDailyTables() {
             const sellVal = row.foreignSellVal ? fmtRpMiliar(row.foreignSellVal) : null;
 
             return `
-                <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+                <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${escapeHtml(row.ticker)}">
                     <td class="p-3 font-mono">
                         <div class="flex items-center gap-2">
                             ${getForeignRankBadge(idx + 1)}
-                            <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                            <span class="font-bold text-cyan-400 hover:underline text-sm">${escapeHtml(row.ticker)}</span>
                         </div>
-                        <p class="text-[10px] text-slate-400 truncate max-w-[150px] sm:max-w-[200px] mt-0.5">${row.sector || 'IDX'}</p>
+                        <p class="text-[10px] text-slate-400 truncate max-w-[150px] sm:max-w-[200px] mt-0.5">${escapeHtml(row.sector || 'IDX')}</p>
                     </td>
                     <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.currentPrice || row.price)}</td>
                     <td class="p-3 font-mono font-bold ${chgColor}">${sign}${chg.toFixed(2)}%</td>
@@ -2565,7 +2575,7 @@ function renderForeignDailyTables() {
                         </div>
                     </td>
                     <td class="p-3">
-                        <span class="text-[10px] px-2 py-0.5 rounded shadow-sm ${statusBadge}">${row.status || 'AKUMULASI 🟢'}</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded shadow-sm ${statusBadge}">${escapeHtml(row.status || 'PROXY')}</span>
                     </td>
                 </tr>
             `;
@@ -2591,13 +2601,13 @@ function renderForeignDailyTables() {
             const sellVal = row.foreignSellVal ? fmtRpMiliar(row.foreignSellVal) : null;
 
             return `
-                <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+                <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${escapeHtml(row.ticker)}">
                     <td class="p-3 font-mono">
                         <div class="flex items-center gap-2">
                             ${getForeignRankBadge(idx + 1)}
-                            <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                            <span class="font-bold text-cyan-400 hover:underline text-sm">${escapeHtml(row.ticker)}</span>
                         </div>
-                        <p class="text-[10px] text-slate-400 truncate max-w-[150px] sm:max-w-[200px] mt-0.5">${row.sector || 'IDX'}</p>
+                        <p class="text-[10px] text-slate-400 truncate max-w-[150px] sm:max-w-[200px] mt-0.5">${escapeHtml(row.sector || 'IDX')}</p>
                     </td>
                     <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.currentPrice || row.price)}</td>
                     <td class="p-3 font-mono font-bold ${chgColor}">${sign}${chg.toFixed(2)}%</td>
@@ -2620,7 +2630,7 @@ function renderForeignDailyTables() {
                         </div>
                     </td>
                     <td class="p-3">
-                        <span class="text-[10px] px-2 py-0.5 rounded shadow-sm ${statusBadge}">${row.status || 'DISTRIBUSI 🔴'}</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded shadow-sm ${statusBadge}">${escapeHtml(row.status || 'PROXY')}</span>
                     </td>
                 </tr>
             `;
@@ -2668,13 +2678,13 @@ function renderForeignWeeklyTable() {
         }
 
         return `
-            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${escapeHtml(row.ticker)}">
                 <td class="p-3 font-mono">
                     <div class="flex items-center gap-2">
                         ${getForeignRankBadge(idx + 1)}
-                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                        <span class="font-bold text-cyan-400 hover:underline text-sm">${escapeHtml(row.ticker)}</span>
                     </div>
-                    <p class="text-[10px] text-slate-400 truncate max-w-[150px] sm:max-w-[200px] mt-0.5">${row.sector || 'IDX'}</p>
+                    <p class="text-[10px] text-slate-400 truncate max-w-[150px] sm:max-w-[200px] mt-0.5">${escapeHtml(row.sector || 'IDX')}</p>
                 </td>
                 <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.currentPrice || row.price)}</td>
                 <td class="p-3 font-mono font-bold ${retColor}">${sign}${ret.toFixed(2)}%</td>
@@ -2719,13 +2729,13 @@ function renderForeignMonthlyTable() {
         }
 
         return `
-            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${escapeHtml(row.ticker)}">
                 <td class="p-3 font-mono">
                     <div class="flex items-center gap-2">
                         ${getForeignRankBadge(idx + 1)}
-                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                        <span class="font-bold text-cyan-400 hover:underline text-sm">${escapeHtml(row.ticker)}</span>
                     </div>
-                    <p class="text-[10px] text-slate-400 truncate max-w-[150px] sm:max-w-[200px] mt-0.5">${row.sector || 'IDX'}</p>
+                    <p class="text-[10px] text-slate-400 truncate max-w-[150px] sm:max-w-[200px] mt-0.5">${escapeHtml(row.sector || 'IDX')}</p>
                 </td>
                 <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(row.currentPrice || row.price)}</td>
                 <td class="p-3 font-mono font-bold ${retColor}">${sign}${ret.toFixed(2)}%</td>
@@ -2775,18 +2785,14 @@ function renderForeignStreakTable() {
         } else if (!trailingStop || trailingStop === '-') {
             trailingStop = currentPrice > 0 ? fmtRp.format(Math.round(currentPrice * 0.97)) : '-';
         }
-
-        const winRate = row.backtestWinRate || row.backtest?.winRate || '78.4%';
-        const profitFactor = row.profitFactor || row.backtest?.profitFactor || '2.80';
-
         return `
-            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${row.ticker}">
+            <tr class=" hover:bg-[#11192a] transition cursor-pointer" data-ticker="${escapeHtml(row.ticker)}">
                 <td class="p-3 font-mono">
                     <div class="flex items-center gap-2">
                         ${getForeignRankBadge(idx + 1)}
-                        <span class="font-bold text-cyan-400 hover:underline text-sm">$${row.ticker}</span>
+                        <span class="font-bold text-cyan-400 hover:underline text-sm">${escapeHtml(row.ticker)}</span>
                     </div>
-                    <p class="text-[10px] text-slate-400 truncate max-w-[150px] sm:max-w-[200px] mt-0.5">${row.sector || 'IDX'}</p>
+                    <p class="text-[10px] text-slate-400 truncate max-w-[150px] sm:max-w-[200px] mt-0.5">${escapeHtml(row.sector || 'IDX')}</p>
                 </td>
                 <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(currentPrice)}</td>
                 <td class="p-3">
@@ -2799,14 +2805,14 @@ function renderForeignStreakTable() {
                 <td class="p-3 font-mono font-bold ${gainColor}">${gain >= 0 ? '+' : ''}${gain.toFixed(2)}%</td>
                 <td class="p-3">
                     <span class="bg-purple-950/80 shadow-sm text-purple-300 font-extrabold text-[10px] px-2 py-0.5 rounded">
-                        ${conviction}
+                        ${escapeHtml(conviction)}
                     </span>
                 </td>
-                <td class="p-3 font-mono text-emerald-400 font-semibold">${entryZone}</td>
+                <td class="p-3 font-mono text-emerald-400 font-semibold">${escapeHtml(entryZone)}</td>
                 <td class="p-3 font-mono text-rose-400 font-semibold">${trailingStop}</td>
                 <td class="p-3">
                     <span class="bg-emerald-950/80 shadow-sm text-emerald-400 px-2 py-0.5 rounded text-[11px] font-mono font-bold whitespace-nowrap">
-                        Win ${winRate} | PF ${profitFactor}
+                        Estimasi berbasis harga dan volume
                     </span>
                 </td>
             </tr>
@@ -2874,7 +2880,7 @@ function renderWatchlistDrawer() {
             <div class="flex items-center gap-3 cursor-pointer flex-1" data-action="analyze">
                 <span class="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 font-mono font-bold text-xs flex items-center justify-center shadow-sm">$</span>
                 <div>
-                    <h5 class="font-bold text-white font-mono text-sm">${ticker}</h5>
+                    <h5 class="font-bold text-white font-mono text-sm">${escapeHtml(ticker)}</h5>
                     <p class="text-[11px] text-slate-400">Emiten Terpantau Radar</p>
                 </div>
             </div>
@@ -3140,7 +3146,7 @@ async function loadMarketIndices() {
             const sign = isUp ? '+' : '';
             const colorClass = isUp ? 'text-emerald-400' : 'text-rose-400';
             const flag = idx.flag || '🌐';
-            return `<span class="inline-flex items-center gap-1.5"><span class="text-slate-400">${flag}</span> <b class="text-white">${idx.name}:</b> <span class="text-slate-200">${idx.priceFormatted || idx.price}</span> <span class="${colorClass} font-bold">${sign}${idx.changePct}%</span></span>`;
+            return `<span class="inline-flex items-center gap-1.5"><span class="text-slate-400">${escapeHtml(flag)}</span> <b class="text-white">${escapeHtml(idx.name)}:</b> <span class="text-slate-200">${escapeHtml(idx.priceFormatted || idx.price)}</span> <span class="${colorClass} font-bold">${sign}${escapeHtml(idx.changePct)}%</span></span>`;
         }).join('');
 
         // Duplicate set for seamless infinite marquee scroll
@@ -3243,20 +3249,20 @@ btnExportData?.addEventListener('click', () => {
     if (currentActiveMainTab === 'foreign') {
         // Tab 3: Export Foreign Flow Data to CSV
         if (!allForeignData || (!allForeignData.daily?.topBuy?.length && !allForeignData.daily?.topSell?.length)) {
-            alert('Data Foreign Flow belum siap untuk diekspor.');
+            alert('Data estimasi proxy harga dan volume belum siap untuk diekspor.');
             return;
         }
 
-        let csv = 'Kategori,Ticker,Nama Emiten,Sektor,Harga Terakhir,Change (%),Net Foreign 1D (Miliar Rp),Net Foreign 5D (Miliar Rp),Foreign VWAP (Rp),FFPI (Pressure),Streak (Hari),Streak Nilai (Miliar Rp),Status / Fase\n';
+        let csv = 'Kategori,Ticker,Nama Emiten,Sektor,Harga Terakhir,Change (%),Estimasi Net Proxy 1D (Miliar Rp),Estimasi Net Proxy 5D (Miliar Rp),VWAP Proxy (Rp),FFPI (Pressure),Streak (Hari),Streak Nilai (Miliar Rp),Status / Fase\n';
 
         // Daily Top Buy
         (allForeignData.daily?.topBuy || []).forEach(item => {
-            csv += `"Top Foreign Buy 1D","${item.ticker}","${item.name || ''}","${item.sector || ''}","${item.lastPrice || 0}","${item.changePct || 0}","${((item.netForeignVal || 0) / 1e9).toFixed(2)}","${((item.weeklyNetVal || 0) / 1e9).toFixed(2)}","${item.vwap || item.foreignVWAP || 0}","${item.ffpi || 0}","${item.streakDays || 0}","${((item.streakTotalVal || 0) / 1e9).toFixed(2)}","${(item.status || 'AKUMULASI ASING').replace(/"/g, '""')}"\n`;
+            csv += `"Proxy Net Buy 1D","${item.ticker}","${item.name || ''}","${item.sector || ''}","${item.lastPrice || 0}","${item.changePct || 0}","${((item.netForeignVal || 0) / 1e9).toFixed(2)}","${((item.weeklyNetVal || 0) / 1e9).toFixed(2)}","${item.vwap || item.foreignVWAP || 0}","${item.ffpi || 0}","${item.streakDays || 0}","${((item.streakTotalVal || 0) / 1e9).toFixed(2)}","${(item.status || 'PROXY BELI').replace(/"/g, '""')}"\n`;
         });
 
         // Daily Top Sell
         (allForeignData.daily?.topSell || []).forEach(item => {
-            csv += `"Top Foreign Sell 1D","${item.ticker}","${item.name || ''}","${item.sector || ''}","${item.lastPrice || 0}","${item.changePct || 0}","${((item.netForeignVal || 0) / 1e9).toFixed(2)}","${((item.weeklyNetVal || 0) / 1e9).toFixed(2)}","${item.vwap || item.foreignVWAP || 0}","${item.ffpi || 0}","${item.streakDays || 0}","${((item.streakTotalVal || 0) / 1e9).toFixed(2)}","${(item.status || 'DISTRIBUSI ASING').replace(/"/g, '""')}"\n`;
+            csv += `"Proxy Net Sell 1D","${item.ticker}","${item.name || ''}","${item.sector || ''}","${item.lastPrice || 0}","${item.changePct || 0}","${((item.netForeignVal || 0) / 1e9).toFixed(2)}","${((item.weeklyNetVal || 0) / 1e9).toFixed(2)}","${item.vwap || item.foreignVWAP || 0}","${item.ffpi || 0}","${item.streakDays || 0}","${((item.streakTotalVal || 0) / 1e9).toFixed(2)}","${(item.status || 'PROXY JUAL').replace(/"/g, '""')}"\n`;
         });
 
         // Weekly Accumulation
@@ -3266,14 +3272,14 @@ btnExportData?.addEventListener('click', () => {
 
         // Inflow Streaks
         (allForeignData.streak?.streaks || []).forEach(item => {
-            csv += `"Streak Akumulasi Asing","${item.ticker}","${item.name || ''}","${item.sector || ''}","${item.lastPrice || 0}","${item.changePct || 0}","${((item.netForeignVal || 0) / 1e9).toFixed(2)}","${((item.weeklyNetVal || 0) / 1e9).toFixed(2)}","${item.foreignVWAP || 0}","${item.ffpi || 0}","${item.streakDays || 0}","${((item.streakTotalVal || 0) / 1e9).toFixed(2)}","Streak ${item.streakDays} Hari"\n`;
+            csv += `"Streak Proxy Harga/Volume","${item.ticker}","${item.name || ''}","${item.sector || ''}","${item.lastPrice || 0}","${item.changePct || 0}","${((item.netForeignVal || 0) / 1e9).toFixed(2)}","${((item.weeklyNetVal || 0) / 1e9).toFixed(2)}","${item.foreignVWAP || 0}","${item.ffpi || 0}","${item.streakDays || 0}","${((item.streakTotalVal || 0) / 1e9).toFixed(2)}","Streak ${item.streakDays} Hari"\n`;
         });
 
         const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.setAttribute('href', url);
-        link.setAttribute('download', `STOCKRADAR_FOREIGN_FLOW_${todayStr}.csv`);
+        link.setAttribute('download', `STOCKRADAR_PRICE_VOLUME_PROXY_${todayStr}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -3287,7 +3293,7 @@ btnExportData?.addEventListener('click', () => {
             return;
         }
 
-        let csv = 'Kategori,Rank,Ticker,Harga Terakhir,Change (%),Sinyal Entri,Supertrend,RSI (14),EMA 200,Support,Target Konservatif,Target Agresif,Cut Loss,Horizon,Win Rate Backtest,Profit Factor\n';
+        let csv = 'Kategori,Rank,Ticker,Harga Terakhir,Change (%),Sinyal Entri,Supertrend,RSI (14),EMA 200,Support,Target Konservatif,Target Agresif,Cut Loss,Horizon,Win Rate Backtest (jika dihitung),Profit Factor (jika dihitung)\n';
         const cats = [
             { key: 'scalping', label: 'Scalping Sesi 1' },
             { key: 'daytrade', label: 'Day Trading' },
@@ -3300,7 +3306,7 @@ btnExportData?.addEventListener('click', () => {
         cats.forEach(c => {
             const list = lastScreenerData[c.key] || [];
             list.forEach((item, idx) => {
-                csv += `"${c.label}","#${idx + 1}","${item.ticker}","${item.price}","${item.changePct}%","${item.sinyalEntri || '-'}","${item.supertrendBadge || '-'}","${item.rsi || '-'}","${item.ema200 || '-'}","${item.support || '-'}","${item.targetKonservatif || '-'}","${item.targetAgresif || '-'}","${item.cutLoss || '-'}","${item.horizon || '-'}","${item.backtest?.winRate || '-'}","${item.backtest?.profitFactor || '-'}"\n`;
+                csv += `"${c.label}","#${idx + 1}","${item.ticker}","${item.price}","${item.changePct}%","${item.sinyalEntri || '-'}","${item.supertrendBadge || '-'}","${item.rsi || '-'}","${item.ema200 || '-'}","${item.support || '-'}","${item.targetKonservatif || '-'}","${item.targetAgresif || '-'}","${item.cutLoss || '-'}","${item.horizon || '-'}","${item.backtest?.winRate || 'Belum dihitung'}","${item.backtest?.profitFactor || 'Belum dihitung'}"\n`;
             });
         });
 
@@ -3662,16 +3668,16 @@ function renderTradeLog(trades = []) {
         return `
                 <tr class="hover:bg-[#111a2e] transition group">
                     <td class="p-3 text-slate-500 font-sans">#${t.tradeNumber}</td>
-                    <td class="p-3 text-slate-300 font-sans">${t.entryDate}</td>
+                    <td class="p-3 text-slate-300 font-sans">${escapeHtml(t.entryDate)}</td>
                     <td class="p-3 text-white font-bold">${fmtRp.format(t.entryPrice)}</td>
                     <td class="p-3 text-cyan-300">${t.lots} lot <span class="text-[10px] text-slate-500">(${fmtNum.format(t.shares)})</span></td>
-                    <td class="p-3 text-slate-300 font-sans">${t.exitDate}</td>
+                    <td class="p-3 text-slate-300 font-sans">${escapeHtml(t.exitDate)}</td>
                     <td class="p-3 text-white font-bold">${fmtRp.format(t.exitPrice)}</td>
                     <td class="p-3 text-slate-400 font-sans">${t.holdDays} hari</td>
                     <td class="p-3 text-right ${pnlColor}">${pnlFormatted}</td>
                     <td class="p-3 text-right ${pnlColor}">${returnFormatted}</td>
                     <td class="p-3 text-center">${statusBadge}</td>
-                    <td class="p-3 text-[11px] text-slate-400 font-sans group-hover:text-slate-200">${t.exitReason}</td>
+                    <td class="p-3 text-[11px] text-slate-400 font-sans group-hover:text-slate-200">${escapeHtml(t.exitReason)}</td>
                 </tr>
             `;
     }).join('');
@@ -3692,7 +3698,7 @@ function initBacktestModule() {
         const key = strategySelect.value;
         const cfg = STRATEGY_CONFIGS[key] || STRATEGY_CONFIGS.COMPOSITE_QUANT;
         if (descEl) {
-            descEl.innerHTML = `<span class="text-violet-400">ℹ️</span> <span>${cfg.desc}</span>`;
+            descEl.innerHTML = `<span class="text-violet-400">ℹ️</span> <span>${escapeHtml(cfg.desc)}</span>`;
         }
         if (tpSlider && tpLabel) {
             tpSlider.value = cfg.tp;
@@ -3774,7 +3780,7 @@ function initBacktestModule() {
         let csv = 'Trade#,Ticker,Tanggal Beli,Harga Beli,Lot,Lembar Saham,Tanggal Jual,Harga Jual,Durasi (Hari),Net Profit/Loss (Rp),Return (%),Status,Alasan Exit\n';
 
         lastBacktestData.tradeLog.forEach(t => {
-            csv += `"${t.tradeNumber}","${t.ticker}","${t.entryDate}","${t.entryPrice}","${t.lots}","${t.shares}","${t.exitDate}","${t.exitPrice}","${t.holdDays}","${t.netPnl}","${t.gainPct}%","${t.status}","${t.exitReason}"\n`;
+            csv += `"${t.tradeNumber}","${t.ticker}","${escapeHtml(t.entryDate)}","${t.entryPrice}","${t.lots}","${t.shares}","${escapeHtml(t.exitDate)}","${t.exitPrice}","${t.holdDays}","${t.netPnl}","${t.gainPct}%","${t.status}","${escapeHtml(t.exitReason)}"\n`;
         });
 
         const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -3888,6 +3894,7 @@ const btnClearMobileSearch = document.getElementById('btn-clear-mobile-search');
 const mobileSearchResults = document.getElementById('mobile-search-results');
 const mobileSearchQuickPicks = document.getElementById('mobile-search-quick-picks');
 let mobileSearchDebounce = null;
+let mobileSearchRequestVersion = 0;
 
 function openMobileSearch() {
     if (!modalMobileSearch) return;
@@ -3901,6 +3908,8 @@ function closeMobileSearch() {
     if (!modalMobileSearch) return;
     modalMobileSearch.classList.add('hidden');
     modalMobileSearch.classList.remove('flex');
+    mobileSearchRequestVersion += 1;
+    clearTimeout(mobileSearchDebounce);
     document.body.style.overflow = '';
     if (inputMobileSearch) inputMobileSearch.value = '';
     if (mobileSearchResults) mobileSearchResults.innerHTML = '';
@@ -3912,6 +3921,8 @@ btnMobileSearchPill?.addEventListener('click', openMobileSearch);
 btnCloseMobileSearch?.addEventListener('click', closeMobileSearch);
 
 btnClearMobileSearch?.addEventListener('click', () => {
+    mobileSearchRequestVersion += 1;
+    clearTimeout(mobileSearchDebounce);
     if (inputMobileSearch) {
         inputMobileSearch.value = '';
         inputMobileSearch.focus();
@@ -3938,25 +3949,30 @@ inputMobileSearch?.addEventListener('input', (e) => {
         btnClearMobileSearch?.classList.remove('hidden');
         mobileSearchQuickPicks?.classList.add('hidden');
     } else {
+        mobileSearchRequestVersion += 1;
+        clearTimeout(mobileSearchDebounce);
         btnClearMobileSearch?.classList.add('hidden');
         mobileSearchQuickPicks?.classList.remove('hidden');
         if (mobileSearchResults) mobileSearchResults.innerHTML = '';
         return;
     }
 
+    const requestVersion = ++mobileSearchRequestVersion;
     clearTimeout(mobileSearchDebounce);
     mobileSearchDebounce = setTimeout(async () => {
         try {
             const res = await fetch(`/api/search-suggest?q=${encodeURIComponent(q)}`);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
+            const currentQuery = (inputMobileSearch?.value || '').trim().replace(/^[\$#]/, '');
+            if (requestVersion !== mobileSearchRequestVersion || q !== currentQuery || modalMobileSearch?.classList.contains('hidden')) return;
             const matches = data.suggestions || [];
 
             if (!mobileSearchResults) return;
             if (matches.length === 0) {
                 mobileSearchResults.innerHTML = `
                     <div class="bg-[#0d1424] p-4 rounded-xl text-center space-y-2 cursor-pointer shadow-lg" id="mobile-fallback-action">
-                        <p class="text-sm font-bold text-white">Analisis langsung emiten <span class="text-amber-400 font-mono font-black">$${q.toUpperCase()}</span></p>
+                        <p class="text-sm font-bold text-white">Analisis langsung emiten <span class="text-amber-400 font-mono font-black">$${escapeHtml(q.toUpperCase())}</span></p>
                         <p class="text-xs text-slate-400">Tekan di sini untuk memuat data kuantitatif</p>
                     </div>
                 `;
@@ -3968,17 +3984,17 @@ inputMobileSearch?.addEventListener('input', (e) => {
             }
 
             mobileSearchResults.innerHTML = matches.map(item => `
-                <div class="mobile-search-item bg-[#0d1424] hover:bg-[#131e33] p-3.5 rounded-xl flex items-center justify-between cursor-pointer transition shadow-md" data-ticker="${item.ticker}">
+                <div class="mobile-search-item bg-[#0d1424] hover:bg-[#131e33] p-3.5 rounded-xl flex items-center justify-between cursor-pointer transition shadow-md" data-ticker="${escapeHtml(item.ticker)}">
                     <div class="flex items-center gap-3 min-w-0">
                         <div class="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-300 font-mono font-black text-sm shrink-0">
                             $${item.ticker.slice(0, 3)}
                         </div>
                         <div class="min-w-0">
                             <div class="flex items-center gap-2">
-                                <span class="font-mono font-black text-white text-sm">$${item.ticker}</span>
-                                <span class="text-[10px] px-1.5 py-0.5 rounded bg-[#162035] text-slate-300 font-medium truncate">${item.sector || 'IDX'}</span>
+                            <span class="font-mono font-black text-white text-sm">$${escapeHtml(item.ticker)}</span>
+                                <span class="text-[10px] px-1.5 py-0.5 rounded bg-[#162035] text-slate-300 font-medium truncate">${escapeHtml(item.sector || 'IDX')}</span>
                             </div>
-                            <p class="text-xs text-slate-400 truncate mt-0.5">${item.name}</p>
+                            <p class="text-xs text-slate-400 truncate mt-0.5">${escapeHtml(item.name)}</p>
                         </div>
                     </div>
                     <span class="text-xs font-bold text-emerald-400 font-mono bg-emerald-950/60 px-2.5 py-1 rounded-lg shrink-0 ml-2">
@@ -4013,6 +4029,7 @@ inputMobileSearch?.addEventListener('keydown', (e) => {
         closeMobileSearch();
     }
 });
+
 // --- END MODULE: mobileSearch.js ---
 
 // --- START MODULE: init.js ---

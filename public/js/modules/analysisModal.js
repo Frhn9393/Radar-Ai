@@ -249,7 +249,7 @@ function populateAnalysisModal(data) {
     if (rvolEl) {
         const rvol = Number(trend.rvol);
         const color = rvol >= 1.5 ? 'text-amber-400' : rvol >= 1.1 ? 'text-emerald-400' : 'text-slate-300';
-        rvolEl.innerHTML = `<span class="${color} font-bold font-mono">${rvol.toFixed(2)}x</span> <span class="text-[10px] text-slate-400">(${trend.volumeStatus || 'Normal'})</span>`;
+        rvolEl.innerHTML = `<span class="${color} font-bold font-mono">${rvol.toFixed(2)}x</span> <span class="text-[10px] text-slate-400">(${escapeHtml(trend.volumeStatus || 'Normal')})</span>`;
     }
 
     const rsiEl = document.getElementById('modal-trend-rsi');
@@ -279,7 +279,7 @@ function populateAnalysisModal(data) {
     const aiPatternsEl = document.getElementById('modal-ai-patterns-confidence');
     if (aiPatternsEl) {
         const patterns = Array.isArray(candlestickAi.patterns) && candlestickAi.patterns.length ? candlestickAi.patterns.join(', ') : 'Tidak terdeteksi';
-        const confidence = Number.isFinite(Number(candlestickAi.confidencePct)) ? `${candlestickAi.confidencePct}%` : 'belum dilatih';
+        const confidence = candlestickAi.confidencePct !== null && candlestickAi.confidencePct !== undefined && Number.isFinite(Number(candlestickAi.confidencePct)) ? `${candlestickAi.confidencePct}%` : 'belum tervalidasi';
         aiPatternsEl.textContent = `${patterns} · ${confidence}`;
     }
     const aiTargetStopEl = document.getElementById('modal-ai-target-stop');
@@ -528,14 +528,14 @@ function populateAnalysisModal(data) {
             item.innerHTML = `
                 <div>
                     <div class="flex items-center justify-between text-[10px] text-slate-500 mb-1">
-                        <span class="text-cyan-400 font-bold">${n.source}</span>
-                        <span class="text-emerald-400 font-mono font-semibold">🕒 ${n.date || n.timeAgo}</span>
+                        <span class="text-cyan-400 font-bold">${escapeHtml(n.source)}</span>
+                        <span class="text-emerald-400 font-mono font-semibold">🕒 ${escapeHtml(n.date || n.timeAgo)}</span>
                     </div>
-                    <h5 class="text-xs font-semibold text-slate-200 group-hover:text-amber-300 leading-snug">${n.title}</h5>
-                    <p class="text-[10px] text-slate-400 italic mt-1">${n.impact}</p>
+                    <h5 class="text-xs font-semibold text-slate-200 group-hover:text-amber-300 leading-snug">${escapeHtml(n.title)}</h5>
+                    <p class="text-[10px] text-slate-400 italic mt-1">${escapeHtml(n.impact)}</p>
                 </div>
                 <div class="flex justify-end pt-1">
-                    <a href="${n.link}" target="_blank" rel="noopener noreferrer"
+                    <a href="${safeExternalUrl(n.link)}" target="_blank" rel="noopener noreferrer"
                        class="inline-flex items-center gap-1 text-[11px] font-bold text-sky-300 hover:text-sky-100 bg-sky-950/60 hover:bg-sky-900/80 shadow-sm px-2.5 py-1 rounded transition">
                         <span>Baca Berita Lengkap</span>
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>

@@ -321,16 +321,16 @@ function renderTradeLog(trades = []) {
         return `
                 <tr class="hover:bg-[#111a2e] transition group">
                     <td class="p-3 text-slate-500 font-sans">#${t.tradeNumber}</td>
-                    <td class="p-3 text-slate-300 font-sans">${t.entryDate}</td>
+                    <td class="p-3 text-slate-300 font-sans">${escapeHtml(t.entryDate)}</td>
                     <td class="p-3 text-white font-bold">${fmtRp.format(t.entryPrice)}</td>
                     <td class="p-3 text-cyan-300">${t.lots} lot <span class="text-[10px] text-slate-500">(${fmtNum.format(t.shares)})</span></td>
-                    <td class="p-3 text-slate-300 font-sans">${t.exitDate}</td>
+                    <td class="p-3 text-slate-300 font-sans">${escapeHtml(t.exitDate)}</td>
                     <td class="p-3 text-white font-bold">${fmtRp.format(t.exitPrice)}</td>
                     <td class="p-3 text-slate-400 font-sans">${t.holdDays} hari</td>
                     <td class="p-3 text-right ${pnlColor}">${pnlFormatted}</td>
                     <td class="p-3 text-right ${pnlColor}">${returnFormatted}</td>
                     <td class="p-3 text-center">${statusBadge}</td>
-                    <td class="p-3 text-[11px] text-slate-400 font-sans group-hover:text-slate-200">${t.exitReason}</td>
+                    <td class="p-3 text-[11px] text-slate-400 font-sans group-hover:text-slate-200">${escapeHtml(t.exitReason)}</td>
                 </tr>
             `;
     }).join('');
@@ -351,7 +351,7 @@ function initBacktestModule() {
         const key = strategySelect.value;
         const cfg = STRATEGY_CONFIGS[key] || STRATEGY_CONFIGS.COMPOSITE_QUANT;
         if (descEl) {
-            descEl.innerHTML = `<span class="text-violet-400">ℹ️</span> <span>${cfg.desc}</span>`;
+            descEl.innerHTML = `<span class="text-violet-400">ℹ️</span> <span>${escapeHtml(cfg.desc)}</span>`;
         }
         if (tpSlider && tpLabel) {
             tpSlider.value = cfg.tp;
@@ -433,7 +433,7 @@ function initBacktestModule() {
         let csv = 'Trade#,Ticker,Tanggal Beli,Harga Beli,Lot,Lembar Saham,Tanggal Jual,Harga Jual,Durasi (Hari),Net Profit/Loss (Rp),Return (%),Status,Alasan Exit\n';
 
         lastBacktestData.tradeLog.forEach(t => {
-            csv += `"${t.tradeNumber}","${t.ticker}","${t.entryDate}","${t.entryPrice}","${t.lots}","${t.shares}","${t.exitDate}","${t.exitPrice}","${t.holdDays}","${t.netPnl}","${t.gainPct}%","${t.status}","${t.exitReason}"\n`;
+            csv += `"${t.tradeNumber}","${t.ticker}","${escapeHtml(t.entryDate)}","${t.entryPrice}","${t.lots}","${t.shares}","${escapeHtml(t.exitDate)}","${t.exitPrice}","${t.holdDays}","${t.netPnl}","${t.gainPct}%","${t.status}","${escapeHtml(t.exitReason)}"\n`;
         });
 
         const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });

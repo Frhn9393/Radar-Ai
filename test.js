@@ -125,6 +125,7 @@ function testCandlestickAiEngine() {
     const prediction = analyzeCandlesticks(candles);
     assert(FEATURE_NAMES.length === 11, 'Candlestick engine uses the declared OHLCV, volume, pattern and trend feature schema');
     assert(['STRONG BUY', 'BUY', 'NEUTRAL'].includes(prediction.decision), 'Candlestick engine returns a supported decision label');
+    assert(prediction.decision === 'NEUTRAL' && prediction.confidencePct === null, 'Candlestick model without validated edge suppresses buy signal and unverified confidence');
     assert(prediction.targetPrice > candles.at(-1).close && prediction.stopLoss < candles.at(-1).close, 'Candlestick engine computes TP and SL from latest close');
     assert(prediction.targetRule.includes('10 sesi bursa'), 'Candlestick engine exposes its forward-label horizon');
     const reversal = candles.slice(0, 200).concat([
@@ -132,6 +133,26 @@ function testCandlestickAiEngine() {
         { date: new Date(), open: 988, high: 1006, low: 987, close: 1005, volume: 180_000 }
     ]);
     assert(getCandlePatterns(reversal, reversal.length - 1).bullishEngulfing === 1, 'Candlestick feature extractor detects a bullish engulfing pattern');
+}
+
+function testTelegramWebhookRequiresConfiguredSecret() {
+    const previousSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
+    delete process.env.TELEGRAM_WEBHOOK_SECRET;
+    try {
+        const router = require('./routes/stockRoutes');
+        const routeLayer = router.stack.find(layer => layer.route?.path === '/telegram-webhook');
+        let statusCode = 200;
+        let responseBody = '';
+        const response = {
+            status(code) { statusCode = code; return this; },
+            send(body) { responseBody = body; return this; }
+        };
+        routeLayer.route.stack[0].handle({ body: {}, get: () => undefined }, response);
+        assert(statusCode === 401 && responseBody === 'Unauthorized', 'Telegram webhook fails closed when its required secret is missing');
+    } finally {
+        if (previousSecret === undefined) delete process.env.TELEGRAM_WEBHOOK_SECRET;
+        else process.env.TELEGRAM_WEBHOOK_SECRET = previousSecret;
+    }
 }
 
 async function testTelegramAdminAndCorporateNews() {
@@ -177,6 +198,14 @@ async function testTelegramAdminAndCorporateNews() {
         await processTelegramUpdate(makeUpdate(12, '/news'), dependencies);
         assert(sent.at(-1)?.text === 'Saat ini belum ada berita atau sentimen akuisisi/merger terbaru di pasar modal.', '/news returns the requested fallback when both news providers fail');
         assert(tracked.length === 5 && tracked[0] === 12 && tracked[1] === 900, 'Each incoming command is tracked before access control');
+
+        const redisTimeoutMessages = [];
+        await processTelegramUpdate(makeUpdate(900, '/users'), {
+            recordTelegramUser: () => new Promise(() => {}),
+            listTelegramUsers: async () => ({ available: true, users: [] }),
+            sendTelegramMessage: async (chatId, text) => { redisTimeoutMessages.push(text); return true; }
+        });
+        assert(redisTimeoutMessages.some(message => message.includes('Total pengguna unik: 0')), 'Telegram admin command continues after a stalled Redis user-record operation times out');
     } finally {
         if (previousAdminId === undefined) delete process.env.TELEGRAM_ADMIN_CHAT_ID;
         else process.env.TELEGRAM_ADMIN_CHAT_ID = previousAdminId;
@@ -292,7 +321,10 @@ async function runAllTests() {
     assert(formattedAlert.includes('Emiten: $BBRI') && formattedAlert.includes('Link: https://example.com/news'), 'News alert includes issuer and source link');
     const { generateScreenerSignal } = require('./services/backtestEngine');
     const historicalBars = Array.from({ length: 20 }, (_, index) => ({ date: `2026-01-${String(index + 1).padStart(2, '0')}`, open: 100, high: 105, low: 99, close: index === 19 ? 104 : 100, volume: index === 19 ? 200 : 100 }));
-    assert(generateScreenerSignal('DAYTRADE', historicalBars, 19), 'Historical screener backtest recognizes >3% range and >1.8x volume signal');
+    assert(generateScreenerSignal('DAYTRADE', historicalBars, 19), 'Historical screener backtest accepts positive change above +2% with volatility and volume');
+    assert(!generateScreenerSignal('DAYTRADE', historicalBars.map((bar, index) => index === 19 ? { ...bar, close: 90 } : bar), 19), 'Historical daytrade backtest rejects negative price change');
+    assert(!generateScreenerSignal('DAYTRADE', historicalBars.map((bar, index) => index === 19 ? { ...bar, close: 102 } : bar), 19), 'Historical daytrade backtest rejects change exactly +2%');
+    assert(generateScreenerSignal('DAYTRADE', historicalBars.map((bar, index) => index === 19 ? { ...bar, close: 102.01 } : bar), 19), 'Historical daytrade backtest accepts change strictly above +2%');
     assert(!generateScreenerSignal('DAYTRADE', historicalBars.map((bar, index) => index === 19 ? { ...bar, volume: 180 } : bar), 19), 'Historical screener backtest respects strict volume threshold');
     assert(generateScreenerSignal('SWING', historicalBars.map((bar, index) => ({ ...bar, high: 110, close: index === 19 ? 106 : 100 })), 19), 'Historical swing backtest uses only available moving-average and volume data');
 
@@ -332,6 +364,9 @@ async function runAllTests() {
     assert(!datasetQuality.ok && datasetQuality.duplicateKeys === 1, 'Candlestick dataset quality gate rejects duplicate ticker/date bars');
     const invalidDatasetQuality = validateDatasetQuality([{ ...validDatasetRow, high: 90 }], datasetHeader, { minimumRows: 1, minimumTickers: 1, minimumBytes: 1 });
     assert(!invalidDatasetQuality.ok && invalidDatasetQuality.invalidRows === 1, 'Candlestick dataset quality gate rejects impossible OHLC ranges');
+    const patternHeader = [...datasetHeader, 'hammer', 'morningStar'];
+    const unsupportedPatternQuality = validateDatasetQuality([{ ...validDatasetRow, hammer: 1, morningStar: 0 }], patternHeader, { minimumRows: 1, minimumTickers: 1, minimumBytes: 1, minimumPatternSamples: 2 });
+    assert(!unsupportedPatternQuality.ok && unsupportedPatternQuality.issues.some(issue => issue.includes('pattern samples below')), 'Candlestick quality gate blocks publication when a pattern sample count is under minimum');
     assert(!isStrictBsjpEligible({ ...strictBsjp, isCurrentJakartaDay: false }), 'BSJP rejects stale Yahoo daily candle');
     assert(!isStrictBpjpEligible({ ...strictBpjp, isCurrentJakartaDay: false }), 'BPJP rejects stale Yahoo daily candle');
     assert(!isStrictIntradayEligible({ ...strictIntraday, isCurrentJakartaDay: false }), 'Scalping/Daytrade rejects stale Yahoo daily candle');
@@ -344,6 +379,7 @@ async function runAllTests() {
     assert(batchMessage.includes('MASTER RADAR') && batchMessage.includes('BSJP') && batchMessage.includes('DAYTRADE') && ['BBCA', 'BBRI', 'TLKM'].every(ticker => batchMessage.includes(ticker)), 'Screener Telegram alert formatter groups multiple tickers and strategies into one Master Radar message');
     await testRadarCommand();
     testCandlestickAiEngine();
+    testTelegramWebhookRequiresConfiguredSecret();
     await testTelegramUserStore();
     await testTelegramAdminAndCorporateNews();
     assert(emptyCommandMessages.length === 0, 'Legacy standalone screener commands are no longer handled');
@@ -426,6 +462,7 @@ async function runAllTests() {
 
     const allForeign = await getForeignFlowData();
     assert(allForeign && allForeign.macro && allForeign.daily && allForeign.weekly && allForeign.monthly, 'getForeignFlowData() returns complete multi-timeframe dataset');
+    assert(allForeign.methodologyMetadata?.auditStatus === 'ESTIMATED_PROXY' && allForeign.macro.dataDisclaimer?.includes('bukan data transaksi'), 'Foreign-flow response identifies its values as an estimate rather than actual foreign transactions');
     assert(allForeign.macro.totalEmitenTracked > 0, `Macro tracking ${allForeign?.macro?.totalEmitenTracked} liquid stocks`);
     assert(Array.isArray(allForeign.daily.topBuy) && allForeign.daily.topBuy.length > 0, `Daily Top Buy has ${allForeign?.daily?.topBuy?.length} emiten`);
     assert(Array.isArray(allForeign.daily.topSell) && allForeign.daily.topSell.length > 0, `Daily Top Sell has ${allForeign?.daily?.topSell?.length} emiten`);
@@ -478,7 +515,7 @@ async function runAllTests() {
     assert(Array.isArray(btResult.equityCurve) && btResult.equityCurve.length > 20, `BBCA equityCurve generated (${btResult.equityCurve.length} data points)`);
 
     const quickAuditBbca = await quickAudit('BBRI');
-    assert(quickAuditBbca && quickAuditBbca.ticker === 'BBRI' && quickAuditBbca.winRate, `quickAudit(BBRI) returned instant quant audit (WinRate: ${quickAuditBbca.winRate})`);
+    assert(quickAuditBbca && quickAuditBbca.ticker === 'BBRI' && (quickAuditBbca.unavailable || quickAuditBbca.winRate), 'quickAudit(BBRI) returns computed backtest metrics or an explicit unavailable state, never fabricated fallback metrics');
 
     // ── Summary ──────────────────────────────────────────────────
     console.log('\n════════════════════════════════════════════════════════════════');

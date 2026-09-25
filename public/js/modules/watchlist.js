@@ -42,7 +42,7 @@ function renderWatchlistDrawer() {
             <div class="flex items-center gap-3 cursor-pointer flex-1" data-action="analyze">
                 <span class="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 font-mono font-bold text-xs flex items-center justify-center shadow-sm">$</span>
                 <div>
-                    <h5 class="font-bold text-white font-mono text-sm">${ticker}</h5>
+                    <h5 class="font-bold text-white font-mono text-sm">${escapeHtml(ticker)}</h5>
                     <p class="text-[11px] text-slate-400">Emiten Terpantau Radar</p>
                 </div>
             </div>

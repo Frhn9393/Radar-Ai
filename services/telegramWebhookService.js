@@ -10,6 +10,7 @@ const MAX_SEEN_UPDATES = 2000;
 const STRICT_EMPTY_ALERT = 'Stockradar Alert: Saat ini tidak ada emiten yang memenuhi kriteria filter ketat. Disarankan Wait & See.';
 const RADAR_BUSY_MESSAGE = '⚠️ Server sedang sibuk mengambil data pasar, silakan coba beberapa saat lagi.';
 const RADAR_TIMEOUT_MS = 4500;
+const REDIS_OPERATION_TIMEOUT_MS = 2500;
 
 function withTimeout(task, timeoutMs, label) {
     let timeout;
@@ -67,7 +68,7 @@ function formatRadarSummary(result) {
     const aiSection = aiRows.length
         ? `🧠 AI Candlestick · probabilitas model (${aiRows.length})\n${oosLine}\n${aiRows.slice(0, 5).map(({ item }) => {
             const ai = item?.candlestickAi || {};
-            const confidence = Number.isFinite(Number(ai.confidencePct)) ? `${ai.confidencePct}%` : 'N/A';
+            const confidence = ai.confidencePct !== null && ai.confidencePct !== undefined && Number.isFinite(Number(ai.confidencePct)) ? `${ai.confidencePct}%` : 'belum tervalidasi';
             const target = Number.isFinite(Number(ai.targetPrice)) ? Number(ai.targetPrice).toLocaleString('id-ID') : '—';
             const stop = Number.isFinite(Number(ai.stopLoss)) ? Number(ai.stopLoss).toLocaleString('id-ID') : '—';
             return `• $${item.ticker} · ${ai.decision || 'NEUTRAL'} (${confidence}) · TP ${target} · SL ${stop} · ${(ai.patterns || []).join(', ') || item.candlestick || 'Pola belum terdeteksi'}`;
@@ -91,12 +92,12 @@ async function processTelegramUpdate(update, dependencies = {}) {
     const recordUser = dependencies.recordTelegramUser || recordTelegramUser;
     if (isRadarCommand) {
         // User-directory persistence must not consume the screener's serverless response budget.
-        Promise.resolve().then(() => recordUser(message)).catch(error => {
+        withTimeout(() => recordUser(message), REDIS_OPERATION_TIMEOUT_MS, 'Telegram Redis user record').catch(error => {
             console.error('[telegram-user] persistence failed', error.message || error);
         });
     } else {
         try {
-            await recordUser(message);
+            await withTimeout(() => recordUser(message), REDIS_OPERATION_TIMEOUT_MS, 'Telegram Redis user record');
         } catch (error) {
             console.error('[telegram-user] persistence failed', error.message || error);
         }
@@ -111,7 +112,11 @@ async function processTelegramUpdate(update, dependencies = {}) {
             return;
         }
         try {
-            const directory = await (dependencies.listTelegramUsers || listTelegramUsers)();
+            const directory = await withTimeout(
+                () => (dependencies.listTelegramUsers || listTelegramUsers)(),
+                REDIS_OPERATION_TIMEOUT_MS,
+                'Telegram Redis user list'
+            );
             if (!directory?.available) {
                 await sendMessage(chatId, 'Daftar pengguna belum tersedia. Penyimpanan pengguna belum terhubung.');
                 return;

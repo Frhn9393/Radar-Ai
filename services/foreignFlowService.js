@@ -34,9 +34,11 @@ const UNIQUE_FOREIGN_UNIVERSE = Array.from(new Set(FOREIGN_TRACKING_UNIVERSE));
 // In-Memory Cache
 let foreignFlowCache = null;
 let foreignFlowCacheTime = 0;
+let foreignFlowInFlight = null;
 const CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes
+const YAHOO_REQUEST_TIMEOUT_MS = 3000;
 
-// Calibrated Institutional Foreign Participation Tiers based on IDX Market Structure
+// Estimated participation tiers used for a price/volume proxy, not reported foreign transactions.
 const TIER_1_HEAVYWEIGHTS = new Set([
     'BBCA', 'BBRI', 'BMRI', 'BBNI', 'TLKM', 'ASII', 'AMMN', 'BREN'
 ]);
@@ -69,7 +71,7 @@ function getBaseForeignParticipation(ticker) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  CORE ALGORITHM: Calibrated Real Institutional Foreign Flow & Streak Engine
+//  CORE ALGORITHM: Estimated Price/Volume Participation Proxy & Streak Engine
 // ═══════════════════════════════════════════════════════════════
 function processQuotesForForeignFlow(ticker, quotes, liveQuote = null) {
     const valid = quotes.filter(q => q && q.close !== null && q.high !== null && q.low !== null && q.volume !== null && !isNaN(q.close));
@@ -178,11 +180,11 @@ function processQuotesForForeignFlow(ticker, quotes, liveQuote = null) {
     const latest = dailyMetrics[dailyMetrics.length - 1];
 
     // ── 1. Harian (Daily 1D) ──────────────────────────────────────────
-    let dailyStatus = 'NETRAL ⚪';
-    if (latest.ffpi >= 50) dailyStatus = 'AKUMULASI MASIF 🔥';
-    else if (latest.ffpi >= 20) dailyStatus = 'AKUMULASI NORMAL 🟢';
-    else if (latest.ffpi <= -50) dailyStatus = 'DISTRIBUSI MASIF 🔴';
-    else if (latest.ffpi <= -20) dailyStatus = 'DISTRIBUSI NORMAL 🔻';
+    let dailyStatus = 'PROXY NETRAL ⚪';
+    if (latest.ffpi >= 50) dailyStatus = 'PROXY BELI KUAT 🔥';
+    else if (latest.ffpi >= 20) dailyStatus = 'PROXY BELI 🟢';
+    else if (latest.ffpi <= -50) dailyStatus = 'PROXY JUAL KUAT 🔴';
+    else if (latest.ffpi <= -20) dailyStatus = 'PROXY JUAL 🔻';
 
     const daily = {
         ticker,
@@ -200,7 +202,7 @@ function processQuotesForForeignFlow(ticker, quotes, liveQuote = null) {
         netForeignVol: latest.netForeignVol,
         ffpi: latest.ffpi,
         clv: latest.clv,
-        foreignParticipationPct: Math.round(latest.effectiveParticipation * 100),
+        estimatedParticipationPct: Math.round(latest.effectiveParticipation * 100),
         status: dailyStatus
     };
 
@@ -320,23 +322,14 @@ function processQuotesForForeignFlow(ticker, quotes, liveQuote = null) {
         const avgDailyInflow = Math.round(streakTotalVal / streakDays);
 
         // Momentum scoring & conviction rating
-        let convictionBadge = 'Early Stealth Accumulation (2-3 Hari)';
-        let winRate = '74.5%';
-        let profitFactor = '2.35';
-        let rrRatio = '1:2.5';
+        let convictionBadge = 'Proxy Harga/Volume (2-3 Hari)';
         let momentumScore = Math.min(96, 62 + streakDays * 5);
 
         if (streakDays >= 7) {
-            convictionBadge = 'Diamond Hands Institutional (≥ 7 Hari)';
-            winRate = '85.6%';
-            profitFactor = '3.50';
-            rrRatio = '1:3.6';
+            convictionBadge = 'Proxy Harga/Volume (≥ 7 Hari)';
             momentumScore = 98;
         } else if (streakDays >= 4) {
-            convictionBadge = 'Aggressive Markup Inflow (4-6 Hari)';
-            winRate = '79.4%';
-            profitFactor = '2.85';
-            rrRatio = '1:2.9';
+            convictionBadge = 'Proxy Harga/Volume (4-6 Hari)';
             momentumScore = 88;
         }
 
@@ -379,15 +372,7 @@ function processQuotesForForeignFlow(ticker, quotes, liveQuote = null) {
             momentumScore,
             foreignVWAP,
 
-            backtest: {
-                winRate,
-                profitFactor,
-                riskReward: rrRatio,
-                avgHolding: streakDays >= 5 ? '5 - 14 Hari' : '3 - 7 Hari',
-                strategy: 'Institutional Consecutive Inflow Momentum'
-            },
-            backtestWinRate: winRate,
-            profitFactor: profitFactor
+            flowMethod: 'Estimated price/volume proxy; not actual foreign investor transaction data'
         };
     }
 
@@ -406,7 +391,16 @@ async function computeAllForeignFlow(forceRefresh = false) {
     if (!forceRefresh && foreignFlowCache && (Date.now() - foreignFlowCacheTime < CACHE_TTL_MS)) {
         return foreignFlowCache;
     }
+    if (foreignFlowInFlight) return foreignFlowInFlight;
+    foreignFlowInFlight = computeForeignFlowSnapshot();
+    try {
+        return await foreignFlowInFlight;
+    } finally {
+        foreignFlowInFlight = null;
+    }
+}
 
+async function computeForeignFlowSnapshot() {
     const dailyList = [];
     const weeklyList = [];
     const monthlyList = [];
@@ -417,7 +411,7 @@ async function computeAllForeignFlow(forceRefresh = false) {
     async function evaluateTicker(ticker) {
         try {
             const symbol = `${ticker}.JK`;
-            const chart = await yahooFinance.chart(symbol, { period1, interval: '1d' });
+            const chart = await withTimeout(yahooFinance.chart(symbol, { period1, interval: '1d' }), YAHOO_REQUEST_TIMEOUT_MS, `Yahoo ${symbol}`);
             if (!chart || !chart.quotes || chart.quotes.length === 0) return;
 
             const res = processQuotesForForeignFlow(ticker, chart.quotes);
@@ -486,15 +480,15 @@ async function computeAllForeignFlow(forceRefresh = false) {
     const totalDailySellVal = dailyList.reduce((acc, d) => acc + (d.foreignSellVal || 0), 0);
     const totalDailyTurnover = dailyList.reduce((acc, d) => acc + d.turnoverRp, 0);
 
-    const avgForeignParticipation = totalDailyTurnover > 0
+    const avgEstimatedParticipation = totalDailyTurnover > 0
         ? Math.round(((totalDailyBuyVal + totalDailySellVal) / (totalDailyTurnover * 2)) * 100)
         : 38;
 
-    let macroSentiment = 'AKUMULASI NETRAL ⚪';
-    if (totalDailyNetVal > 250000000000) macroSentiment = 'AKUMULASI MASIF ASING 🔥 (Bullish)';
-    else if (totalDailyNetVal > 40000000000) macroSentiment = 'NET BUY ASING 🟢';
-    else if (totalDailyNetVal < -250000000000) macroSentiment = 'DISTRIBUSI MASIF ASING 🔴 (Bearish)';
-    else if (totalDailyNetVal < -40000000000) macroSentiment = 'NET SELL ASING 🔻';
+    let macroSentiment = 'PROXY HARGA/VOLUME NETRAL ⚪';
+    if (totalDailyNetVal > 250000000000) macroSentiment = 'PROXY AKUMULASI KUAT 🔥';
+    else if (totalDailyNetVal > 40000000000) macroSentiment = 'PROXY NET BUY 🟢';
+    else if (totalDailyNetVal < -250000000000) macroSentiment = 'PROXY DISTRIBUSI KUAT 🔴';
+    else if (totalDailyNetVal < -40000000000) macroSentiment = 'PROXY NET SELL 🔻';
 
     const results = {
         macro: {
@@ -502,7 +496,8 @@ async function computeAllForeignFlow(forceRefresh = false) {
             totalForeignBuyVal: totalDailyBuyVal,
             totalForeignSellVal: totalDailySellVal,
             totalTurnover: totalDailyTurnover,
-            foreignParticipationPct: Math.min(65, Math.max(20, avgForeignParticipation)),
+            estimatedParticipationPct: Math.min(65, Math.max(20, avgEstimatedParticipation)),
+            dataDisclaimer: 'Estimasi proxy berbasis harga, volume, dan bobot partisipasi; bukan data transaksi atau kepemilikan investor asing aktual.',
             sentiment: macroSentiment,
             totalEmitenTracked: dailyList.length,
             timestamp: new Date().toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta' }) + ' WIB'
@@ -526,9 +521,10 @@ async function computeAllForeignFlow(forceRefresh = false) {
             streaks: sortedStreak,
             totalActiveStreaks: sortedStreak.length
         },
-        backtestMetadata: {
-            auditStatus: 'VERIFIED_INSTITUTIONAL',
-            model: 'Calibrated Multi-Tier IDX Institutional Order Flow & VPA Model',
+        methodologyMetadata: {
+            auditStatus: 'ESTIMATED_PROXY',
+            model: 'Estimated Price/Volume Participation Proxy',
+            dataDisclaimer: 'Estimasi, bukan data transaksi aktual investor asing.',
             timestamp: new Date().toISOString()
         }
     };
@@ -538,13 +534,21 @@ async function computeAllForeignFlow(forceRefresh = false) {
     return results;
 }
 
+function withTimeout(promise, timeoutMs, label) {
+    let timer;
+    return Promise.race([
+        promise,
+        new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs); })
+    ]).finally(() => clearTimeout(timer));
+}
+
 // Single Ticker Foreign Flow Analytics for Modal & Detail Inspection
 async function getTickerForeignFlow(ticker) {
     const clean = sanitizeTicker(ticker);
     try {
         const symbol = `${clean}.JK`;
         const period1 = new Date(Date.now() - 60 * 24 * 3600 * 1000);
-        const chart = await yahooFinance.chart(symbol, { period1, interval: '1d' });
+        const chart = await withTimeout(yahooFinance.chart(symbol, { period1, interval: '1d' }), YAHOO_REQUEST_TIMEOUT_MS, `Yahoo ${symbol}`);
         if (!chart || !chart.quotes || chart.quotes.length === 0) return null;
         return processQuotesForForeignFlow(clean, chart.quotes);
     } catch (e) {

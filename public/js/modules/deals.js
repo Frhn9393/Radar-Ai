@@ -11,12 +11,12 @@ async function loadDeals() {
         const res = await fetch('/api/deals');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        if (data.deals && data.deals.length > 0) {
+        if (Array.isArray(data.deals)) {
             allDeals = data.deals;
             if (badgeTotalDeals) badgeTotalDeals.textContent = `${allDeals.length} DEAL TERDETEKSI`;
             if (countFilterAll) countFilterAll.textContent = allDeals.length;
-            if (data.lastUpdated && statLastUpdate) {
-                statLastUpdate.textContent = data.lastUpdated;
+            if (statLastUpdate) {
+                statLastUpdate.textContent = data.lastUpdated || 'Belum diperbarui';
             }
             renderDeals();
         }
@@ -89,7 +89,7 @@ function renderDeals() {
                     <div class="flex items-center gap-1.5 text-right shrink-0">
                         <span class="text-xs text-slate-400 font-medium truncate max-w-[100px]">${escapeHtml(deal.source)}</span>
                         <span class="text-slate-600 text-xs">•</span>
-                        <span class="inline-flex items-center gap-1 text-[11px] text-emerald-400/90 font-mono font-bold bg-[#071d22] shadow-sm px-1.5 py-0.5 rounded" title="Waktu Tayang: ${deal.timeStr} (${deal.dateStr})">
+                        <span class="inline-flex items-center gap-1 text-[11px] text-emerald-400/90 font-mono font-bold bg-[#071d22] shadow-sm px-1.5 py-0.5 rounded" title="Waktu Tayang: ${escapeHtml(deal.timeStr)} (${escapeHtml(deal.dateStr)})">
                             <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2"/></svg>
                             <span>${escapeHtml(deal.timeAgo || 'Baru saja')}</span>
                             <span class="text-slate-400 font-normal hidden sm:inline">(${escapeHtml(deal.timeStr)})</span>
@@ -128,7 +128,7 @@ function renderDeals() {
                             <span>Baca Berita</span>
                         </a>
                         <!-- Analyze stock button -->
-                        <button class="btn-inspect-deal text-amber-400 hover:text-amber-300 font-bold text-xs flex items-center gap-1 transition shrink-0" data-ticker="${primaryTicker}">
+                        <button class="btn-inspect-deal text-amber-400 hover:text-amber-300 font-bold text-xs flex items-center gap-1 transition shrink-0" data-ticker="${escapeHtml(primaryTicker)}">
                             <span>Analisis</span>
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                         </button>

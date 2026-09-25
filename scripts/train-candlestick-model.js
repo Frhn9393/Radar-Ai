@@ -184,6 +184,10 @@ async function main() {
     const outcomeSafetyCutoff = new Date(new Date(cutoff).getTime() - 30 * 86400_000).toISOString().slice(0, 10);
     const aggregatePatternCounts = Object.fromEntries(PATTERN_NAMES.map(([name]) => [name, 0]));
     for (const row of mergedRows) for (const [name] of PATTERN_NAMES) aggregatePatternCounts[name] += Number(row[name]) ? 1 : 0;
+    const underSupportedPatterns = Object.entries(aggregatePatternCounts).filter(([, count]) => count < 2000);
+    if (underSupportedPatterns.length) {
+        throw new Error(`Model publication cancelled: pattern sample minimum is 2,000; ${underSupportedPatterns.map(([name, count]) => `${name}=${count}`).join(', ')}.`);
+    }
     const patternRows = mergedRows.filter(row => row.labelWin !== null && PATTERN_NAMES.some(([name]) => Number(row[name])));
     const training = patternRows.filter(row => row.date < outcomeSafetyCutoff).map(row => ({ features: makeFeatureVector(featureFromDatasetRow(row)), labelWin: Number(row.labelWin) }));
     const holdout = patternRows.filter(row => row.date >= cutoff).map(row => ({ features: makeFeatureVector(featureFromDatasetRow(row)), labelWin: Number(row.labelWin) }));
@@ -213,7 +217,7 @@ async function main() {
         brierScore: Number((brier / holdout.length).toFixed(4)),
         predictedStrongBuySamples: signals80,
         observedStrongBuyWinRatePct: signals80 ? Number((100 * wins80 / signals80).toFixed(2)) : null,
-        confidenceTarget80Met: Boolean(signals80 && (100 * wins80 / signals80) >= 80)
+        confidenceTarget80Met: Boolean(signals80 >= 30 && (100 * wins80 / signals80) >= 80)
     };
     const model = {
         version: 1,
@@ -223,6 +227,8 @@ async function main() {
         trainingSamples: training.length,
         tickerCount,
         patternCounts: aggregatePatternCounts,
+        confidenceStatus: validation.confidenceTarget80Met ? 'VALIDATED_ON_HOLDOUT' : 'NOT_VALIDATED',
+        confidenceNote: 'Prediction probability is not a demonstrated win rate. Signals below 60 percent remain NEUTRAL; buy signals require validated holdout win-rate evidence.',
         dataQuality: {
             adjustedOhlcvSource: 'Yahoo Finance chart API split-adjusted OHLCV (split events included for audit; not double-adjusted)',
             minimumCurrentAverageTurnoverIdr: MIN_AVG_TURNOVER,

@@ -11,7 +11,7 @@ async function loadMarketNews() {
         const res = await fetch('/api/market-news');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        if (data.news && data.news.length > 0) {
+        if (Array.isArray(data.news)) {
             allMarketNews = data.news;
 
             // Update stats
@@ -19,13 +19,13 @@ async function loadMarketNews() {
                 const dealsLen = typeof allDeals !== 'undefined' && Array.isArray(allDeals) ? allDeals.length : 0;
                 statTotalNews.textContent = `${allMarketNews.length + dealsLen} Total Berita Terkumpul`;
             }
-            if (data.lastUpdated && statLastUpdate) {
-                statLastUpdate.textContent = data.lastUpdated;
+            if (statLastUpdate) {
+                statLastUpdate.textContent = data.lastUpdated || 'Belum diperbarui';
             }
 
             renderMarketNews();
             renderCorporateNewsTicker();
-            if (typeof playSoundChime === 'function') playSoundChime();
+            if (allMarketNews.length && typeof playSoundChime === 'function') playSoundChime();
         }
     } catch (err) {
         console.error('Gagal memuat berita pasar:', err);
@@ -48,17 +48,18 @@ function renderCorporateNewsTicker() {
         item.className = 'inline-flex items-center gap-2 text-slate-300 whitespace-nowrap cursor-pointer hover:text-white transition';
 
         let tag = 'IDX';
-        if (news.category) tag = news.category.toUpperCase().substring(0, 5);
+        if (news.category) tag = String(news.category).toUpperCase().substring(0, 5);
 
         item.innerHTML = `
-            <span class="bg-[#101929] text-cyan-400 text-[10px] font-bold px-1.5 py-0.5 rounded font-mono shadow-sm">[${tag}]</span>
-            <span class="bg-emerald-950/70 text-emerald-400 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded shadow-sm">${news.timeStr || news.timeAgo}</span>
+            <span class="bg-[#101929] text-cyan-400 text-[10px] font-bold px-1.5 py-0.5 rounded font-mono shadow-sm">[${escapeHtml(tag)}]</span>
+            <span class="bg-emerald-950/70 text-emerald-400 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded shadow-sm">${escapeHtml(news.timeStr || news.timeAgo || '')}</span>
             <span class="font-medium text-xs">${escapeHtml(news.title)}</span>
             <span class="text-emerald-400 font-bold text-xs ml-1">↗</span>
             <span class="text-slate-700 ml-3">•</span>
         `;
         item.addEventListener('click', () => {
-            if (news.link) window.open(news.link, '_blank', 'noopener,noreferrer');
+            const safeLink = safeExternalUrl(news.link);
+            if (safeLink !== '#') window.open(safeLink, '_blank', 'noopener,noreferrer');
         });
         groupEl.appendChild(item);
         });

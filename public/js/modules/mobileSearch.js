@@ -14,6 +14,7 @@ const btnClearMobileSearch = document.getElementById('btn-clear-mobile-search');
 const mobileSearchResults = document.getElementById('mobile-search-results');
 const mobileSearchQuickPicks = document.getElementById('mobile-search-quick-picks');
 let mobileSearchDebounce = null;
+let mobileSearchRequestVersion = 0;
 
 function openMobileSearch() {
     if (!modalMobileSearch) return;
@@ -27,6 +28,8 @@ function closeMobileSearch() {
     if (!modalMobileSearch) return;
     modalMobileSearch.classList.add('hidden');
     modalMobileSearch.classList.remove('flex');
+    mobileSearchRequestVersion += 1;
+    clearTimeout(mobileSearchDebounce);
     document.body.style.overflow = '';
     if (inputMobileSearch) inputMobileSearch.value = '';
     if (mobileSearchResults) mobileSearchResults.innerHTML = '';
@@ -38,6 +41,8 @@ btnMobileSearchPill?.addEventListener('click', openMobileSearch);
 btnCloseMobileSearch?.addEventListener('click', closeMobileSearch);
 
 btnClearMobileSearch?.addEventListener('click', () => {
+    mobileSearchRequestVersion += 1;
+    clearTimeout(mobileSearchDebounce);
     if (inputMobileSearch) {
         inputMobileSearch.value = '';
         inputMobileSearch.focus();
@@ -64,25 +69,30 @@ inputMobileSearch?.addEventListener('input', (e) => {
         btnClearMobileSearch?.classList.remove('hidden');
         mobileSearchQuickPicks?.classList.add('hidden');
     } else {
+        mobileSearchRequestVersion += 1;
+        clearTimeout(mobileSearchDebounce);
         btnClearMobileSearch?.classList.add('hidden');
         mobileSearchQuickPicks?.classList.remove('hidden');
         if (mobileSearchResults) mobileSearchResults.innerHTML = '';
         return;
     }
 
+    const requestVersion = ++mobileSearchRequestVersion;
     clearTimeout(mobileSearchDebounce);
     mobileSearchDebounce = setTimeout(async () => {
         try {
             const res = await fetch(`/api/search-suggest?q=${encodeURIComponent(q)}`);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
+            const currentQuery = (inputMobileSearch?.value || '').trim().replace(/^[\$#]/, '');
+            if (requestVersion !== mobileSearchRequestVersion || q !== currentQuery || modalMobileSearch?.classList.contains('hidden')) return;
             const matches = data.suggestions || [];
 
             if (!mobileSearchResults) return;
             if (matches.length === 0) {
                 mobileSearchResults.innerHTML = `
                     <div class="bg-[#0d1424] p-4 rounded-xl text-center space-y-2 cursor-pointer shadow-lg" id="mobile-fallback-action">
-                        <p class="text-sm font-bold text-white">Analisis langsung emiten <span class="text-amber-400 font-mono font-black">$${q.toUpperCase()}</span></p>
+                        <p class="text-sm font-bold text-white">Analisis langsung emiten <span class="text-amber-400 font-mono font-black">$${escapeHtml(q.toUpperCase())}</span></p>
                         <p class="text-xs text-slate-400">Tekan di sini untuk memuat data kuantitatif</p>
                     </div>
                 `;
@@ -94,17 +104,17 @@ inputMobileSearch?.addEventListener('input', (e) => {
             }
 
             mobileSearchResults.innerHTML = matches.map(item => `
-                <div class="mobile-search-item bg-[#0d1424] hover:bg-[#131e33] p-3.5 rounded-xl flex items-center justify-between cursor-pointer transition shadow-md" data-ticker="${item.ticker}">
+                <div class="mobile-search-item bg-[#0d1424] hover:bg-[#131e33] p-3.5 rounded-xl flex items-center justify-between cursor-pointer transition shadow-md" data-ticker="${escapeHtml(item.ticker)}">
                     <div class="flex items-center gap-3 min-w-0">
                         <div class="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-300 font-mono font-black text-sm shrink-0">
                             $${item.ticker.slice(0, 3)}
                         </div>
                         <div class="min-w-0">
                             <div class="flex items-center gap-2">
-                                <span class="font-mono font-black text-white text-sm">$${item.ticker}</span>
-                                <span class="text-[10px] px-1.5 py-0.5 rounded bg-[#162035] text-slate-300 font-medium truncate">${item.sector || 'IDX'}</span>
+                            <span class="font-mono font-black text-white text-sm">$${escapeHtml(item.ticker)}</span>
+                                <span class="text-[10px] px-1.5 py-0.5 rounded bg-[#162035] text-slate-300 font-medium truncate">${escapeHtml(item.sector || 'IDX')}</span>
                             </div>
-                            <p class="text-xs text-slate-400 truncate mt-0.5">${item.name}</p>
+                            <p class="text-xs text-slate-400 truncate mt-0.5">${escapeHtml(item.name)}</p>
                         </div>
                     </div>
                     <span class="text-xs font-bold text-emerald-400 font-mono bg-emerald-950/60 px-2.5 py-1 rounded-lg shrink-0 ml-2">

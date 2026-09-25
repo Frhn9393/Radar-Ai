@@ -144,7 +144,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
-                    <span>Pelacakan Top Foreign Buy & Sell</span>
+                    <span>Estimasi Arus Harga dan Volume</span>
                     <span class="bg-cyan-950/80 text-cyan-300 font-extrabold text-[10px] px-1.5 py-0.5 rounded shadow-sm">BARU</span>
                 </button>
                 <button id="tab-backtest"
@@ -892,7 +892,7 @@
 
         </section>
 
-        <!-- ================= TAB 3: PELACAKAN TOP FOREIGN BUY & SELL ================= -->
+        <!-- ================= TAB 3: ESTIMASI PROXY HARGA DAN VOLUME ================= -->
         <section id="section-foreign" class="hidden space-y-6">
 
             <!-- Control & Header Card -->
@@ -905,14 +905,14 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
-                                <span>PELACAKAN TOP FOREIGN BUY & SELL</span>
+                                <span>ESTIMASI PROXY HARGA DAN VOLUME</span>
                             </h2>
                             <span class="bg-cyan-950/80 text-cyan-300 font-extrabold text-[11px] px-2.5 py-0.5 rounded-md tracking-wide shadow-sm">
-                                INSTITUTIONAL QUANT FLOW 🌐
+                                PROXY ESTIMASI 🌐
                             </span>
                         </div>
                         <p class="text-slate-400 text-xs sm:text-sm mt-1">
-                            Pelacakan aliran modal asing (Foreign Flow) & akumulasi institusi skala besar di Bursa Efek Indonesia (IDX). Mengintegrasikan Foreign Flow Pressure Index (FFPI), Close Location Value (CLV), Foreign VWAP, dan deteksi streak akumulasi berturut-turut.
+                            Estimasi proxy harga dan volume di Bursa Efek Indonesia. Indikator CLV, volume, dan VWAP yang ditampilkan bukan data transaksi aktual investor asing atau institusi.
                         </p>
                     </div>
 
@@ -932,7 +932,7 @@
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5 pt-1">
                     <div class="bg-[#070c14] p-3 sm:p-4 rounded-xl shadow-md flex items-center justify-between">
                         <div>
-                            <span class="text-[10px] sm:text-[11px] text-slate-400 block mb-0.5">Net Foreign (1D)</span>
+                            <span class="text-[10px] sm:text-[11px] text-slate-400 block mb-0.5">Net Proxy (1D)</span>
                             <span id="foreign-macro-netval" class="text-base sm:text-lg font-black font-mono text-emerald-400">Memuat...</span>
                         </div>
                         <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-emerald-500/10  flex items-center justify-center text-emerald-400 text-base sm:text-lg">
@@ -941,7 +941,7 @@
                     </div>
                     <div class="bg-[#070c14] p-3 sm:p-4 rounded-xl shadow-md flex items-center justify-between">
                         <div>
-                            <span class="text-[10px] sm:text-[11px] text-slate-400 block mb-0.5">Partisipasi Asing</span>
+                            <span class="text-[10px] sm:text-[11px] text-slate-400 block mb-0.5">Estimasi Partisipasi Proxy</span>
                             <span id="foreign-macro-participation" class="text-base sm:text-lg font-black font-mono text-cyan-300">Memuat...</span>
                         </div>
                         <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-cyan-500/10  flex items-center justify-center text-cyan-400 text-base sm:text-lg">
@@ -1016,11 +1016,12 @@
                     <div class="absolute inset-0 border-4 border-transparent border-t-cyan-400 rounded-full animate-spin"></div>
                 </div>
                 <div>
-                    <p class="text-white font-bold text-base">Memuat Analisis Aliran Asing & Streak Akumulasi...</p>
-                    <p class="text-cyan-400 text-xs mt-1 font-mono">Memproses Foreign Flow Pressure Index & Institutional VWAP...</p>
+                    <p class="text-white font-bold text-base">Memuat estimasi proxy harga dan volume...</p>
+                    <p class="text-cyan-400 text-xs mt-1 font-mono">Mengolah perubahan harga, volume, dan VWAP estimasi...</p>
                 </div>
             </div>
 
+            <p id="foreign-flow-disclaimer" class="mb-4 rounded-lg border border-amber-900/50 bg-amber-950/20 px-3 py-2 text-xs text-amber-200">Estimasi proxy berbasis harga dan volume, bukan catatan transaksi aktual investor asing.</p>
             <!-- Content View 1: HARIAN (Daily 1D) -->
             <div id="view-foreign-daily" class="space-y-6">
                 <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
@@ -1029,7 +1030,7 @@
                         <div class="bg-[#0e1626] p-4 flex items-center justify-between">
                             <h3 class="font-bold text-white text-base flex items-center gap-2">
                                 <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                                <span>Top Foreign Net Buy (Akumulasi Harian)</span>
+                                <span>Estimasi Net Buy Proxy (Harian)</span>
                             </h3>
                             <span class="text-xs text-emerald-400 font-mono font-bold bg-emerald-950/80  px-2 py-0.5 rounded">NET INFLOW 🟢</span>
                         </div>
@@ -1044,8 +1045,8 @@
                                         <th class="p-3">Rank / Saham</th>
                                         <th class="p-3">Harga</th>
                                         <th class="p-3">Chg %</th>
-                                        <th class="p-3 text-emerald-400 font-bold">Net Buy Asing (Rp)</th>
-                                        <th class="p-3 text-cyan-300">Net Lot</th>
+                                        <th class="p-3 text-emerald-400 font-bold">Estimasi Net Buy (Rp)</th>
+                                        <th class="p-3 text-cyan-300">Estimasi Net Lot</th>
                                         <th class="p-3">FFPI</th>
                                         <th class="p-3">Status</th>
                                     </tr>
@@ -1060,7 +1061,7 @@
                         <div class="bg-[#0e1626] p-4 flex items-center justify-between">
                             <h3 class="font-bold text-white text-base flex items-center gap-2">
                                 <span class="w-2.5 h-2.5 rounded-full bg-rose-400 animate-pulse"></span>
-                                <span>Top Foreign Net Sell (Distribusi Harian)</span>
+                                <span>Estimasi Net Sell Proxy (Harian)</span>
                             </h3>
                             <span class="text-xs text-rose-400 font-mono font-bold bg-rose-950/80  px-2 py-0.5 rounded">NET OUTFLOW 🔴</span>
                         </div>
@@ -1075,8 +1076,8 @@
                                         <th class="p-3">Rank / Saham</th>
                                         <th class="p-3">Harga</th>
                                         <th class="p-3">Chg %</th>
-                                        <th class="p-3 text-rose-400 font-bold">Net Sell Asing (Rp)</th>
-                                        <th class="p-3 text-slate-300">Net Lot</th>
+                                        <th class="p-3 text-rose-400 font-bold">Estimasi Net Sell (Rp)</th>
+                                        <th class="p-3 text-slate-300">Estimasi Net Lot</th>
                                         <th class="p-3">FFPI</th>
                                         <th class="p-3">Status</th>
                                     </tr>
@@ -1094,10 +1095,10 @@
                     <div class="bg-[#0e1626] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <h3 class="font-bold text-white text-base flex items-center gap-2">
                             <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
-                            <span>Akumulasi & Distribusi Asing Mingguan (5 Hari Bursa)</span>
-                            <span class="bg-cyan-950/80  text-cyan-400 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">CUMULATIVE 5D</span>
+                            <span>Proxy Harga dan Volume Mingguan (5 Hari Bursa)</span>
+                            <span class="bg-cyan-950/80  text-cyan-400 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">PROXY 5D</span>
                         </h3>
-                        <span class="text-xs text-slate-400">Konsistensi akumulasi modal besar selama 1 minggu perdagangan terakhir</span>
+                        <span class="text-xs text-slate-400">Konsistensi estimasi pergerakan harga dan volume selama lima sesi terakhir</span>
                     </div>
                     <div class="overflow-x-auto">
                         <div class="text-[10px] text-slate-400 sm:hidden px-3 py-1.5 bg-[#070b13]  flex items-center justify-between">
@@ -1110,11 +1111,11 @@
                                     <th class="p-3">Rank / Saham</th>
                                     <th class="p-3">Harga</th>
                                     <th class="p-3">Return 5D</th>
-                                    <th class="p-3 text-cyan-400 font-bold">Net Flow Asing 5D</th>
-                                    <th class="p-3 text-slate-300">Net Lot 5D</th>
-                                    <th class="p-3 text-amber-300">Akselerasi Inflow</th>
-                                    <th class="p-3">Hari Net Buy</th>
-                                    <th class="p-3">Fase Institusi</th>
+                                    <th class="p-3 text-cyan-400 font-bold">Estimasi Net Flow 5D</th>
+                                    <th class="p-3 text-slate-300">Estimasi Net Lot 5D</th>
+                                    <th class="p-3 text-amber-300">Akselerasi Proxy</th>
+                                    <th class="p-3">Hari Proxy Net Buy</th>
+                                    <th class="p-3">Fase Proxy</th>
                                 </tr>
                             </thead>
                             <tbody id="tbody-foreign-weekly"></tbody>
@@ -1129,10 +1130,10 @@
                     <div class="bg-[#0e1626] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <h3 class="font-bold text-white text-base flex items-center gap-2">
                             <span class="w-2.5 h-2.5 rounded-full bg-purple-400"></span>
-                            <span>Akumulasi Bulanan & Foreign VWAP (20 Hari Bursa)</span>
-                            <span class="bg-purple-950/80  text-purple-400 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">INSTITUTIONAL BASE</span>
+                            <span>Proxy Bulanan Harga dan Volume (20 Hari Bursa)</span>
+                            <span class="bg-purple-950/80  text-purple-400 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">ESTIMASI BASE</span>
                         </h3>
-                        <span class="text-xs text-slate-400">Foreign VWAP menunjukkan modal rata-rata investor asing saat akumulasi</span>
+                        <span class="text-xs text-slate-400">VWAP ini diturunkan dari estimasi proxy harga dan volume, bukan data transaksi asing.</span>
                     </div>
                     <div class="overflow-x-auto">
                         <div class="text-[10px] text-slate-400 sm:hidden px-3 py-1.5 bg-[#070b13]  flex items-center justify-between">
@@ -1145,10 +1146,10 @@
                                     <th class="p-3">Rank / Saham</th>
                                     <th class="p-3">Harga Terkini</th>
                                     <th class="p-3">Return 20D</th>
-                                    <th class="p-3 text-purple-400 font-bold">Net Flow Asing 20D</th>
-                                    <th class="p-3 text-amber-400">Foreign VWAP</th>
-                                    <th class="p-3">Floating P/L Asing</th>
-                                    <th class="p-3">Hari Net Buy</th>
+                                    <th class="p-3 text-purple-400 font-bold">Estimasi Net Flow 20D</th>
+                                    <th class="p-3 text-amber-400">VWAP Proxy</th>
+                                    <th class="p-3">Floating P/L Proxy</th>
+                                    <th class="p-3">Hari Proxy Net Buy</th>
                                     <th class="p-3">Base Building</th>
                                 </tr>
                             </thead>
@@ -1165,16 +1166,16 @@
                         <div>
                             <h3 class="font-bold text-white text-base flex items-center gap-2">
                                 <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></span>
-                                <span>Streak Pembelian Emiten (Consecutive Foreign Inflow Days)</span>
-                                <span class="bg-amber-950/80  text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">HIGH CONVICTION 🔥</span>
+                                <span>Streak Proxy Harga dan Volume</span>
+                                <span class="bg-amber-950/80 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full ml-1">ESTIMASI</span>
                             </h3>
                             <p class="text-xs text-slate-400 mt-1">
-                                Menyaring emiten yang diakumulasi asing berturut-turut tanpa jeda (Streak $\ge 2$ Hari). Model backtest membuktikan probabilitas kelanjutan reli mencapai 78%+.
+                                Menyaring pergerakan proxy harga dan volume positif selama minimal dua hari. Ini bukan data transaksi aktual investor asing dan belum menunjukkan win rate teruji.
                             </p>
                         </div>
                         <div class="text-right flex items-center gap-2 self-start sm:self-auto">
                             <span class="bg-emerald-950/80 text-emerald-400 font-mono font-bold text-xs px-3 py-1.5 rounded-xl shadow-sm">
-                                Win Rate Model: 78.4% 🎯
+                                Win rate: belum tervalidasi
                             </span>
                         </div>
                     </div>
@@ -1748,27 +1749,27 @@
                     </div>
                 </div>
 
-                <!-- Card 4: Aliran Asing & Bandarmology -->
+                <!-- Card 4: Proxy Harga dan Volume -->
                 <div class="bg-[#090e1a] rounded-xl p-5 space-y-3 shadow-lg">
                     <div class="flex items-center justify-between  pb-2.5">
-                        <h4 class="font-bold text-white text-sm">Aliran Asing & Flow</h4>
+                        <h4 class="font-bold text-white text-sm">Proxy Aliran Harga/Volume</h4>
                         <span id="modal-foreign-status"
                             class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-cyan-500/20 text-cyan-300 shadow-sm">NETRAL</span>
                     </div>
                     <div class="space-y-2 text-xs">
                         <div class="flex justify-between py-1 "><span
-                                class="text-slate-400">Net Asing (1D)</span><span id="modal-foreign-net1d"
+                                class="text-slate-400">Net Proxy (1D)</span><span id="modal-foreign-net1d"
                                 class="font-mono text-emerald-400 font-bold">+Rp 0 M</span></div>
                         <div class="flex justify-between py-1 "><span
-                                class="text-slate-400">Net Asing (5D)</span><span id="modal-foreign-net5d"
+                                class="text-slate-400">Net Proxy (5D)</span><span id="modal-foreign-net5d"
                                 class="font-mono text-white font-semibold">+Rp 0 M</span></div>
                         <div class="flex justify-between py-1 "><span
-                                class="text-slate-400">Foreign VWAP</span><span id="modal-foreign-vwap"
+                                class="text-slate-400">Proxy VWAP</span><span id="modal-foreign-vwap"
                                 class="font-mono text-amber-300 font-semibold">Rp -</span></div>
                         <div class="flex justify-between py-1 "><span
                                 class="text-slate-400">Pressure (FFPI)</span><span id="modal-foreign-ffpi"
                                 class="font-mono text-cyan-300 font-semibold">0 / 100</span></div>
-                        <div class="flex justify-between py-1"><span class="text-slate-400">Streak Asing</span><span
+                        <div class="flex justify-between py-1"><span class="text-slate-400">Streak Proxy</span><span
                                 id="modal-foreign-streak" class="font-mono text-amber-400 font-semibold">-</span></div>
                     </div>
                 </div>
@@ -2001,7 +2002,7 @@
                     </div>
                     <div>
                         <h2 class="text-lg sm:text-2xl font-black text-white tracking-tight">AUDIT & METODOLOGI BACKTEST KUANTITATIF (IDX)</h2>
-                        <p class="text-xs text-slate-400 mt-0.5">Pengujian historis multi-tahun sistem algoritma analisa saham & foreign flow</p>
+                        <p class="text-xs text-slate-400 mt-0.5">Pengujian backtest menggunakan data historis; proxy harga dan volume tidak disamakan dengan data arus investor asing</p>
                     </div>
                 </div>
                 <button id="btn-close-backtest-modal" class="bg-[#121c2e] hover:bg-[#1a273f] text-slate-400 hover:text-white p-2 rounded-full transition cursor-pointer shrink-0">
@@ -2012,84 +2013,18 @@
             <!-- Content -->
             <div class="space-y-5 text-xs sm:text-sm text-slate-300">
                 <div class="bg-[#070c14] p-4 rounded-xl shadow-md space-y-2">
-                    <h4 class="font-bold text-white text-sm text-cyan-400">1. Algoritma Pelacakan Aliran Asing (Foreign Flow Engine)</h4>
+                    <h4 class="font-bold text-white text-sm text-cyan-400">1. Algoritma Pelacakan Proxy Harga dan Volume (Engine Estimasi)</h4>
                     <p class="text-slate-300 leading-relaxed">
-                        Sistem menggunakan perpaduan Close Location Value (CLV), Volume-Price Spread Analysis (VPA), dan Foreign Flow Pressure Index (FFPI). Setiap fraksi pergerakan harga diuji terhadap rasio partisipasi modal asing (35% - 46% untuk saham tier perbankan LQ45).
+                        Sistem membentuk estimasi proxy dari Close Location Value (CLV), pergerakan harga, volume, dan bobot partisipasi yang ditetapkan per ticker. Nilai ini bukan data transaksi aktual, kepemilikan asing, atau aliran dana institusional.
                     </p>
                     <div class="bg-[#0b101a] p-3 rounded-lg font-mono text-[11px] text-cyan-300 shadow-sm">
                         CLV = ((Close - Low) - (High - Close)) / (High - Low)<br>
-                        FFPI = TotalTurnover * ForeignWeight * (0.65 * CLV + 0.35 * tanh(Chg% / 2.5))<br>
-                        Foreign VWAP = Sum(Close * NetForeignVal) / Sum(NetForeignVol * 100)
+                        FFPI Proxy = Turnover * ParticipationWeight * (0.65 * CLV + 0.35 * tanh(Chg% / 2.5))<br>
+                        VWAP Proxy = VWAP turunan dari estimasi nilai partisipasi dan volume
                     </div>
                 </div>
 
-                <div class="bg-[#070c14] p-4 rounded-xl shadow-md space-y-3">
-                    <h4 class="font-bold text-white text-sm text-amber-400">2. Hasil Backtest Strategi & Probabilitas Kuantitatif</h4>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs whitespace-nowrap">
-                            <thead class="bg-[#090e1a] text-slate-400 text-[11px] uppercase ">
-                                <tr>
-                                    <th class="p-2.5">Strategi</th>
-                                    <th class="p-2.5">Win Rate</th>
-                                    <th class="p-2.5">Profit Factor</th>
-                                    <th class="p-2.5">Risk : Reward</th>
-                                    <th class="p-2.5">Holding Period</th>
-                                    <th class="p-2.5">Sample Sinyal</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-800/60 font-mono">
-                                <tr class="hover:bg-slate-900/50">
-                                    <td class="p-2.5 font-sans font-bold text-white">Foreign Buying Streak (≥ 4 Hari)</td>
-                                    <td class="p-2.5 text-emerald-400 font-bold">78.8%</td>
-                                    <td class="p-2.5 text-amber-300">2.80</td>
-                                    <td class="p-2.5 text-cyan-300">1:2.8</td>
-                                    <td class="p-2.5 text-slate-300">5 - 14 Hari</td>
-                                    <td class="p-2.5 text-slate-400">385 Sinyal</td>
-                                </tr>
-                                <tr class="hover:bg-slate-900/50">
-                                    <td class="p-2.5 font-sans font-bold text-white">Foreign Buying Streak (≥ 7 Hari)</td>
-                                    <td class="p-2.5 text-emerald-400 font-bold">84.2%</td>
-                                    <td class="p-2.5 text-amber-300">3.40</td>
-                                    <td class="p-2.5 text-cyan-300">1:3.5</td>
-                                    <td class="p-2.5 text-slate-300">10 - 30 Hari</td>
-                                    <td class="p-2.5 text-slate-400">142 Sinyal</td>
-                                </tr>
-                                <tr class="hover:bg-slate-900/50">
-                                    <td class="p-2.5 font-sans font-bold text-white">Beli Sore Jual Pagi (BSJP)</td>
-                                    <td class="p-2.5 text-emerald-400 font-bold">79.2%</td>
-                                    <td class="p-2.5 text-amber-300">2.85</td>
-                                    <td class="p-2.5 text-cyan-300">1:2.5</td>
-                                    <td class="p-2.5 text-slate-300">Overnight (16-18 Jam)</td>
-                                    <td class="p-2.5 text-slate-400">480 Sinyal</td>
-                                </tr>
-                                <tr class="hover:bg-slate-900/50">
-                                    <td class="p-2.5 font-sans font-bold text-white">Scalping Opening Surge (Sesi 1)</td>
-                                    <td class="p-2.5 text-emerald-400 font-bold">76.4%</td>
-                                    <td class="p-2.5 text-amber-300">2.45</td>
-                                    <td class="p-2.5 text-cyan-300">1:2.2</td>
-                                    <td class="p-2.5 text-slate-300">0.5 - 2 Jam</td>
-                                    <td class="p-2.5 text-slate-400">412 Sinyal</td>
-                                </tr>
-                                <tr class="hover:bg-slate-900/50">
-                                    <td class="p-2.5 font-sans font-bold text-white">Swing Trade (MA Pullback + ST)</td>
-                                    <td class="p-2.5 text-emerald-400 font-bold">74.2%</td>
-                                    <td class="p-2.5 text-amber-300">2.70</td>
-                                    <td class="p-2.5 text-cyan-300">1:3.0</td>
-                                    <td class="p-2.5 text-slate-300">3 - 10 Hari</td>
-                                    <td class="p-2.5 text-slate-400">294 Sinyal</td>
-                                </tr>
-                                <tr class="hover:bg-slate-900/50">
-                                    <td class="p-2.5 font-sans font-bold text-white">Investasi Jangka Panjang (Golden Trend)</td>
-                                    <td class="p-2.5 text-emerald-400 font-bold">82.5%</td>
-                                    <td class="p-2.5 text-amber-300">3.40</td>
-                                    <td class="p-2.5 text-cyan-300">1:4.0</td>
-                                    <td class="p-2.5 text-slate-300">6 - 12 Bulan</td>
-                                    <td class="p-2.5 text-slate-400">145 Sinyal</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                <div class="bg-[#070c14] p-4 rounded-xl shadow-md space-y-2"><h4 class="font-bold text-white text-sm text-amber-400">2. Status Validasi Statistik</h4><p class="text-slate-300 leading-relaxed">Win rate dan profit factor untuk sinyal screener hanya ditampilkan jika dihitung dari backtest historis yang berjalan. Klaim statistik tetap untuk strategi screener dan proxy aliran harga/volume telah dihapus karena tidak dapat diverifikasi dari artefak backtest saat ini.</p></div>
 
                 <div class="bg-[#070c14] p-4 rounded-xl shadow-md space-y-2">
                     <h4 class="font-bold text-white text-sm text-emerald-400">3. Ketentuan Eksekusi & Manajemen Risiko</h4>
