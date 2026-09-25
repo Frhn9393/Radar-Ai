@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-let lastTelegramTestAt = 0;
 const { fetchBroksum } = require('../services/broksumService');
 const { StockbitFeedError } = require('../services/customMarketFeed');
 const { formatJakartaDate, daysAgoJakarta, tradingDateBounds } = require('../services/dateTime');
 const { waitUntil } = require('@vercel/functions');
-const { sendTelegramAlert } = require('../services/telegramService');
+const { sendTelegramAlert, setTelegramWebhook, getTelegramWebhookInfo } = require('../services/telegramService');
+const { isSameOriginRequest, allowRateLimitedRequest } = require('../services/requestGuard');
 const { fetchHistoricalData } = require('../services/backtestEngine');
 const { isDuplicateTelegramUpdate, processTelegramUpdate } = require('../services/telegramWebhookService');
 const { fetch_market_news, fetch_ma_deals } = require('../services/newsService');
@@ -44,6 +44,33 @@ router.get('/cron/telegram-session-alerts', async (req, res) => {
     } catch (error) {
         console.error('[cron:telegram-session-alerts] failed', error.message || error);
         return res.status(500).json({ ok: false, error: 'Scheduled alert run failed' });
+    }
+});
+
+router.post('/telegram/configure-webhook', async (req, res) => {
+    const secret = String(process.env.CRON_SECRET || '').trim();
+    if (!secret || String(req.get('authorization') || '').trim() !== `Bearer ${secret}`) {
+        return res.status(401).json({ ok: false, error: 'Unauthorized' });
+    }
+    const webhookSecret = String(process.env.TELEGRAM_WEBHOOK_SECRET || '').trim();
+    const webhookUrl = String(process.env.TELEGRAM_WEBHOOK_URL || 'https://radar-ai-beta.vercel.app/api/telegram-webhook').trim();
+    if (!process.env.TELEGRAM_BOT_TOKEN || !webhookSecret) {
+        return res.status(503).json({ ok: false, error: 'Telegram webhook configuration unavailable' });
+    }
+    try {
+        await setTelegramWebhook(webhookUrl, webhookSecret);
+        const info = await getTelegramWebhookInfo();
+        if (info.url !== webhookUrl) throw new Error('Telegram webhook URL did not match after setup');
+        return res.json({
+            ok: true,
+            webhookUrl: info.url,
+            pendingUpdates: Number(info.pending_update_count) || 0,
+            lastErrorDate: info.last_error_date || null,
+            lastErrorMessage: info.last_error_message || null
+        });
+    } catch (error) {
+        console.error('[telegram-webhook-setup] failed', error.message || error);
+        return res.status(502).json({ ok: false, error: 'Telegram webhook could not be configured.' });
     }
 });
 
@@ -134,18 +161,18 @@ router.post('/telegram-webhook', (req, res) => {
 });
 
 router.post('/telegram/test-alert', async (req, res) => {
-    const origin = req.get('origin');
-    if (origin) {
-        try {
-            if (new URL(origin).host !== req.get('host')) return res.status(403).json({ ok: false, error: 'Origin tidak diizinkan.' });
-        } catch { return res.status(403).json({ ok: false, error: 'Origin tidak valid.' }); }
+    if (!isSameOriginRequest(req)) return res.status(403).json({ ok: false, error: 'Origin tidak diizinkan.' });
+    try {
+        if (!await allowRateLimitedRequest(req, 'telegram-test-alert', { limit: 1, windowSeconds: 60 })) {
+            return res.status(429).json({ ok: false, error: 'Tunggu satu menit sebelum mengirim tes berikutnya.' });
+        }
+    } catch {
+        return res.status(503).json({ ok: false, error: 'Layanan pembatasan permintaan sementara tidak tersedia.' });
     }
-    if (Date.now() - lastTelegramTestAt < 60_000) return res.status(429).json({ ok: false, error: 'Tunggu satu menit sebelum mengirim tes berikutnya.' });
     if (!process.env.TELEGRAM_BOT_TOKEN || !process.env.TELEGRAM_ADMIN_CHAT_ID) {
         return res.status(503).json({ ok: false, error: 'Konfigurasi Telegram belum tersedia.' });
     }
     try {
-        lastTelegramTestAt = Date.now();
         const ok = await sendTelegramAlert('✅ STOCKRADAR AI: Tes notifikasi berhasil. Alert Telegram aktif.');
         return res.status(ok ? 200 : 502).json({ ok, message: ok ? 'Tes notifikasi berhasil dikirim.' : 'Telegram menolak pengiriman.' });
     } catch (error) {

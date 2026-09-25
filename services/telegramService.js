@@ -35,6 +35,53 @@ async function sendTelegramAlert(message) {
     return sendTelegramMessage(adminChatId.toString(), message);
 }
 
+async function setTelegramWebhook(url, secretToken, options = {}) {
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    if (!token) throw new Error('Telegram bot token is not configured');
+    const webhookUrl = String(url || '').trim();
+    const webhookSecret = String(secretToken || '').trim();
+    if (!/^https:\/\//i.test(webhookUrl)) throw new Error('Telegram webhook must use HTTPS');
+    if (!/^[A-Za-z0-9_-]{1,256}$/.test(webhookSecret)) throw new Error('Telegram webhook secret is invalid');
+
+    const controller = new AbortController();
+    const timeoutMs = Number.isFinite(Number(options.timeoutMs)) && Number(options.timeoutMs) > 0 ? Number(options.timeoutMs) : 5000;
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        const response = await fetch(`https://api.telegram.org/bot${token}/setWebhook`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+                url: webhookUrl,
+                secret_token: webhookSecret,
+                allowed_updates: ['message', 'edited_message'],
+                drop_pending_updates: false
+            }),
+            signal: controller.signal
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || result.ok === false) throw new Error(result.description || `Telegram API HTTP ${response.status}`);
+        return result.result === true;
+    } finally {
+        clearTimeout(timeout);
+    }
+}
+
+async function getTelegramWebhookInfo(options = {}) {
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    if (!token) throw new Error('Telegram bot token is not configured');
+    const controller = new AbortController();
+    const timeoutMs = Number.isFinite(Number(options.timeoutMs)) && Number(options.timeoutMs) > 0 ? Number(options.timeoutMs) : 4000;
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        const response = await fetch(`https://api.telegram.org/bot${token}/getWebhookInfo`, { signal: controller.signal });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || result.ok === false) throw new Error(result.description || `Telegram API HTTP ${response.status}`);
+        return result.result || {};
+    } finally {
+        clearTimeout(timeout);
+    }
+}
+
 const TELEGRAM_COMMANDS = [
     { command: 'radar', description: 'Ringkasan seluruh rekomendasi screener (Master Radar)' },
     { command: 'news', description: 'Berita akuisisi & merger terbaru hari ini' },
@@ -45,14 +92,21 @@ const TELEGRAM_COMMANDS = [
 async function setTelegramCommands() {
     const token = process.env.TELEGRAM_BOT_TOKEN;
     if (!token) return false;
-    const response = await fetch(`https://api.telegram.org/bot${token}/setMyCommands`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ commands: TELEGRAM_COMMANDS })
-    });
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok || result.ok === false) throw new Error(result.description || `Telegram API HTTP ${response.status}`);
-    return true;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4000);
+    try {
+        const response = await fetch(`https://api.telegram.org/bot${token}/setMyCommands`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ commands: TELEGRAM_COMMANDS }),
+            signal: controller.signal
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || result.ok === false) throw new Error(result.description || `Telegram API HTTP ${response.status}`);
+        return true;
+    } finally {
+        clearTimeout(timeout);
+    }
 }
 
-module.exports = { sendTelegramAlert, sendTelegramMessage, setTelegramCommands, TELEGRAM_COMMANDS };
+module.exports = { sendTelegramAlert, sendTelegramMessage, setTelegramWebhook, getTelegramWebhookInfo, setTelegramCommands, TELEGRAM_COMMANDS };

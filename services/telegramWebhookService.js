@@ -11,6 +11,7 @@ const STRICT_EMPTY_ALERT = 'Stockradar Alert: Saat ini tidak ada emiten yang mem
 const RADAR_BUSY_MESSAGE = '⚠️ Server sedang sibuk mengambil data pasar, silakan coba beberapa saat lagi.';
 const RADAR_TIMEOUT_MS = 4500;
 const REDIS_OPERATION_TIMEOUT_MS = 2500;
+const NEWS_PROVIDER_TIMEOUT_MS = 4000;
 
 function withTimeout(task, timeoutMs, label) {
     let timeout;
@@ -172,8 +173,8 @@ async function processTelegramUpdate(update, dependencies = {}) {
 
     if (/^\/news(?:@\w+)?$/i.test(text)) {
         const [marketResult, dealResult] = await Promise.allSettled([
-            (dependencies.fetchMarketNews || fetch_market_news)(),
-            (dependencies.fetchMaDeals || fetch_ma_deals)()
+            withTimeout(dependencies.fetchMarketNews || fetch_market_news, NEWS_PROVIDER_TIMEOUT_MS, 'Telegram market news'),
+            withTimeout(dependencies.fetchMaDeals || fetch_ma_deals, NEWS_PROVIDER_TIMEOUT_MS, 'Telegram M&A news')
         ]);
         const marketValue = marketResult.status === 'fulfilled' ? marketResult.value : null;
         const dealValue = dealResult.status === 'fulfilled' ? dealResult.value : null;
@@ -198,7 +199,7 @@ async function processTelegramUpdate(update, dependencies = {}) {
         });
         await sendMessage(chatId, lines.length
             ? `STOCKRADAR AI · Berita Akuisisi / Merger Hari Ini\n\n${lines.join('\n\n')}`
-            : 'Saat ini belum ada berita atau sentimen akuisisi/merger terbaru di pasar modal.');
+            : 'Saat ini belum ada berita atau sentimen akuisisi/merger terbaru di pasar modal.', { timeoutMs: 3000 });
         return;
     }
     if (/^\/(start|help)(?:@\w+)?$/i.test(text)) {

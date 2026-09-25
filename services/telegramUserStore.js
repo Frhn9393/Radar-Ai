@@ -56,8 +56,6 @@ async function recordTelegramUser(message) {
     const user = normalizeTelegramUser(message);
     if (!user) return { recorded: false, persisted: false };
 
-    // Keep the interaction log useful while never logging message text or bot tokens.
-    console.info('[telegram-user] interaction', JSON.stringify(user));
     if (!getRedisConfig()) return { recorded: true, persisted: false };
 
     return withRedisTimeout((async () => {

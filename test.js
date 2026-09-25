@@ -16,6 +16,7 @@ const { fetchBrokerTop, requestBrokerTop, parseStockbitResponse, _clearCacheForT
 const { fetchBroksum } = require('./services/broksumService');
 const { validateDatasetQuality } = require('./scripts/candlestickDataset');
 const { analyzeStock, runScreener, hasUsableRealtimeData } = require('./services/stockService');
+const { isSameOriginRequest, allowRateLimitedRequest } = require('./services/requestGuard');
 
 let totalTests = 0;
 let passedTests = 0;
@@ -155,6 +156,31 @@ function testTelegramWebhookRequiresConfiguredSecret() {
     }
 }
 
+async function testTelegramConnectionGuards() {
+    const sameOriginRequest = {
+        ip: '127.0.0.1',
+        get: name => ({ origin: 'http://localhost:3000', host: 'localhost:3000' }[name.toLowerCase()])
+    };
+    const crossOriginRequest = {
+        get: name => ({ origin: 'https://attacker.example', host: 'radar-ai-beta.vercel.app' }[name.toLowerCase()])
+    };
+    const missingOriginRequest = { get: name => ({ host: 'radar-ai-beta.vercel.app' }[name.toLowerCase()]) };
+    assert(isSameOriginRequest(sameOriginRequest), 'Telegram alert endpoints accept a request from the same origin');
+    assert(!isSameOriginRequest(crossOriginRequest), 'Telegram alert endpoints reject cross-origin requests');
+    assert(!isSameOriginRequest(missingOriginRequest), 'Telegram alert endpoints reject requests without an Origin header');
+
+    const rateLimitKey = `test-${Date.now()}-${Math.random()}`;
+    assert(await allowRateLimitedRequest(sameOriginRequest, rateLimitKey, { limit: 1, windowSeconds: 60 }), 'Telegram side-effect rate limiter allows the first request');
+    assert(!await allowRateLimitedRequest(sameOriginRequest, rateLimitKey, { limit: 1, windowSeconds: 60 }), 'Telegram side-effect rate limiter blocks repeated requests');
+
+    const router = require('./routes/stockRoutes');
+    const setupRoute = router.stack.find(layer => layer.route?.path === '/telegram/configure-webhook');
+    let setupStatus = 200;
+    const setupResponse = { status(code) { setupStatus = code; return this; }, json() { return this; } };
+    await setupRoute.route.stack[0].handle({ get: () => undefined }, setupResponse);
+    assert(setupStatus === 401, 'Telegram webhook setup endpoint fails closed without CRON_SECRET authorization');
+}
+
 async function testTelegramAdminAndCorporateNews() {
     const previousAdminId = process.env.TELEGRAM_ADMIN_CHAT_ID;
     process.env.TELEGRAM_ADMIN_CHAT_ID = '900';
@@ -282,6 +308,8 @@ async function runAllTests() {
     console.log('════════════════════════════════════════════════════════════════');
     console.log('   RADAR-AI COMPREHENSIVE AUTOMATED VERIFICATION TEST SUITE     ');
     console.log('════════════════════════════════════════════════════════════════\n');
+
+    await testTelegramConnectionGuards();
 
     // ── 1. Unit Tests: sanitizeTicker ───────────────────────────
     console.log('▶ [1/7] Testing utils.sanitizeTicker...');

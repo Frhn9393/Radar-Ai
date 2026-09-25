@@ -6,6 +6,7 @@ const {
     fetch_ma_deals,
     get_market_indices
 } = require('../services/stockService');
+const { isSameOriginRequest, allowRateLimitedRequest } = require('../services/requestGuard');
 
 // API: Run Screener (Superfast Multi-factor Engine)
 router.get('/screener', async (req, res) => {
@@ -19,6 +20,14 @@ router.get('/screener', async (req, res) => {
 
 // Trigger Telegram delivery using the same cached, deduplicated screener result as the UI.
 router.post('/screener/telegram-alerts', async (req, res) => {
+    if (!isSameOriginRequest(req)) return res.status(403).json({ ok: false, error: 'Origin tidak diizinkan.' });
+    try {
+        if (!await allowRateLimitedRequest(req, 'screener-telegram-alerts', { limit: 5, windowSeconds: 60 })) {
+            return res.status(429).json({ ok: false, error: 'Terlalu banyak permintaan notifikasi. Coba lagi sebentar.' });
+        }
+    } catch {
+        return res.status(503).json({ ok: false, error: 'Layanan pembatasan permintaan sementara tidak tersedia.' });
+    }
     try {
         const data = await runScreener({ sendAlerts: true });
         return res.json({ ok: true, screenerUpdated: Boolean(data) });
