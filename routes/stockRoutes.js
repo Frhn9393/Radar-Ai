@@ -9,7 +9,7 @@ const { isSameOriginRequest, allowRateLimitedRequest } = require('../services/re
 const { fetchHistoricalData } = require('../services/backtestEngine');
 const { isDuplicateTelegramUpdate, processTelegramUpdate } = require('../services/telegramWebhookService');
 const { fetch_market_news, fetch_ma_deals } = require('../services/newsService');
-const { enqueueNewsAlerts, isStrategicCorporateAction } = require('../services/newsAlertService');
+const { enqueueNewsAlerts, filterAutomaticNewsWindow } = require('../services/newsAlertService');
 const {
     analyzeStock,
     hasUsableRealtimeData,
@@ -18,9 +18,8 @@ const {
     get_stock_price,
     get_sector_for_ticker
 } = require('../services/stockService');
-const { runScreener } = require('../services/screenerService');
 
-// Vercel Cron hits this endpoint at Indonesian session open times (weekdays).
+// Daily Vercel Cron checks corporate-action news and queues a compact Telegram alert.
 router.get('/cron/telegram-session-alerts', async (req, res) => {
     const secret = String(process.env.CRON_SECRET || '').trim();
     const authorization = String(req.get('authorization') || '').trim();
@@ -32,15 +31,22 @@ router.get('/cron/telegram-session-alerts', async (req, res) => {
     }
 
     try {
-        const [screener, marketNews, maNews] = await Promise.all([
-            runScreener(), fetch_market_news().catch(() => null), fetch_ma_deals().catch(() => null)
-        ]);
-        const newsItems = [
+        const [marketResult, dealResult] = await Promise.allSettled([fetch_market_news(), fetch_ma_deals()]);
+        const marketNews = marketResult.status === 'fulfilled' ? marketResult.value : null;
+        const maNews = dealResult.status === 'fulfilled' ? dealResult.value : null;
+        const newsItems = filterAutomaticNewsWindow([
             ...(Array.isArray(marketNews?.news) ? marketNews.news : []),
             ...(Array.isArray(maNews?.deals) ? maNews.deals : [])
-        ].filter(isStrategicCorporateAction);
-        enqueueNewsAlerts(newsItems);
-        return res.json({ ok: true, screenerUpdated: Boolean(screener), newsItems: newsItems.length });
+        ]);
+        const alertCandidates = enqueueNewsAlerts(newsItems);
+        const feedErrors = Number(marketResult.status === 'rejected' || Boolean(marketNews?.error))
+            + Number(dealResult.status === 'rejected' || Boolean(maNews?.error));
+        console.info('[cron:telegram-session-alerts] news scan complete', {
+            matched: newsItems.length,
+            alertCandidates,
+            feedErrors
+        });
+        return res.json({ ok: true, matchedNewsItems: newsItems.length, alertCandidates, feedErrors });
     } catch (error) {
         console.error('[cron:telegram-session-alerts] failed', error.message || error);
         return res.status(500).json({ ok: false, error: 'Scheduled alert run failed' });

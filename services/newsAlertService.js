@@ -20,6 +20,19 @@ function isStrategicCorporateAction(item) {
     return /\b(?:akuisisi|acquisitions?|mergers?|pengambilalihan|tender\s+offers?|buybacks?|divestasi|rights?\s+issues?)\b/i.test(content);
 }
 
+function isAutomaticNewsAlert(item) {
+    const content = `${item?.title || ''} ${item?.summary || ''}`;
+    return /\b(?:akuisisi|mengakuisisi|diakuisisi|acquisitions?|acquire[sd]?|mergers?|pengambilalihan|penggabungan\s+usaha|takeovers?)\b|\b(?:rights?\s+issues?|hmetd|pmhmetd|hak\s+memesan\s+efek\s+terlebih\s+dahulu)\b/i.test(content);
+}
+
+function filterAutomaticNewsWindow(items, now = Date.now(), windowMs = 36 * 60 * 60 * 1000) {
+    return (Array.isArray(items) ? items : []).filter(item => {
+        if (!isAutomaticNewsAlert(item)) return false;
+        const publishedAt = new Date(item?.pubDate).getTime();
+        return Number.isFinite(publishedAt) && publishedAt <= now && now - publishedAt <= windowMs;
+    }).sort((first, second) => new Date(second.pubDate).getTime() - new Date(first.pubDate).getTime());
+}
+
 function findNewNewsItems(items = [], previousItems = []) {
     if (!previousItems.length) return [];
     const previousKeys = new Set(previousItems.map(getNewsAlertKey));
@@ -61,6 +74,19 @@ function formatNewsAlert(item) {
     ].join('\n');
 }
 
+function formatNewsAlertBatch(items) {
+    const eligibleItems = (Array.isArray(items) ? items : []).filter(isAutomaticNewsAlert).slice(0, 5);
+    const rows = eligibleItems.map((item, index) => {
+        const tickers = Array.isArray(item?.tickers) ? item.tickers : [item?.ticker || 'IHSG'];
+        const ticker = String(tickers[0] || 'IHSG').replace(/[^A-Z0-9]/gi, '').slice(0, 5) || 'IHSG';
+        const title = String(item?.title || 'Berita aksi korporasi').replace(/\s+/g, ' ').trim().slice(0, 260);
+        const link = String(item?.link || '').trim().slice(0, 350);
+        const source = String(item?.source || 'Sumber berita').replace(/[\r\n]+/g, ' ').slice(0, 80);
+        return `${index + 1}. $${ticker} · ${title}\n${source}${link ? ` · ${link}` : ''}`;
+    });
+    return `📰 STOCKRADAR AI · AKUISISI & RIGHTS ISSUE (${rows.length})\n\n${rows.join('\n\n')}`.slice(0, 3900);
+}
+
 function rememberKey(key) {
     const now = Date.now();
     for (const [existingKey, timestamp] of notifiedNews) {
@@ -74,34 +100,47 @@ function rememberKey(key) {
 }
 
 function enqueueNewsAlerts(items = []) {
-    for (const item of items) {
-        if (!isStrategicCorporateAction(item)) continue;
+    const eligible = [];
+    const keys = new Set();
+    for (const item of Array.isArray(items) ? items : []) {
+        if (!isAutomaticNewsAlert(item)) continue;
         const key = getNewsAlertKey(item);
-        if (!key || notifiedNews.has(key)) continue;
-        rememberKey(key);
+        if (!key || keys.has(key) || notifiedNews.has(key)) continue;
+        keys.add(key);
+        eligible.push({ item, key, dedupeKey: `news:${key}` });
+    }
+    if (!eligible.length) return 0;
 
-        const dedupeKey = `news:${key}`;
-        const task = claimAlert(dedupeKey).then(claimed => claimed ? sendTelegramAlert(formatNewsAlert(item)) : true).then(async sent => {
+    const task = (async () => {
+        const claimed = [];
+        for (const candidate of eligible.slice(0, 5)) {
+            if (await claimAlert(candidate.dedupeKey)) claimed.push(candidate);
+        }
+        if (!claimed.length) return;
+        try {
+            const sent = await sendTelegramAlert(formatNewsAlertBatch(claimed.map(row => row.item)));
             if (!sent) {
-                notifiedNews.delete(key);
-                await releaseAlert(dedupeKey);
+                for (const { key, dedupeKey } of claimed) await releaseAlert(dedupeKey);
                 if (!missingConfigLogged) {
                     console.warn('[news-alert] TELEGRAM_BOT_TOKEN or TELEGRAM_ADMIN_CHAT_ID is not configured');
                     missingConfigLogged = true;
                 }
+                return;
             }
-        }).catch(async error => {
-            notifiedNews.delete(key);
-            await releaseAlert(dedupeKey).catch(() => {});
+            claimed.forEach(({ key }) => rememberKey(key));
+            console.info('[news-alert] automatic corporate-action batch delivered', { count: claimed.length });
+        } catch (error) {
+            for (const { dedupeKey } of claimed) await releaseAlert(dedupeKey).catch(() => {});
             console.error('[news-alert] Telegram delivery failed:', error.message || error);
-        });
-
-        try {
-            waitUntil(task);
-        } catch {
-            task.catch(() => {});
         }
+    })();
+
+    try {
+        waitUntil(task);
+    } catch {
+        task.catch(() => {});
     }
+    return Math.min(eligible.length, 5);
 }
 
-module.exports = { classifyNewsSentiment, enqueueNewsAlerts, findNewNewsItems, formatNewsAlert, getNewsAlertKey, isStrategicCorporateAction };
+module.exports = { classifyNewsSentiment, enqueueNewsAlerts, filterAutomaticNewsWindow, findNewNewsItems, formatNewsAlert, formatNewsAlertBatch, getNewsAlertKey, isAutomaticNewsAlert, isStrategicCorporateAction };

@@ -58,7 +58,6 @@ async function fetchFeed(url, timeoutMs = 6000) {
                 'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8'
             }
         });
-        clearTimeout(timer);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const xml = await res.text();
         try {

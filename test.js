@@ -4,7 +4,8 @@ const { search_stocks } = require('./services/searchService');
 const { get_stock_price, get_market_indices } = require('./services/marketDataService');
 const { get_technical_indicators } = require('./services/technicalService');
 const { fetch_market_news, fetch_ma_deals, extractNewsTicker } = require('./services/newsService');
-const { classifyNewsSentiment, findNewNewsItems, formatNewsAlert, isStrategicCorporateAction } = require('./services/newsAlertService');
+const { classifyNewsSentiment, enqueueNewsAlerts, filterAutomaticNewsWindow, findNewNewsItems, formatNewsAlert, formatNewsAlertBatch, isAutomaticNewsAlert, isStrategicCorporateAction } = require('./services/newsAlertService');
+const { claimAlert, releaseAlert } = require('./services/alertDedupeStore');
 const { formatJakartaDate, formatJakartaDateTime } = require('./services/dateTime');
 const { listTelegramUsers, recordTelegramUser } = require('./services/telegramUserStore');
 const { isStrictBsjpEligible, isStrictBpjpEligible, isStrictIntradayEligible, isScalpingOpeningSurgeEligible, isBullishIntradaySurgeEligible } = require('./services/strictScreenerFilters');
@@ -183,6 +184,45 @@ async function testTelegramConnectionGuards() {
     assert(setupStatus === 401, 'Telegram webhook setup endpoint fails closed without CRON_SECRET authorization');
 }
 
+async function testAutomaticCorporateNewsAlerts() {
+    const now = Date.now();
+    const recentAcquisition = { title: 'Emiten akuisisi perusahaan energi', ticker: 'ABCD', source: 'Media A', link: 'https://example.com/a', pubDate: new Date(now - 60_000).toISOString() };
+    const recentRightsIssue = { title: 'Perseroan umumkan HMETD rights issue', ticker: 'EFGH', source: 'Media B', link: 'https://example.com/b', pubDate: new Date(now - 2 * 60 * 60 * 1000).toISOString() };
+    const oldMerger = { title: 'Rencana merger dua emiten', pubDate: new Date(now - 48 * 60 * 60 * 1000).toISOString() };
+    const unrelated = { title: 'Emiten umumkan buyback saham', pubDate: new Date(now - 60_000).toISOString() };
+    assert(isAutomaticNewsAlert(recentAcquisition), 'Automatic Telegram news accepts acquisition headlines');
+    assert(isAutomaticNewsAlert(recentRightsIssue), 'Automatic Telegram news accepts HMETD and rights issue headlines');
+    assert(!isAutomaticNewsAlert(unrelated), 'Automatic Telegram news excludes buyback and unrelated corporate actions');
+    const filtered = filterAutomaticNewsWindow([recentAcquisition, recentRightsIssue, oldMerger, unrelated], now);
+    assert(filtered.length === 2 && filtered.every(isAutomaticNewsAlert), 'Automatic Telegram news keeps only eligible items published within the scan window');
+    const batch = formatNewsAlertBatch([recentAcquisition, recentRightsIssue, unrelated]);
+    assert(batch.includes('AKUISISI & RIGHTS ISSUE (2)') && batch.includes('$ABCD') && batch.includes('$EFGH') && !batch.includes('buyback'), 'Automatic news formatter groups only eligible headlines into one compact Telegram message');
+
+    const previousUrl = process.env.KV_REST_API_URL;
+    const previousToken = process.env.KV_REST_API_TOKEN;
+    const previousFetch = global.fetch;
+    const redisCommands = [];
+    process.env.KV_REST_API_URL = 'https://redis.example.test';
+    process.env.KV_REST_API_TOKEN = 'test-kv-secret';
+    global.fetch = async (_url, options) => {
+        const command = JSON.parse(options.body);
+        redisCommands.push(command);
+        const result = command[0] === 'SET' ? (redisCommands.filter(row => row[0] === 'SET').length === 1 ? 'OK' : null) : 1;
+        return { ok: true, json: async () => ({ result }) };
+    };
+    try {
+        const key = `test:auto-news:${now}`;
+        assert(await claimAlert(key), 'Automatic alert dedupe claims a news item using shared Redis');
+        assert(!(await claimAlert(key)), 'Automatic alert dedupe suppresses an already claimed news item');
+        await releaseAlert(key);
+        assert(redisCommands.some(command => command[0] === 'SET' && command.includes('NX') && command.includes('EX')) && redisCommands.some(command => command[0] === 'DEL'), 'Automatic alert dedupe uses atomic Redis SET NX EX and supports release');
+    } finally {
+        global.fetch = previousFetch;
+        if (previousUrl === undefined) delete process.env.KV_REST_API_URL; else process.env.KV_REST_API_URL = previousUrl;
+        if (previousToken === undefined) delete process.env.KV_REST_API_TOKEN; else process.env.KV_REST_API_TOKEN = previousToken;
+    }
+}
+
 async function testTelegramAdminAndCorporateNews() {
     const previousAdminId = process.env.TELEGRAM_ADMIN_CHAT_ID;
     process.env.TELEGRAM_ADMIN_CHAT_ID = '900';
@@ -312,6 +352,7 @@ async function runAllTests() {
     console.log('════════════════════════════════════════════════════════════════\n');
 
     await testTelegramConnectionGuards();
+    await testAutomaticCorporateNewsAlerts();
 
     // ── 1. Unit Tests: sanitizeTicker ───────────────────────────
     console.log('▶ [1/7] Testing utils.sanitizeTicker...');
