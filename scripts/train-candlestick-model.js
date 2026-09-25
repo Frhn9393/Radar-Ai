@@ -27,23 +27,23 @@ function validQuote(q) {
 
 function addLabels(quotes) {
     const rows = [];
-    const patternCounts = Object.fromEntries(PATTERN_NAMES.map(([name]) => [name, 0]));
-    for (let i = 199; i < quotes.length - 10; i++) {
+    for (let i = 199; i < quotes.length; i++) {
         const feature = extractFeatureAt(quotes, i);
         if (!feature) continue;
         const entry = quotes[i].close;
-        const target = entry * 1.03;
-        const stop = entry * 0.98;
-        let labelWin;
-        for (let j = i + 1; j <= i + 10; j++) {
-            if (quotes[j].low <= stop) { labelWin = 0; break; } // conservative if both touched in one candle
-            if (quotes[j].high >= target) { labelWin = 1; break; }
+        let labelWin = null;
+        if (i + 10 < quotes.length) {
+            const target = entry * 1.03;
+            const stop = entry * 0.98;
+            for (let j = i + 1; j <= i + 10; j++) {
+                if (quotes[j].low <= stop) { labelWin = 0; break; } // conservative if both touched in one candle
+                if (quotes[j].high >= target) { labelWin = 1; break; }
+            }
+            if (labelWin === null) labelWin = Number(quotes[i + 10].close > entry);
         }
-        if (labelWin === undefined) labelWin = Number(quotes[i + 10].close > entry);
-        for (const [name] of PATTERN_NAMES) patternCounts[name] += feature[name] ? 1 : 0;
         rows.push({ ticker: '', date: new Date(quotes[i].date).toISOString().slice(0, 10), quote: quotes[i], feature, labelWin });
     }
-    return { rows, patternCounts };
+    return { rows };
 }
 
 async function fetchUniverse() {
@@ -186,7 +186,7 @@ async function main() {
     const outcomeSafetyCutoff = new Date(new Date(cutoff).getTime() - 30 * 86400_000).toISOString().slice(0, 10);
     const aggregatePatternCounts = Object.fromEntries(PATTERN_NAMES.map(([name]) => [name, 0]));
     for (const row of mergedRows) for (const [name] of PATTERN_NAMES) aggregatePatternCounts[name] += Number(row[name]) ? 1 : 0;
-    const patternRows = mergedRows.filter(row => PATTERN_NAMES.some(([name]) => Number(row[name])));
+    const patternRows = mergedRows.filter(row => row.labelWin !== null && PATTERN_NAMES.some(([name]) => Number(row[name])));
     const training = patternRows.filter(row => row.date < outcomeSafetyCutoff).map(row => ({ features: makeFeatureVector(featureFromDatasetRow(row)), labelWin: Number(row.labelWin) }));
     const holdout = patternRows.filter(row => row.date >= cutoff).map(row => ({ features: makeFeatureVector(featureFromDatasetRow(row)), labelWin: Number(row.labelWin) }));
     if (training.length < 20_000 || holdout.length < 10_000) throw new Error(`Insufficient train/holdout rows (${training.length}/${holdout.length}).`);
@@ -239,6 +239,9 @@ async function main() {
     const report = {
         rowCount: mergedRows.length,
         freshRows: freshRows.length,
+        labelledRows: mergedRows.filter(row => row.labelWin !== null).length,
+        unlabelledRecentRows: mergedRows.filter(row => row.labelWin === null).length,
+        latestOhlcvDate: mergedRows.reduce((latest, row) => row.date > latest ? row.date : latest, ''),
         tickerCount,
         fileBytes,
         patternCounts: aggregatePatternCounts,

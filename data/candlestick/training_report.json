@@ -1,14 +1,18 @@
 {
-  "rowCount": 230750,
+  "rowCount": 232040,
+  "freshRows": 232040,
+  "labelledRows": 230750,
+  "unlabelledRecentRows": 1290,
+  "latestOhlcvDate": "2026-09-25",
   "tickerCount": 129,
-  "fileBytes": 26146227,
+  "fileBytes": 26282264,
   "patternCounts": {
-    "bullishEngulfing": 13127,
-    "hammer": 13712,
-    "morningStar": 7426,
-    "threeWhiteSoldiers": 904,
-    "piercingLine": 3253,
-    "breakoutVolume": 6693
+    "bullishEngulfing": 13200,
+    "hammer": 13798,
+    "morningStar": 7460,
+    "threeWhiteSoldiers": 906,
+    "piercingLine": 3287,
+    "breakoutVolume": 6698
   },
   "patternTargetMet": {
     "bullishEngulfing": true,
