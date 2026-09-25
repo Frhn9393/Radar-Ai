@@ -37,6 +37,21 @@ function mergeDatasetRows(existingRows, freshRows, cutoffDate, header) {
     return [...keyedRows.values()].sort((a, b) => a.date.localeCompare(b.date) || a.ticker.localeCompare(b.ticker));
 }
 
+function validateDatasetQuality(rows, header, { minimumRows = 150_000, minimumTickers = 50, minimumBytes = 15_000_000 } = {}) {
+    const issues = [];
+    const source = Array.isArray(rows) ? rows : [];
+    const tickerCount = new Set(source.map(row => row.ticker)).size;
+    const duplicateKeys = source.length - new Set(source.map(row => `${row.ticker}|${row.date}`)).size;
+    const invalidRows = source.filter(row => !isValidDatasetRow(row, header)).length;
+    const byteCount = Buffer.byteLength(serializeDatasetCsv(source, header), 'utf8');
+    if (invalidRows) issues.push(`${invalidRows} invalid OHLCV/feature rows`);
+    if (duplicateKeys) issues.push(`${duplicateKeys} duplicate ticker/date rows`);
+    if (source.length < minimumRows) issues.push(`${source.length} rows (need ${minimumRows})`);
+    if (tickerCount < minimumTickers) issues.push(`${tickerCount} tickers (need ${minimumTickers})`);
+    if (byteCount < minimumBytes) issues.push(`${byteCount} bytes (need ${minimumBytes})`);
+    return { ok: issues.length === 0, issues, rowCount: source.length, tickerCount, duplicateKeys, invalidRows, fileBytes: byteCount };
+}
+
 function serializeDatasetCsv(rows, header) {
     return `${[header.join(','), ...(Array.isArray(rows) ? rows : []).map(row => header.map(name => {
         const value = row[name];
@@ -44,4 +59,4 @@ function serializeDatasetCsv(rows, header) {
     }).join(','))].join('\n')}\n`;
 }
 
-module.exports = { parseDatasetCsv, isValidDatasetRow, mergeDatasetRows, serializeDatasetCsv };
+module.exports = { parseDatasetCsv, isValidDatasetRow, mergeDatasetRows, serializeDatasetCsv, validateDatasetQuality };

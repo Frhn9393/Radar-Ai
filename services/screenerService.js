@@ -7,7 +7,7 @@ const { getTickSize } = require('./utils');
 const { formatJakartaDate } = require('./dateTime');
 const { sendTelegramAlert } = require('./telegramService');
 const { claimAlert, releaseAlert } = require('./alertDedupeStore');
-const { isStrictBsjpEligible, isStrictBpjpEligible, isStrictIntradayEligible, isScalpingOpeningSurgeEligible } = require('./strictScreenerFilters');
+const { isStrictBsjpEligible, isStrictBpjpEligible, isStrictIntradayEligible, isScalpingOpeningSurgeEligible, isBullishIntradaySurgeEligible } = require('./strictScreenerFilters');
 const { analyzeCandlesticks } = require('./candlestickAiEngine');
 const { formatScreenerAlertBatch } = require('./screenerAlertFormatter');
 
@@ -92,16 +92,70 @@ function getTechnicalStatus(isSupertrendBullish, rsi, fallbackLabel) {
 }
 
 async function runScreener(options = {}) {
-    if (screenerCache && Date.now() - screenerCacheTime < SCREENER_CACHE_TTL) return screenerCache;
-    if (screenerInFlight) return screenerInFlight;
+    if (screenerCache && Date.now() - screenerCacheTime < SCREENER_CACHE_TTL) {
+        if (screenerInFlight) {
+            return screenerInFlight;
+        }
+        if (options.sendAlerts !== false) triggerScreenerAlerts(screenerCache);
+        return screenerCache;
+    }
+    if (screenerInFlight) {
+        return screenerInFlight;
+    }
 
-    const task = runScreenerFresh(options);
+    const task = runScreenerFresh({ ...options, sendAlerts: false });
     screenerInFlight = task;
     try {
-        return await task;
+        const results = await task;
+        if (options.sendAlerts !== false) triggerScreenerAlerts(results);
+        return results;
     } finally {
         if (screenerInFlight === task) screenerInFlight = null;
     }
+}
+
+function triggerScreenerAlerts(results) {
+    if (!process.env.TELEGRAM_BOT_TOKEN || !process.env.TELEGRAM_ADMIN_CHAT_ID) return;
+    const alertCategories = [
+        ['BSJP', results.allCandidates?.bsjp], ['BPJS', results.allCandidates?.bpjs],
+        ['SCALPING', results.allCandidates?.scalpingSesi1], ['DAYTRADE', results.allCandidates?.daytrade]
+    ];
+    const currentSignals = new Set();
+    const newlyQualified = [];
+    for (const [strategy, rows] of alertCategories) {
+        for (const row of Array.isArray(rows) ? rows : []) {
+            const key = `${formatJakartaDate()}|${strategy}|${row.ticker}`;
+            currentSignals.add(key);
+            if (!previousAlertSignals.has(key)) newlyQualified.push({ key, strategy, row });
+        }
+    }
+    previousAlertSignals.clear();
+    currentSignals.forEach(key => previousAlertSignals.add(key));
+    if (!newlyQualified.length) return;
+    const alertTask = (async () => {
+        const claimedSignals = [];
+        for (const signal of newlyQualified) {
+            const dedupeKey = `signal:${signal.key}`;
+            if (await claimAlert(dedupeKey)) claimedSignals.push({ ...signal, dedupeKey });
+        }
+        if (!claimedSignals.length) return;
+        try {
+            const delivered = await sendTelegramAlert(formatScreenerAlertBatch(claimedSignals));
+            if (!delivered) {
+                for (const { key, dedupeKey } of claimedSignals) {
+                    previousAlertSignals.delete(key);
+                    await releaseAlert(dedupeKey);
+                }
+            }
+        } catch (error) {
+            for (const { key, dedupeKey } of claimedSignals) {
+                previousAlertSignals.delete(key);
+                await releaseAlert(dedupeKey).catch(() => {});
+            }
+            throw error;
+        }
+    })().catch(error => console.error('[screener-alert] Telegram delivery failed:', error.message || error));
+    try { require('@vercel/functions').waitUntil(alertTask); } catch { alertTask.catch(() => {}); }
 }
 
 async function runScreenerFresh(options = {}) {
@@ -224,7 +278,7 @@ async function runScreenerFresh(options = {}) {
                 const tpSesi2 = Math.round(price + Math.max(3 * tick, Math.round(price * 0.025)));
                 const slSesi2 = Math.round(price - Math.max(2 * tick, Math.round(price * 0.015)));
 
-                if (strictIntradayEligible) candidates.scalpingSesi2.push({
+                if (isBullishIntradaySurgeEligible(strictIntradayMetrics, changePct)) candidates.scalpingSesi2.push({
                     score: scalpScore - (pullbackFromHigh * 2),
                     item: {
                         ticker, sector, price, changePct: changePct.toFixed(2),
@@ -261,7 +315,7 @@ async function runScreenerFresh(options = {}) {
             const dayStop = Math.round(price * 0.985);
             const dayTradePricesValid = dayStop < dayEntryLow && dayTarget > dayEntryHigh;
 
-            if (strictIntradayEligible && dayTradePricesValid) candidates.daytrade.push({
+            if (isBullishIntradaySurgeEligible(strictIntradayMetrics, changePct) && dayTradePricesValid) candidates.daytrade.push({
                 score: dayScore,
                 item: {
                     ticker, sector, price, changePct: changePct.toFixed(2),
@@ -516,51 +570,6 @@ async function runScreenerFresh(options = {}) {
         },
         dataSources: { prices: 'Yahoo Finance', indicators: 'Yahoo Finance OHLCV' }
     };
-
-    const currentSignals = new Set();
-    const alertCategories = [
-        ['BSJP', results.allCandidates.bsjp],
-        ['BPJS', results.allCandidates.bpjs],
-        ['SCALPING', results.allCandidates.scalpingSesi1],
-        ['DAYTRADE', results.allCandidates.daytrade]
-    ];
-    const newlyQualified = [];
-    for (const [strategy, rows] of alertCategories) {
-        for (const row of rows) {
-            const key = `${formatJakartaDate()}|${strategy}|${row.ticker}`;
-            currentSignals.add(key);
-            if (!previousAlertSignals.has(key)) newlyQualified.push({ key, strategy, row });
-        }
-    }
-    previousAlertSignals.clear();
-    currentSignals.forEach(key => previousAlertSignals.add(key));
-    if (options.sendAlerts !== false && newlyQualified.length && process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_ADMIN_CHAT_ID) {
-        const alertTask = (async () => {
-            const claimedSignals = [];
-            for (const signal of newlyQualified) {
-                const dedupeKey = `signal:${signal.key}`;
-                if (await claimAlert(dedupeKey)) claimedSignals.push({ ...signal, dedupeKey });
-            }
-            if (!claimedSignals.length) return;
-
-            try {
-                const delivered = await sendTelegramAlert(formatScreenerAlertBatch(claimedSignals));
-                if (!delivered) {
-                    for (const { key, dedupeKey } of claimedSignals) {
-                        previousAlertSignals.delete(key);
-                        await releaseAlert(dedupeKey);
-                    }
-                }
-            } catch (error) {
-                for (const { key, dedupeKey } of claimedSignals) {
-                    previousAlertSignals.delete(key);
-                    await releaseAlert(dedupeKey).catch(() => {});
-                }
-                throw error;
-            }
-        })().catch(error => console.error('[screener-alert] Telegram delivery failed:', error.message || error));
-        try { require('@vercel/functions').waitUntil(alertTask); } catch { alertTask.catch(() => {}); }
-    }
 
     screenerCache = results;
     screenerCacheTime = Date.now();

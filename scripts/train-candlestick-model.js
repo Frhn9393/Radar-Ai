@@ -3,7 +3,7 @@ const path = require('path');
 const YahooFinance = require('yahoo-finance2').default;
 const { UNIQUE_WATCHLIST } = require('../services/screenerService');
 const { extractFeatureAt, FEATURE_NAMES, PATTERN_NAMES, makeFeatureVector } = require('../services/candlestickAiEngine');
-const { parseDatasetCsv, mergeDatasetRows, serializeDatasetCsv } = require('./candlestickDataset');
+const { parseDatasetCsv, mergeDatasetRows, serializeDatasetCsv, validateDatasetQuality } = require('./candlestickDataset');
 
 const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
 const YEARS = 10;
@@ -176,11 +176,9 @@ async function main() {
     const cutoffDate = new Date(Date.now() - YEARS * 365.25 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
     const mergedRows = mergeDatasetRows(existingRows, freshRows, cutoffDate, HEADER);
     const csvContents = serializeDatasetCsv(mergedRows, HEADER);
-    const tickerCount = new Set(mergedRows.map(row => row.ticker)).size;
-    const fileBytes = Buffer.byteLength(csvContents, 'utf8');
-    if (mergedRows.length < 150_000 || tickerCount < 50 || fileBytes < 15_000_000) {
-        throw new Error(`Merged dataset failed quality gates: ${mergedRows.length} rows, ${tickerCount} tickers, ${fileBytes} bytes.`);
-    }
+    const quality = validateDatasetQuality(mergedRows, HEADER);
+    const { tickerCount, fileBytes } = quality;
+    if (!quality.ok) throw new Error(`Merged dataset failed quality gates: ${quality.issues.join('; ')}.`);
 
     const cutoff = new Date(Date.now() - 2 * 365.25 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
     const outcomeSafetyCutoff = new Date(new Date(cutoff).getTime() - 30 * 86400_000).toISOString().slice(0, 10);
@@ -244,6 +242,7 @@ async function main() {
         latestOhlcvDate: mergedRows.reduce((latest, row) => row.date > latest ? row.date : latest, ''),
         tickerCount,
         fileBytes,
+        datasetQuality: quality,
         patternCounts: aggregatePatternCounts,
         patternTargetMet: Object.fromEntries(Object.entries(aggregatePatternCounts).map(([name, count]) => [name, count >= 2000])),
         validation,

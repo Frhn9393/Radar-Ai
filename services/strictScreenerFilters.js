@@ -38,4 +38,8 @@ function isScalpingOpeningSurgeEligible(metrics = {}, changePct) {
     return isStrictIntradayEligible(metrics) && finite(changePct) && Number(changePct) > 2;
 }
 
-module.exports = { isStrictBsjpEligible, isStrictBpjpEligible, isStrictIntradayEligible, isScalpingOpeningSurgeEligible };
+function isBullishIntradaySurgeEligible(metrics = {}, changePct) {
+    return isStrictIntradayEligible(metrics) && finite(changePct) && Number(changePct) > 2;
+}
+
+module.exports = { isStrictBsjpEligible, isStrictBpjpEligible, isStrictIntradayEligible, isScalpingOpeningSurgeEligible, isBullishIntradaySurgeEligible };

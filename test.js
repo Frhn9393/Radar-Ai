@@ -7,13 +7,14 @@ const { fetch_market_news, fetch_ma_deals, extractNewsTicker } = require('./serv
 const { classifyNewsSentiment, findNewNewsItems, formatNewsAlert, isStrategicCorporateAction } = require('./services/newsAlertService');
 const { formatJakartaDate, formatJakartaDateTime } = require('./services/dateTime');
 const { listTelegramUsers, recordTelegramUser } = require('./services/telegramUserStore');
-const { isStrictBsjpEligible, isStrictBpjpEligible, isStrictIntradayEligible, isScalpingOpeningSurgeEligible } = require('./services/strictScreenerFilters');
+const { isStrictBsjpEligible, isStrictBpjpEligible, isStrictIntradayEligible, isScalpingOpeningSurgeEligible, isBullishIntradaySurgeEligible } = require('./services/strictScreenerFilters');
 const { formatScreenerAlertBatch } = require('./services/screenerAlertFormatter');
 const { processTelegramUpdate, formatScreenerRows, STRICT_EMPTY_ALERT, RADAR_BUSY_MESSAGE } = require('./services/telegramWebhookService');
 const { TELEGRAM_COMMANDS } = require('./services/telegramService');
 const { analyzeCandlesticks, getCandlePatterns, FEATURE_NAMES } = require('./services/candlestickAiEngine');
 const { fetchBrokerTop, requestBrokerTop, parseStockbitResponse, _clearCacheForTests } = require('./services/customMarketFeed');
 const { fetchBroksum } = require('./services/broksumService');
+const { validateDatasetQuality } = require('./scripts/candlestickDataset');
 const { analyzeStock, runScreener, hasUsableRealtimeData } = require('./services/stockService');
 
 let totalTests = 0;
@@ -317,9 +318,20 @@ async function runAllTests() {
     assert(!isScalpingOpeningSurgeEligible(strictIntraday, 2), 'Opening Surge rejects change exactly +2%');
     assert(!isScalpingOpeningSurgeEligible(strictIntraday, 0), 'Opening Surge rejects neutral change');
     assert(!isScalpingOpeningSurgeEligible(strictIntraday, -1), 'Opening Surge rejects negative change');
+    assert(isBullishIntradaySurgeEligible(strictIntraday, 2.01), 'All intraday surge strategies accept only change strictly greater than +2%');
+    assert(!isBullishIntradaySurgeEligible(strictIntraday, 2), 'All intraday surge strategies reject change exactly +2%');
+    assert(!isBullishIntradaySurgeEligible(strictIntraday, 0), 'All intraday surge strategies reject a neutral change');
+    assert(!isBullishIntradaySurgeEligible(strictIntraday, -8.55), 'All intraday surge strategies reject sharp negative change');
+    assert(!isBullishIntradaySurgeEligible(strictIntraday, -6.32), 'All intraday surge strategies reject negative change');
     assert(!isStrictIntradayEligible({ ...strictIntraday, high: 103 }), 'Scalping/Daytrade requires volatility strictly above 3%');
     assert(!isStrictIntradayEligible({ ...strictIntraday, volumeToday: 180 }), 'Scalping/Daytrade requires volume strictly above 1.8x MA5');
     assert(!isStrictIntradayEligible([]), 'Intraday safely rejects empty-array market data');
+    const datasetHeader = ['ticker', 'date', 'open', 'high', 'low', 'close', 'volume', 'labelWin'];
+    const validDatasetRow = { ticker: 'BBCA', date: '2026-01-02', open: 100, high: 110, low: 95, close: 105, volume: 1000, labelWin: 1 };
+    const datasetQuality = validateDatasetQuality([validDatasetRow, { ...validDatasetRow }], datasetHeader, { minimumRows: 1, minimumTickers: 1, minimumBytes: 1 });
+    assert(!datasetQuality.ok && datasetQuality.duplicateKeys === 1, 'Candlestick dataset quality gate rejects duplicate ticker/date bars');
+    const invalidDatasetQuality = validateDatasetQuality([{ ...validDatasetRow, high: 90 }], datasetHeader, { minimumRows: 1, minimumTickers: 1, minimumBytes: 1 });
+    assert(!invalidDatasetQuality.ok && invalidDatasetQuality.invalidRows === 1, 'Candlestick dataset quality gate rejects impossible OHLC ranges');
     assert(!isStrictBsjpEligible({ ...strictBsjp, isCurrentJakartaDay: false }), 'BSJP rejects stale Yahoo daily candle');
     assert(!isStrictBpjpEligible({ ...strictBpjp, isCurrentJakartaDay: false }), 'BPJP rejects stale Yahoo daily candle');
     assert(!isStrictIntradayEligible({ ...strictIntraday, isCurrentJakartaDay: false }), 'Scalping/Daytrade rejects stale Yahoo daily candle');

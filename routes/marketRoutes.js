@@ -10,10 +10,21 @@ const {
 // API: Run Screener (Superfast Multi-factor Engine)
 router.get('/screener', async (req, res) => {
     try {
-        const data = await runScreener();
+        const data = await runScreener({ sendAlerts: false });
         res.json(data);
     } catch (error) {
         res.status(500).json({ error: error.message || 'Gagal menjalankan screener' });
+    }
+});
+
+// Trigger Telegram delivery using the same cached, deduplicated screener result as the UI.
+router.post('/screener/telegram-alerts', async (req, res) => {
+    try {
+        const data = await runScreener({ sendAlerts: true });
+        return res.json({ ok: true, screenerUpdated: Boolean(data) });
+    } catch (error) {
+        console.error('[screener:telegram-alerts] failed', error.message || error);
+        return res.status(502).json({ ok: false, error: 'Screener selesai, tetapi notifikasi Telegram belum dapat dipicu.' });
     }
 });
 

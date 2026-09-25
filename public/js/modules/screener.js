@@ -217,6 +217,14 @@ btnTriggerScreener?.addEventListener('click', async () => {
         if (pdfButton) pdfButton.disabled = false;
         renderScreenerResults(data);
 
+        // Keep the visible scan responsive; report a notification-trigger failure without hiding valid results.
+        fetch('/api/screener/telegram-alerts', { method: 'POST' })
+            .then(async response => ({ response, result: await response.json().catch(() => ({})) }))
+            .then(({ response, result }) => {
+                if (!response.ok || !result.ok) console.warn('[screener] Telegram notification trigger failed:', result.error || response.status);
+            })
+            .catch(error => console.warn('[screener] Telegram notification trigger failed:', error.message || error));
+
         // Short delay to show 100% completion
         await new Promise(r => setTimeout(r, 500));
         screenerResultsWrapper?.classList.remove('hidden');
