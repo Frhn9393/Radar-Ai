@@ -1,4 +1,7 @@
 // Radar-AI Automated Test Suite
+// Keep the suite deterministic and runnable in offline/restricted CI environments.
+// Individual tests may temporarily replace global.fetch to exercise integrations.
+require('./tests/offlineFixtures').installOfflineFixtures();
 const { sanitizeTicker } = require('./services/utils');
 const { search_stocks } = require('./services/searchService');
 const { get_stock_price, get_market_indices } = require('./services/marketDataService');
