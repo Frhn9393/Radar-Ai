@@ -9,7 +9,7 @@ const { formatJakartaDate, formatJakartaDateTime } = require('./services/dateTim
 const { listTelegramUsers, recordTelegramUser } = require('./services/telegramUserStore');
 const { isStrictBsjpEligible, isStrictBpjpEligible, isStrictIntradayEligible, isScalpingOpeningSurgeEligible } = require('./services/strictScreenerFilters');
 const { formatScreenerAlertBatch } = require('./services/screenerAlertFormatter');
-const { processTelegramUpdate, formatScreenerRows, STRICT_EMPTY_ALERT } = require('./services/telegramWebhookService');
+const { processTelegramUpdate, formatScreenerRows, STRICT_EMPTY_ALERT, RADAR_BUSY_MESSAGE } = require('./services/telegramWebhookService');
 const { TELEGRAM_COMMANDS } = require('./services/telegramService');
 const { analyzeCandlesticks, getCandlePatterns, FEATURE_NAMES } = require('./services/candlestickAiEngine');
 const { fetchBrokerTop, requestBrokerTop, parseStockbitResponse, _clearCacheForTests } = require('./services/customMarketFeed');
@@ -103,6 +103,14 @@ async function testRadarCommand() {
     await processTelegramUpdate({ message: { chat: { id: 321 }, from: { id: 321 }, text: '/start' } }, radar);
     assert(sent.at(-1)?.text === helpText, '/start replies with the same four-command help structure');
     assert(TELEGRAM_COMMANDS.length === 4 && TELEGRAM_COMMANDS.map(item => item.command).join(',') === 'radar,news,users,help', 'Telegram popup menu contains only the four official commands');
+
+    const timeoutMessages = [];
+    await processTelegramUpdate({ message: { chat: { id: 322 }, from: { id: 322 }, text: '/radar' } }, {
+        sendTelegramMessage: async (chatId, message) => { timeoutMessages.push({ chatId: String(chatId), message }); return true; },
+        runScreener: () => new Promise(() => {}),
+        radarTimeoutMs: 10
+    });
+    assert(timeoutMessages.length === 1 && timeoutMessages[0].message === RADAR_BUSY_MESSAGE, '/radar sends a friendly Telegram reply when screener execution times out');
 }
 
 function testCandlestickAiEngine() {

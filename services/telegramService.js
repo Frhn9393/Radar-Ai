@@ -1,9 +1,10 @@
-async function sendTelegramMessage(chatId, message) {
+async function sendTelegramMessage(chatId, message, options = {}) {
     const token = process.env.TELEGRAM_BOT_TOKEN;
     if (!token || !chatId) return false;
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 7000);
+    const timeoutMs = Number.isFinite(Number(options.timeoutMs)) && Number(options.timeoutMs) > 0 ? Number(options.timeoutMs) : 7000;
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
     try {
         const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
             method: 'POST',

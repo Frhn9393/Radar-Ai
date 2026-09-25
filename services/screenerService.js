@@ -1,5 +1,5 @@
 const YahooFinance = require('yahoo-finance2').default;
-const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
+const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'], queue: { concurrency: 40 } });
 
 const { calcBullishConfidence, processTechnicalData } = require('./technicalService');
 const { ALL_IDX_STOCKS } = require('./searchService');
@@ -26,7 +26,9 @@ if (Array.isArray(ALL_IDX_STOCKS)) {
 let screenerCache = null;
 let screenerCacheTime = 0;
 const SCREENER_CACHE_TTL = 3 * 60 * 1000; // 3 minutes
+const YAHOO_SCREEN_TIMEOUT_MS = 3800;
 const previousAlertSignals = new Set();
+let screenerInFlight = null;
 
 const WATCHLIST_UNIVERSE = [
     // ── Bluechip & Top Tier LQ45 / Kompas100 ─────────────────────────────
@@ -90,14 +92,19 @@ function getTechnicalStatus(isSupertrendBullish, rsi, fallbackLabel) {
 }
 
 async function runScreener(options = {}) {
-    if (screenerCache && (Date.now() - screenerCacheTime < SCREENER_CACHE_TTL)) {
-        const hasCachedStrictSignals = [
-            screenerCache.scalpingSesi1, screenerCache.scalpingSesi2, screenerCache.daytrade,
-            screenerCache.bsjp, screenerCache.bpjp
-        ].some(rows => Array.isArray(rows) && rows.length > 0);
-        if (!hasCachedStrictSignals) return screenerCache;
-    }
+    if (screenerCache && Date.now() - screenerCacheTime < SCREENER_CACHE_TTL) return screenerCache;
+    if (screenerInFlight) return screenerInFlight;
 
+    const task = runScreenerFresh(options);
+    screenerInFlight = task;
+    try {
+        return await task;
+    } finally {
+        if (screenerInFlight === task) screenerInFlight = null;
+    }
+}
+
+async function runScreenerFresh(options = {}) {
     const candidates = {
         scalpingSesi1: [],
         scalpingSesi2: [],
@@ -112,11 +119,13 @@ async function runScreener(options = {}) {
 
     const period1 = new Date(Date.now() - 365 * 24 * 3600 * 1000);
 
-    async function evaluateTicker(ticker) {
+    let successfulTickerFetches = 0;
+    async function evaluateTicker(ticker, signal) {
         try {
             const symbol = `${ticker}.JK`;
-            const chart = await yahooFinance.chart(symbol, { period1, interval: '1d' });
+            const chart = await yahooFinance.chart(symbol, { period1, interval: '1d' }, { fetchOptions: { signal } });
             if (!chart || !chart.quotes || chart.quotes.length < 20) return;
+            successfulTickerFetches++;
 
             const trendData = processTechnicalData(chart.quotes);
             const validQuotes = chart.quotes.filter(q => q && q.close !== null);
@@ -455,12 +464,16 @@ async function runScreener(options = {}) {
         }
     }
 
-    // Process universe in parallel concurrency chunks of 25
-    const CHUNK_SIZE = 25;
-    for (let i = 0; i < UNIQUE_WATCHLIST.length; i += CHUNK_SIZE) {
-        const chunk = UNIQUE_WATCHLIST.slice(i, i + CHUNK_SIZE);
-        await Promise.allSettled(chunk.map(ticker => evaluateTicker(ticker)));
+    // Run Yahoo chart requests concurrently and abort the batch before the webhook's serverless budget expires.
+    const yahooController = new AbortController();
+    const yahooTimeout = setTimeout(() => yahooController.abort(), YAHOO_SCREEN_TIMEOUT_MS);
+    try {
+        await Promise.allSettled(UNIQUE_WATCHLIST.map(ticker => evaluateTicker(ticker, yahooController.signal)));
+    } finally {
+        clearTimeout(yahooTimeout);
     }
+    if (yahooController.signal.aborted) throw new Error(`Yahoo Finance screener batch timed out after ${YAHOO_SCREEN_TIMEOUT_MS}ms`);
+    if (!successfulTickerFetches) throw new Error('Yahoo Finance returned no usable ticker data');
 
     const rankAndPick = (list, limit = 3) => {
         return list

@@ -8,6 +8,16 @@ const { listTelegramUsers, recordTelegramUser } = require('./telegramUserStore')
 const seenUpdateIds = new Map();
 const MAX_SEEN_UPDATES = 2000;
 const STRICT_EMPTY_ALERT = 'Stockradar Alert: Saat ini tidak ada emiten yang memenuhi kriteria filter ketat. Disarankan Wait & See.';
+const RADAR_BUSY_MESSAGE = '⚠️ Server sedang sibuk mengambil data pasar, silakan coba beberapa saat lagi.';
+const RADAR_TIMEOUT_MS = 4500;
+
+function withTimeout(task, timeoutMs, label) {
+    let timeout;
+    const timedOut = new Promise((_, reject) => {
+        timeout = setTimeout(() => reject(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs);
+    });
+    return Promise.race([Promise.resolve().then(task), timedOut]).finally(() => clearTimeout(timeout));
+}
 
 function isDuplicateTelegramUpdate(updateId) {
     if (updateId === undefined || updateId === null) return false;
@@ -77,10 +87,19 @@ async function processTelegramUpdate(update, dependencies = {}) {
     const sendMessage = dependencies.sendTelegramMessage || sendTelegramMessage;
     if (!chatId) return;
 
-    try {
-        await (dependencies.recordTelegramUser || recordTelegramUser)(message);
-    } catch (error) {
-        console.error('[telegram-user] persistence failed', error.message || error);
+    const isRadarCommand = /^\/radar(?:@\w+)?$/i.test(text);
+    const recordUser = dependencies.recordTelegramUser || recordTelegramUser;
+    if (isRadarCommand) {
+        // User-directory persistence must not consume the screener's serverless response budget.
+        Promise.resolve().then(() => recordUser(message)).catch(error => {
+            console.error('[telegram-user] persistence failed', error.message || error);
+        });
+    } else {
+        try {
+            await recordUser(message);
+        } catch (error) {
+            console.error('[telegram-user] persistence failed', error.message || error);
+        }
     }
     if (!text) return;
 
@@ -128,8 +147,21 @@ async function processTelegramUpdate(update, dependencies = {}) {
     const getScreener = dependencies.runScreener || runScreener;
 
     if (/^\/radar(?:@\w+)?$/i.test(text)) {
-        const result = safeScreenerResult(await getScreener({ sendAlerts: false }));
-        await sendMessage(chatId, formatRadarSummary(result));
+        const timeoutMs = Number.isFinite(Number(dependencies.radarTimeoutMs)) && Number(dependencies.radarTimeoutMs) > 0
+            ? Number(dependencies.radarTimeoutMs) : RADAR_TIMEOUT_MS;
+        try {
+            const result = safeScreenerResult(await withTimeout(
+                () => getScreener({ sendAlerts: false }), timeoutMs, 'Telegram /radar screener'
+            ));
+            await sendMessage(chatId, formatRadarSummary(result), { timeoutMs: 3000 });
+        } catch (error) {
+            console.error('[telegram-radar] screener failed', error.message || error);
+            try {
+                await sendMessage(chatId, RADAR_BUSY_MESSAGE, { timeoutMs: 3000 });
+            } catch (sendError) {
+                console.error('[telegram-radar] unable to send fallback reply', sendError.message || sendError);
+            }
+        }
         return;
     }
 
@@ -180,4 +212,4 @@ async function processTelegramUpdate(update, dependencies = {}) {
     }
 }
 
-module.exports = { isDuplicateTelegramUpdate, processTelegramUpdate, formatRadarSummary, formatScreenerRows, STRICT_EMPTY_ALERT };
+module.exports = { isDuplicateTelegramUpdate, processTelegramUpdate, formatRadarSummary, formatScreenerRows, STRICT_EMPTY_ALERT, RADAR_BUSY_MESSAGE };
