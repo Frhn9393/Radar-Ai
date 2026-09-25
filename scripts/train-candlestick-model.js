@@ -3,6 +3,7 @@ const path = require('path');
 const YahooFinance = require('yahoo-finance2').default;
 const { UNIQUE_WATCHLIST } = require('../services/screenerService');
 const { extractFeatureAt, FEATURE_NAMES, PATTERN_NAMES, makeFeatureVector } = require('../services/candlestickAiEngine');
+const { parseDatasetCsv, mergeDatasetRows, serializeDatasetCsv } = require('./candlestickDataset');
 
 const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
 const YEARS = 10;
@@ -130,37 +131,64 @@ function csvValue(value) {
     return String(Number(Number(value).toFixed(6)));
 }
 
+function datasetRow(ticker, date, quote, feature, avgTurnover20, labelWin) {
+    return {
+        ticker, date,
+        open: quote.open, high: quote.high, low: quote.low, close: quote.close, volume: quote.volume,
+        avgTurnover20: csvValue(avgTurnover20), volumeSpikeRatio: csvValue(feature.volumeSpikeRatio),
+        ma20: csvValue(feature.ma20), ma50: csvValue(feature.ma50), ma200: csvValue(feature.ma200),
+        rsi14: csvValue(feature.rsi14),
+        ...Object.fromEntries(PATTERN_NAMES.map(([name]) => [name, feature[name]])),
+        labelWin
+    };
+}
+
+function featureFromDatasetRow(row) {
+    return {
+        ...Object.fromEntries(PATTERN_NAMES.map(([name]) => [name, Number(row[name])])),
+        volumeSpikeRatio: Number(row.volumeSpikeRatio),
+        closeAboveMA20: Number(row.close) > Number(row.ma20) ? 1 : 0,
+        ma20AboveMA50: Number(row.ma20) > Number(row.ma50) ? 1 : 0,
+        ma50AboveMA200: Number(row.ma50) > Number(row.ma200) ? 1 : 0,
+        rsi14: Number(row.rsi14)
+    };
+}
+
+function writeFileAtomically(filePath, contents) {
+    const temporaryPath = `${filePath}.tmp`;
+    fs.writeFileSync(temporaryPath, contents, 'utf8');
+    fs.renameSync(temporaryPath, filePath);
+}
+
 async function main() {
     fs.mkdirSync(OUTPUT_DIR, { recursive: true });
     process.stdout.write(`Fetching up to ${MAX_SYMBOLS} IDX tickers, ${YEARS} years daily OHLCV...\n`);
     const instruments = await fetchUniverse();
     if (instruments.length < 50) throw new Error(`Only ${instruments.length} currently liquid tickers were found; need at least 50.`);
-    const allRows = [];
-    const aggregatePatternCounts = Object.fromEntries(PATTERN_NAMES.map(([name]) => [name, 0]));
+    const freshRows = [];
     for (const instrument of instruments) {
-        const { rows, patternCounts } = addLabels(instrument.quotes);
-        for (const row of rows) { row.ticker = instrument.ticker; row.avgTurnover20 = instrument.avgTurnover20; }
-        allRows.push(...rows);
-        for (const name of Object.keys(aggregatePatternCounts)) aggregatePatternCounts[name] += patternCounts[name];
+        const { rows } = addLabels(instrument.quotes);
+        for (const row of rows) freshRows.push(datasetRow(instrument.ticker, row.date, row.quote, row.feature, instrument.avgTurnover20, row.labelWin));
     }
-    if (allRows.length < 150_000) throw new Error(`Dataset has ${allRows.length} rows; requirement is at least 150,000.`);
-    allRows.sort((a, b) => a.date.localeCompare(b.date) || a.ticker.localeCompare(b.ticker));
-    const csv = [HEADER.join(',')];
-    for (const row of allRows) {
-        const q = row.quote, f = row.feature;
-        csv.push([
-            row.ticker, row.date, q.open, q.high, q.low, q.close, q.volume, csvValue(row.avgTurnover20),
-            csvValue(f.volumeSpikeRatio), csvValue(f.ma20), csvValue(f.ma50), csvValue(f.ma200), csvValue(f.rsi14),
-            ...PATTERN_NAMES.map(([name]) => f[name]), row.labelWin
-        ].join(','));
+
+    const existingCsv = fs.existsSync(DATASET_PATH) ? fs.readFileSync(DATASET_PATH, 'utf8') : '';
+    const existingRows = parseDatasetCsv(existingCsv, HEADER);
+    const cutoffDate = new Date(Date.now() - YEARS * 365.25 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const mergedRows = mergeDatasetRows(existingRows, freshRows, cutoffDate, HEADER);
+    const csvContents = serializeDatasetCsv(mergedRows, HEADER);
+    const tickerCount = new Set(mergedRows.map(row => row.ticker)).size;
+    const fileBytes = Buffer.byteLength(csvContents, 'utf8');
+    if (mergedRows.length < 150_000 || tickerCount < 50 || fileBytes < 15_000_000) {
+        throw new Error(`Merged dataset failed quality gates: ${mergedRows.length} rows, ${tickerCount} tickers, ${fileBytes} bytes.`);
     }
-    fs.writeFileSync(DATASET_PATH, `${csv.join('\n')}\n`, 'utf8');
 
     const cutoff = new Date(Date.now() - 2 * 365.25 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
     const outcomeSafetyCutoff = new Date(new Date(cutoff).getTime() - 30 * 86400_000).toISOString().slice(0, 10);
-    const patternRows = allRows.filter(row => PATTERN_NAMES.some(([name]) => row.feature[name]));
-    const training = patternRows.filter(row => row.date < outcomeSafetyCutoff).map(row => ({ features: makeFeatureVector(row.feature), labelWin: row.labelWin }));
-    const holdout = patternRows.filter(row => row.date >= cutoff).map(row => ({ features: makeFeatureVector(row.feature), labelWin: row.labelWin }));
+    const aggregatePatternCounts = Object.fromEntries(PATTERN_NAMES.map(([name]) => [name, 0]));
+    for (const row of mergedRows) for (const [name] of PATTERN_NAMES) aggregatePatternCounts[name] += Number(row[name]) ? 1 : 0;
+    const patternRows = mergedRows.filter(row => PATTERN_NAMES.some(([name]) => Number(row[name])));
+    const training = patternRows.filter(row => row.date < outcomeSafetyCutoff).map(row => ({ features: makeFeatureVector(featureFromDatasetRow(row)), labelWin: Number(row.labelWin) }));
+    const holdout = patternRows.filter(row => row.date >= cutoff).map(row => ({ features: makeFeatureVector(featureFromDatasetRow(row)), labelWin: Number(row.labelWin) }));
     if (training.length < 20_000 || holdout.length < 10_000) throw new Error(`Insufficient train/holdout rows (${training.length}/${holdout.length}).`);
     const tree = buildTree(training, training.map((_, i) => i));
     let correct = 0, wins80 = 0, signals80 = 0, predicted = 0, truePositives = 0, actualPositives = 0;
@@ -195,7 +223,7 @@ async function main() {
         featureNames: FEATURE_NAMES,
         tree,
         trainingSamples: training.length,
-        tickerCount: instruments.length,
+        tickerCount,
         patternCounts: aggregatePatternCounts,
         dataQuality: {
             adjustedOhlcvSource: 'Yahoo Finance chart API split-adjusted OHLCV (split events included for audit; not double-adjusted)',
@@ -206,22 +234,20 @@ async function main() {
         },
         validation
     };
-    fs.writeFileSync(MODEL_PATH, `${JSON.stringify(model)}\n`, 'utf8');
+    writeFileAtomically(DATASET_PATH, csvContents);
+    writeFileAtomically(MODEL_PATH, `${JSON.stringify(model)}\n`);
     const report = {
-        rowCount: allRows.length,
-        tickerCount: instruments.length,
-        fileBytes: fs.statSync(DATASET_PATH).size,
+        rowCount: mergedRows.length,
+        freshRows: freshRows.length,
+        tickerCount,
+        fileBytes,
         patternCounts: aggregatePatternCounts,
         patternTargetMet: Object.fromEntries(Object.entries(aggregatePatternCounts).map(([name, count]) => [name, count >= 2000])),
         validation,
         selectedTickers: instruments.map(({ ticker, avgTurnover20, splitEvents }) => ({ ticker, avgTurnover20: Math.round(avgTurnover20), splitEvents }))
     };
-    fs.writeFileSync(REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+    writeFileAtomically(REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`);
     console.log(JSON.stringify(report, null, 2));
-    if (allRows.length < 150_000 || instruments.length < 50 || fs.statSync(DATASET_PATH).size < 15_000_000) {
-        process.exitCode = 2;
-        console.error('Dataset does not meet all volume/file-size targets; inspect the report before claiming training readiness.');
-    }
 }
 
 main().catch(error => { console.error(error.stack || error); process.exitCode = 1; });

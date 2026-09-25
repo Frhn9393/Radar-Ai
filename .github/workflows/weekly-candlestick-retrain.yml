@@ -1,0 +1,47 @@
+name: Weekly Candlestick Model Retraining
+
+on:
+  schedule:
+    - cron: '0 1 * * 6'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: weekly-candlestick-retraining
+  cancel-in-progress: false
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Collect latest IDX OHLCV, merge dataset, and retrain model
+        run: npm run train:candlestick
+
+      - name: Commit refreshed dataset and model
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/candlestick/idx_candlestick_ohlcv_features.csv data/candlestick/training_report.json services/candlestickModel.json
+          if git diff --cached --quiet; then
+            echo "No dataset or model changes to commit."
+          else
+            git commit -m "chore: weekly candlestick model retraining"
+            git push origin HEAD:main
+          fi
