@@ -264,12 +264,16 @@ async function get_financial_report(ticker) {
     }
 
     // ── 2. Universal Valuation Metrics & Currency Normalization (PHASE 1.1) ──────
-    const rawEps = ks.trailingEps || quote.epsTrailingTwelveMonths || null;
-    const rawPer = sd.trailingPE || quote.trailingPE || null;
-    let rawPbv = ks.priceToBook || quote.priceToBook || null;
-    let rawBookValue = ks.bookValue || quote.bookValue || null;
-    const forwardPE = sd.forwardPE || ks.forwardPE || null;
-    const pegRatio = ks.pegRatio || null;
+    const firstFinite = (...values) => {
+        const value = values.find(candidate => candidate !== null && candidate !== undefined && Number.isFinite(Number(candidate)));
+        return value === undefined ? null : Number(value);
+    };
+    const rawEps = firstFinite(ks.trailingEps, quote.epsTrailingTwelveMonths);
+    const rawPer = firstFinite(sd.trailingPE, quote.trailingPE);
+    const rawPbv = firstFinite(ks.priceToBook, quote.priceToBook);
+    const rawBookValue = firstFinite(ks.bookValue, quote.bookValue);
+    const forwardPE = firstFinite(sd.forwardPE, ks.forwardPE);
+    const pegRatio = firstFinite(ks.pegRatio);
     const financialCurrency = fd.financialCurrency || quote.financialCurrency || 'IDR';
     const isForeignCurrency = financialCurrency === 'USD' || (financialCurrency && financialCurrency !== 'IDR');
 
@@ -370,22 +374,20 @@ async function get_financial_report(ticker) {
         perFootnote = `Catatan: PER trailing (${perNum.toFixed(1)}x) terlihat tinggi karena basis EPS masa lalu yang masih rendah dalam fase pemulihan (turnaround). Forward P/E (${fwdNum ? fwdNum.toFixed(1) + 'x' : 'N/A'}) mencerminkan estimasi valuasi wajar pasca normalisasi laba operasional.`;
     }
 
-    let valuationStatus = 'FAIRLY VALUED';
+    let valuationStatus = 'DATA TIDAK CUKUP';
     let fairValue = null;
 
-    if (eps !== null && eps <= 0) {
+    if (eps !== null && eps < 0) {
         valuationStatus = isTurnaround ? 'TURNAROUND (MEMULIH) 🔄' : 'RUGI / SPEKULATIF ⚠️';
+    } else if (eps === 0) {
+        valuationStatus = 'EPS NOL / TANPA LABA';
     } else if (bookValue !== null && bookValue <= 0) {
         valuationStatus = 'EKUITAS NEGATIF 🚨';
-    } else if (eps && eps > 0 && bookValue && bookValue > 0) {
+    } else if (eps > 0 && bookValue > 0) {
         fairValue = Math.round(Math.sqrt(22.5 * eps * bookValue));
-    } else if (eps && eps > 0) {
-        fairValue = Math.round(15 * eps);
-    } else if (bookValue && bookValue > 0) {
-        fairValue = Math.round(bookValue * 1.5);
     }
 
-    if (valuationStatus !== 'RUGI / SPEKULATIF ⚠️' && valuationStatus !== 'EKUITAS NEGATIF 🚨' && !valuationStatus.includes('TURNAROUND')) {
+    if (valuationStatus === 'DATA TIDAK CUKUP' || (eps > 0 && bookValue > 0)) {
         if (fairValue && fairValue > 0) {
             if (price < fairValue * 0.9) {
                 valuationStatus = 'UNDERVALUED';
@@ -400,7 +402,7 @@ async function get_financial_report(ticker) {
             } else {
                 valuationStatus = 'FAIRLY VALUED';
             }
-        } else if (perNum && perNum > 0) {
+        } else if (perNum !== null && perNum > 0) {
             if (perNum < 10) valuationStatus = 'UNDERVALUED';
             else if (perNum > 25) {
                 if (isTurnaround && fwdNum && fwdNum < 15) {

@@ -113,11 +113,11 @@ function enqueueNewsAlerts(items = []) {
 
     const task = (async () => {
         const claimed = [];
-        for (const candidate of eligible.slice(0, 5)) {
-            if (await claimAlert(candidate.dedupeKey)) claimed.push(candidate);
-        }
-        if (!claimed.length) return;
         try {
+            for (const candidate of eligible.slice(0, 5)) {
+                if (await claimAlert(candidate.dedupeKey)) claimed.push(candidate);
+            }
+            if (!claimed.length) return;
             const sent = await sendTelegramAlert(formatNewsAlertBatch(claimed.map(row => row.item)));
             if (!sent) {
                 for (const { key, dedupeKey } of claimed) await releaseAlert(dedupeKey);

@@ -60,16 +60,10 @@ async function analyzeStock(ticker) {
 
         const sector = STOCK_SECTOR_MAP.get(clean) || 'Bursa Efek Indonesia';
 
-        // Banking sector override validation
+        // Banking metrics must come from a verified provider; never synthesize reported ratios.
         const isBankingSector = sector.toLowerCase().includes('bank') || sector.toLowerCase().includes('finansial') || financials?.isBanking;
         if (financials && isBankingSector && !financials.bankingMetrics) {
             financials.isBanking = true;
-            financials.bankingMetrics = {
-                car: '22.5%',
-                npl: '2.4%',
-                ldr: '85.0%',
-                note: 'Permodalan & Likuiditas Memenuhi Regulasi OJK'
-            };
             financials.debtToEquity = null;
         }
 

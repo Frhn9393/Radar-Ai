@@ -105,9 +105,19 @@ router.get('/portfolio/quotes', async (req, res) => {
         sector: get_sector_for_ticker(ticker),
         quote: await get_stock_price(ticker)
     })));
+    const quotes = results.filter(result => result.status === 'fulfilled').map(result => result.value);
+    const errorCount = results.filter(result => result.status === 'rejected').length;
+    if (errorCount > 0) {
+        return res.status(502).json({
+            quotes: [],
+            errors: errorCount,
+            incomplete: true,
+            timestamp: new Date().toISOString()
+        });
+    }
     res.json({
-        quotes: results.filter(result => result.status === 'fulfilled').map(result => result.value),
-        errors: results.filter(result => result.status === 'rejected').length,
+        quotes,
+        errors: 0,
         timestamp: new Date().toISOString()
     });
 });

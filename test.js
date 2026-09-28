@@ -262,12 +262,12 @@ async function testTelegramAdminAndCorporateNews() {
         dependencies.fetchMarketNews = async () => ({ news: [{ title: 'Pasar bergerak stabil', pubDate: todayAt }] });
         dependencies.fetchMaDeals = async () => ({ deals: [] });
         await processTelegramUpdate(makeUpdate(12, '/news'), dependencies);
-        assert(sent.at(-1)?.text === 'Saat ini belum ada berita atau sentimen akuisisi/merger terbaru di pasar modal.', '/news uses the requested fallback when no qualifying item exists');
+        assert(sent.at(-1)?.text === 'Saat ini belum ada berita akuisisi atau rights issue terbaru hari ini.', '/news distinguishes an empty acquisition and rights issue result');
 
         dependencies.fetchMarketNews = async () => { throw new Error('market feed unavailable'); };
         dependencies.fetchMaDeals = async () => { throw new Error('deals feed unavailable'); };
         await processTelegramUpdate(makeUpdate(12, '/news'), dependencies);
-        assert(sent.at(-1)?.text === 'Saat ini belum ada berita atau sentimen akuisisi/merger terbaru di pasar modal.', '/news returns the requested fallback when both news providers fail');
+        assert(sent.at(-1)?.text.includes('Sumber berita sedang mengalami kendala'), '/news reports provider failures instead of claiming there is no news');
         assert(tracked.length === 5 && tracked[0] === 12 && tracked[1] === 900, 'Each incoming command is tracked before access control');
 
         const redisTimeoutMessages = [];

@@ -1,7 +1,7 @@
 const { runScreener } = require('./screenerService');
 const { fetch_market_news, fetch_ma_deals } = require('./newsService');
 const { sendTelegramMessage, setTelegramCommands } = require('./telegramService');
-const { getNewsAlertKey, isStrategicCorporateAction } = require('./newsAlertService');
+const { getNewsAlertKey, isAutomaticNewsAlert } = require('./newsAlertService');
 const { formatJakartaDate, formatJakartaDateTime } = require('./dateTime');
 const { listTelegramUsers, recordTelegramUser } = require('./telegramUserStore');
 
@@ -189,7 +189,7 @@ async function processTelegramUpdate(update, dependencies = {}) {
         ].sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
         const seenNews = new Set();
         const today = formatJakartaDate();
-        const strategicToday = combinedNews.filter(item => isStrategicCorporateAction(item) && item.pubDate && formatJakartaDate(item.pubDate) === today);
+        const strategicToday = combinedNews.filter(item => isAutomaticNewsAlert(item) && item.pubDate && formatJakartaDate(item.pubDate) === today);
         const latestNews = strategicToday.filter(item => {
             const key = getNewsAlertKey(item);
             if (!key || seenNews.has(key)) return false;
@@ -200,9 +200,13 @@ async function processTelegramUpdate(update, dependencies = {}) {
             const ticker = item.tickers?.[0] || item.ticker || 'IHSG';
             return `${index + 1}. $${ticker} · ${String(item.title || '').slice(0, 300)}\n${String(item.link || '').slice(0, 400)}`;
         });
-        await sendMessage(chatId, lines.length
-            ? `STOCKRADAR AI · Berita Akuisisi / Merger Hari Ini\n\n${lines.join('\n\n')}`
-            : 'Saat ini belum ada berita atau sentimen akuisisi/merger terbaru di pasar modal.', { timeoutMs: 3000 });
+        const providersFailed = Number(marketResult.status === 'rejected') + Number(dealResult.status === 'rejected');
+        const responseText = lines.length
+            ? `${providersFailed ? '⚠️ Sebagian sumber berita sedang tidak tersedia.\n\n' : ''}STOCKRADAR AI · Berita Akuisisi / Rights Issue Hari Ini\n\n${lines.join('\n\n')}`
+            : providersFailed
+                ? '⚠️ Sumber berita sedang mengalami kendala. Silakan coba kembali beberapa saat lagi.'
+                : 'Saat ini belum ada berita akuisisi atau rights issue terbaru hari ini.';
+        await sendMessage(chatId, responseText, { timeoutMs: 3000 });
         return;
     }
     if (/^\/(start|help)(?:@\w+)?$/i.test(text)) {

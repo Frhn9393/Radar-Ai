@@ -440,6 +440,7 @@ async function runScreenerFresh(options = {}) {
             if (isSupertrendBullish) ltScore += 15;
             if (smartMoney.score >= 70) ltScore += 10;
             ltScore += (confidence * 0.3);
+            const goldenAlignment = price > trendData.ema20 && trendData.ema20 > trendData.ema50;
 
             candidates.longterm.push({
                 score: ltScore,
@@ -452,7 +453,13 @@ async function runScreenerFresh(options = {}) {
                     targetAgresif: roundToTick(price * 1.40),
                     cutLoss: roundToTick(ema200 * 0.93),
                     horizon: '6-12 Bulan',
-                    sinyalEntri: isSupertrendBullish ? 'Golden Alignment + ST ✓' : 'Trend Support Rebound',
+                    sinyalEntri: goldenAlignment && isSupertrendBullish
+                        ? 'Golden Alignment + ST ✓'
+                        : isSupertrendBullish
+                            ? 'ST Bullish · MA belum Golden Alignment'
+                            : goldenAlignment
+                                ? 'Golden Alignment · ST belum bullish'
+                                : 'Trend Support Rebound',
                     supertrendBadge, confidence, label,
                     smartMoney, pivots, candlestick,
                     }
