@@ -37,6 +37,7 @@ let foreignFlowCacheTime = 0;
 let foreignFlowInFlight = null;
 const CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes
 const YAHOO_REQUEST_TIMEOUT_MS = 3000;
+const MIN_STREAK_DAYS = 4;
 
 // Estimated participation tiers used for a price/volume proxy, not reported foreign transactions.
 const TIER_1_HEAVYWEIGHTS = new Set([
@@ -316,7 +317,7 @@ function processQuotesForForeignFlow(ticker, quotes, liveQuote = null) {
     }
 
     let streakItem = null;
-    if (streakDays >= 2) {
+    if (streakDays >= MIN_STREAK_DAYS) {
         const streakStartClose = dailyMetrics[dailyMetrics.length - streakDays].close;
         const streakPriceGain = streakStartClose > 0 ? ((latest.close - streakStartClose) / streakStartClose) * 100 : 0;
         const avgDailyInflow = Math.round(streakTotalVal / streakDays);
@@ -382,6 +383,14 @@ function processQuotesForForeignFlow(ticker, quotes, liveQuote = null) {
         monthly,
         streak: streakItem
     };
+}
+
+function rankStreaks(streaks) {
+    return (Array.isArray(streaks) ? streaks : [])
+        .filter(item => item && Number(item.streakDays) >= MIN_STREAK_DAYS && Number(item.streakTotalVal) > 0)
+        .sort((a, b) => Number(b.streakDays) - Number(a.streakDays) ||
+            Number(b.streakTotalVal) - Number(a.streakTotalVal) ||
+            String(a.ticker || '').localeCompare(String(b.ticker || '')));
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -466,13 +475,8 @@ async function computeForeignFlowSnapshot() {
         .sort((a, b) => a.monthlyNetVal - b.monthlyNetVal)
         .slice(0, 15);
 
-    // Sort Streak: By longest streak days, then highest streak value
-    const sortedStreak = [...streakList]
-        .sort((a, b) => {
-            if (b.streakDays !== a.streakDays) return b.streakDays - a.streakDays;
-            return b.streakTotalVal - a.streakTotalVal;
-        })
-        .slice(0, 20);
+    // Rank every qualifying streak by consistency first; nominal inflow only breaks ties.
+    const sortedStreak = rankStreaks(streakList);
 
     // Macro IHSG Foreign Flow Summary
     const totalDailyNetVal = dailyList.reduce((acc, d) => acc + d.netForeignVal, 0);
@@ -560,5 +564,6 @@ module.exports = {
     computeAllForeignFlow,
     getForeignFlowData: computeAllForeignFlow,
     getTickerForeignFlow,
-    processQuotesForForeignFlow
+    processQuotesForForeignFlow,
+    rankStreaks
 };

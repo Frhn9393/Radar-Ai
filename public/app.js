@@ -2759,7 +2759,7 @@ function renderForeignStreakTable() {
     const filteredList = filterForeignList(rawList);
 
     if (filteredList.length === 0) {
-        tbodyForeignStreak.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500 italic">Tidak ada emiten dengan streak akumulasi aktif (≥ 2 hari) saat ini.</td></tr>`;
+        tbodyForeignStreak.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500 italic">Belum ada emiten dengan streak proxy positif minimal 4 hari.</td></tr>`;
         return;
     }
 

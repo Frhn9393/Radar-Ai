@@ -541,7 +541,7 @@ async function runAllTests() {
 
     // ── 8. Foreign Flow Engine Test ─────────────────────────────
     console.log('\n▶ [8/8] Testing foreignFlowService...');
-    const { getTickerForeignFlow, getForeignFlowData } = require('./services/foreignFlowService');
+    const { getTickerForeignFlow, getForeignFlowData, rankStreaks } = require('./services/foreignFlowService');
     const bbcaForeign = await getTickerForeignFlow('BBCA');
     assert(bbcaForeign && bbcaForeign.daily && bbcaForeign.weekly && bbcaForeign.monthly, 'getTickerForeignFlow(BBCA) returns daily, weekly, monthly attributes');
     assert(typeof bbcaForeign.daily.ffpi === 'number', `BBCA daily FFPI is a valid number: ${bbcaForeign?.daily?.ffpi}`);
@@ -555,6 +555,15 @@ async function runAllTests() {
     assert(Array.isArray(allForeign.daily.topBuy) && allForeign.daily.topBuy.length > 0, `Daily Top Buy has ${allForeign?.daily?.topBuy?.length} emiten`);
     assert(Array.isArray(allForeign.daily.topSell) && allForeign.daily.topSell.length > 0, `Daily Top Sell has ${allForeign?.daily?.topSell?.length} emiten`);
     assert(Array.isArray(allForeign.streak?.streaks) && allForeign.streak.streaks.length > 0, `Active streak tracker detected ${allForeign?.streak?.streaks?.length} consecutive inflow emiten`);
+    const mixedCapStreakFixture = [
+        { ticker: 'BIG1', streakDays: 3, streakTotalVal: 90_000_000_000 },
+        { ticker: 'BIG2', streakDays: 4, streakTotalVal: 120_000_000_000 },
+        { ticker: 'SMALL1', streakDays: 6, streakTotalVal: 12_000_000_000 },
+        { ticker: 'SMALL2', streakDays: 4, streakTotalVal: 8_000_000_000 }
+    ];
+    const rankedFixtureStreaks = rankStreaks(mixedCapStreakFixture);
+    assert(rankedFixtureStreaks.map(item => item.ticker).join(',') === 'SMALL1,BIG2,SMALL2' && !rankedFixtureStreaks.some(item => item.ticker === 'BIG1'), 'Streak ranking keeps all positive 4+ day candidates, prioritizes streak length over nominal inflow, and excludes shorter streaks');
+    assert(allForeign.streak.streaks.every(item => item.streakDays >= 4), 'Streak payload contains only positive-proxy streaks of at least four days');
 
     // ── 9. Enhanced Financial Health & AI Summary (6 Core Rules) ──
     console.log('\n▶ [9/9] Testing Enhanced Financial Health & AI Summary (6 Core Rules)...');
