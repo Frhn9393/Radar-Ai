@@ -205,7 +205,7 @@ async function runScreenerFresh(options = {}) {
                 return;
             }
 
-            const { confidence, label } = calcBullishConfidence(price, trendData, changePct, value, intraRange);
+            const { heuristic_trend_score, label } = calcBullishConfidence(price, trendData, changePct, value, intraRange);
             const tick = getTickSize(price);
             const isSupertrendBullish = trendData.supertrend?.isBullish;
             const supertrendBadge = isSupertrendBullish ? 'ST Bullish 🟢' : 'ST Bearish 🔴';
@@ -242,7 +242,7 @@ async function runScreenerFresh(options = {}) {
             const strictIntradayEligible = isStrictIntradayEligible(strictIntradayMetrics);
 
             // 1. SCALPING CANDIDATES (Sesi 1 & Sesi 2)
-            let scalpScore = (intraRange * 3) + (rvol * 15) + (changePct > 0 ? changePct * 2 : -5) + (confidence * 0.5);
+            let scalpScore = (intraRange * 3) + (rvol * 15) + (changePct > 0 ? changePct * 2 : -5) + (heuristic_trend_score * 0.5);
             if (value >= 5000000000) scalpScore += 10;
             if (isSupertrendBullish) scalpScore += 8;
             if (smartMoney.score >= 70) scalpScore += 10;
@@ -260,7 +260,7 @@ async function runScreenerFresh(options = {}) {
                     jamEksekusi: '09:00 - 09:30 WIB',
                     targetProfit: tpSesi1,
                     stopLoss: slSesi1,
-                    supertrendBadge, rvolBadge, confidence, label,
+                    supertrendBadge, rvolBadge, heuristic_trend_score, label,
                     smartMoney, pivots, candlestick,
                     }
             });
@@ -279,14 +279,14 @@ async function runScreenerFresh(options = {}) {
                         jamEksekusi: '13:30 - 14:15 WIB',
                         targetProfit: tpSesi2,
                         stopLoss: slSesi2,
-                        supertrendBadge, rvolBadge, confidence, label,
+                        supertrendBadge, rvolBadge, heuristic_trend_score, label,
                         smartMoney, pivots, candlestick,
                         }
                 });
             }
 
             // 2. DAYTRADE CANDIDATES (Momentum Bullish)
-            let dayScore = (confidence * 0.8) + (rvol * 12) + (changePct * 2);
+            let dayScore = (heuristic_trend_score * 0.8) + (rvol * 12) + (changePct * 2);
             if (isSupertrendBullish) dayScore += 15;
             if (price >= ema20) dayScore += 10;
             if (macdBullish) dayScore += 8;
@@ -307,14 +307,14 @@ async function runScreenerFresh(options = {}) {
                     entryZone: `${dayEntryLow} - ${dayEntryHigh}`,
                     targetProfit: dayTarget,
                     stopLoss: dayStop,
-                    supertrendBadge, rvolBadge, confidence, label: technicalStatus,
+                    supertrendBadge, rvolBadge, heuristic_trend_score, label: technicalStatus,
                     smartMoney, pivots, candlestick,
                     }
             });
 
             // 3. SWING TRADE CANDIDATES (Multi-Day Breakout / Trend Pullback)
             const distEma20 = (price - ema20) / ema20;
-            let swingScore = (confidence * 0.6) + (adx * 1.2);
+            let swingScore = (heuristic_trend_score * 0.6) + (adx * 1.2);
             if (ema20 >= ema50) swingScore += 15;
             if (price >= ema20) swingScore += 12;
             if (distEma20 >= -0.02 && distEma20 <= 0.06) swingScore += 15;
@@ -342,7 +342,7 @@ async function runScreenerFresh(options = {}) {
                     cutLoss: swingCutLoss,
                     risk: swingRR.risk, reward: swingRR.reward,
                     riskReward: swingRR.label,
-                    supertrendBadge, rvolBadge, confidence, label: technicalStatus,
+                    supertrendBadge, rvolBadge, heuristic_trend_score, label: technicalStatus,
                     smartMoney, pivots, candlestick,
                     }
                 });
@@ -363,7 +363,7 @@ async function runScreenerFresh(options = {}) {
             if (rsi >= 48 && rsi <= 72) bsjpScore += 15;
             if (isSupertrendBullish || price >= ema20) bsjpScore += 15;
             if (smartMoney.score >= 70) bsjpScore += 15;
-            bsjpScore += (confidence * 0.3);
+            bsjpScore += (heuristic_trend_score * 0.3);
 
             if (isStrictBsjpEligible({
                 isCurrentJakartaDay: strictQuoteToday,
@@ -384,7 +384,7 @@ async function runScreenerFresh(options = {}) {
                     stopLoss: Math.round(low * 0.99),
                     estimasiGain: '1.5-3%',
                     riskReward: '1:2',
-                    supertrendBadge, rvolBadge, confidence, label: technicalStatus,
+                    supertrendBadge, rvolBadge, heuristic_trend_score, label: technicalStatus,
                     smartMoney, pivots, candlestick,
                     }
             });
@@ -401,7 +401,7 @@ async function runScreenerFresh(options = {}) {
             }
             if (adx >= 20) bpjpScore += 10;
             if (smartMoney.score >= 60) bpjpScore += 10;
-            bpjpScore += (confidence * 0.4);
+            bpjpScore += (heuristic_trend_score * 0.4);
 
             if (isStrictBpjpEligible({
                 isCurrentJakartaDay: strictQuoteToday,
@@ -421,7 +421,7 @@ async function runScreenerFresh(options = {}) {
                     stopLoss: Math.round(price * 0.985),
                     jualSebelum: '12:00 WIB',
                     estimasiGain: '2-3.5%',
-                    supertrendBadge, rvolBadge, confidence, label: technicalStatus,
+                    supertrendBadge, rvolBadge, heuristic_trend_score, label: technicalStatus,
                     smartMoney, pivots, candlestick,
                     }
             });
@@ -439,7 +439,7 @@ async function runScreenerFresh(options = {}) {
             if (value >= 5000000000) ltScore += 15;
             if (isSupertrendBullish) ltScore += 15;
             if (smartMoney.score >= 70) ltScore += 10;
-            ltScore += (confidence * 0.3);
+            ltScore += (heuristic_trend_score * 0.3);
             const goldenAlignment = price > trendData.ema20 && trendData.ema20 > trendData.ema50;
 
             candidates.longterm.push({
@@ -460,7 +460,7 @@ async function runScreenerFresh(options = {}) {
                             : goldenAlignment
                                 ? 'Golden Alignment · ST belum bullish'
                                 : 'Trend Support Rebound',
-                    supertrendBadge, confidence, label,
+                    supertrendBadge, heuristic_trend_score, label,
                     smartMoney, pivots, candlestick,
                     }
             });
@@ -503,6 +503,12 @@ async function runScreenerFresh(options = {}) {
         bpjs: rankAndPick(candidates.bpjp, 3),
         longterm: rankAndPick(candidates.longterm, 3),
         candlestickAi: rankAndPick(candidates.candlestickAi, 5),
+        technicalScoreMetadata: {
+            property: 'heuristic_trend_score',
+            label: 'Skor Heuristik Tren',
+            scale: '0–100',
+            interpretation: 'Skor Heuristik Tren; bukan win rate atau probabilitas kemenangan terkalibrasi.'
+        },
         allCandidates: {
             scalpingSesi1: rankAndPick(candidates.scalpingSesi1, 10),
             scalpingSesi2: rankAndPick(candidates.scalpingSesi2, 10),

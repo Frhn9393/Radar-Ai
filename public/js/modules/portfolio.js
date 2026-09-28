@@ -38,11 +38,11 @@ function calculatePortfolioRisk(rows, totalValue) {
     const sectors = Object.entries(sectorTotals).sort((a, b) => b[1] - a[1]);
     const largestExposure = totalValue ? (sectors[0]?.[1] || 0) / totalValue : 0;
     const diversification = rows.length < 2 ? 'Konsentrasi tinggi' : largestExposure > 0.6 ? 'Konsentrasi tinggi' : largestExposure > 0.4 ? 'Cukup terdiversifikasi' : 'Terdiversifikasi';
-    // Conservative parametric proxy: 1.65σ daily move, using each quote's day range.
+    // Heuristic intraday range estimate; this is not a statistical VaR calculation.
     const varianceProxy = rows.reduce((sum, row) => sum + Math.pow((row.quote.high - row.quote.low) / Math.max(row.quote.lastPrice, 1), 2) * row.marketValue, 0);
     const volatility = totalValue ? Math.sqrt(varianceProxy / totalValue) : 0;
-    const var95 = totalValue * volatility * 1.65;
-    return { sectors, largestExposure, diversification, var95 };
+    const estimated_max_drawdown = totalValue * volatility * 1.65;
+    return { sectors, largestExposure, diversification, estimated_max_drawdown };
 }
 
 function renderPortfolioSummary(rows) {
@@ -52,12 +52,12 @@ function renderPortfolioSummary(rows) {
     const risk = calculatePortfolioRisk(rows, totalValue);
     const totalEl = document.getElementById('portfolio-total-value');
     const pnlEl = document.getElementById('portfolio-total-pnl');
-    const varEl = document.getElementById('portfolio-var');
+    const estimatedRiskEl = document.getElementById('portfolio-var');
     const divEl = document.getElementById('portfolio-diversification');
     const sectorEl = document.getElementById('portfolio-sector-exposure');
     if (totalEl) totalEl.textContent = portfolioMoney(totalValue);
     if (pnlEl) { pnlEl.textContent = `${portfolioMoney(pnl)} (${portfolioPct(totalCost ? pnl / totalCost * 100 : 0)})`; pnlEl.className = `font-mono font-bold ${pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`; }
-    if (varEl) varEl.textContent = `${portfolioMoney(risk.var95)} / hari`;
+    if (estimatedRiskEl) estimatedRiskEl.textContent = `${portfolioMoney(risk.estimated_max_drawdown)} / hari`;
     if (divEl) divEl.textContent = risk.diversification;
     if (sectorEl) sectorEl.textContent = risk.sectors[0] ? `${risk.sectors[0][0]} (${(risk.largestExposure * 100).toFixed(1)}%)` : '-';
 }

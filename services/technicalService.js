@@ -544,6 +544,10 @@ function get_technical_indicators_python(ticker, timeframe = '1d') {
 // ═══════════════════════════════════════════════════════════════
 //  4. MULTI-FACTOR BULLISH SCORING ENGINE (0-100%)
 // ═══════════════════════════════════════════════════════════════
+/**
+ * Returns a 0–100 heuristic trend score from weighted technical indicators.
+ * This score is not a win rate or calibrated probability of a winning trade.
+ */
 function calcBullishConfidence(price, trendData, changePct, value, intraRange) {
     let score = 0;
     let maxScore = 0;
@@ -614,7 +618,7 @@ function calcBullishConfidence(price, trendData, changePct, value, intraRange) {
     else if (pct >= 65) label = 'Strong Bullish 🟢';
     else if (pct >= 50) label = 'Bullish Setup ✅';
 
-    return { confidence: pct, label };
+    return { heuristic_trend_score: pct, label };
 }
 
 module.exports = {

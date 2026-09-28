@@ -73,6 +73,12 @@ async function get_market_indices() {
             getYahooQuote('GC=F')
         ]);
 
+        const quotes = [ihsgQuote, lq45Quote, usdidrQuote, sp500Quote, nasdaqQuote, dowQuote, nikkeiQuote, brentQuote, goldQuote];
+        const quoteIsUsable = entry => entry.status === 'fulfilled' &&
+            Number.isFinite(Number(entry.value?.regularMarketPrice)) && Number(entry.value.regularMarketPrice) > 0 &&
+            Number.isFinite(Number(entry.value?.regularMarketChangePercent));
+        const isLive = quotes.every(quoteIsUsable);
+
         const ihsg = ihsgQuote.status === 'fulfilled' ? ihsgQuote.value : null;
         const lq45 = lq45Quote.status === 'fulfilled' ? lq45Quote.value : null;
         const usdidr = usdidrQuote.status === 'fulfilled' ? usdidrQuote.value : null;
@@ -166,7 +172,10 @@ async function get_market_indices() {
                 price: usdidrPrice,
                 changePct: usdidrChg
             },
-            timestamp: new Date().toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta' }) + " WIB"
+            timestamp: new Date().toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta' }) + " WIB",
+            is_live: isLive,
+            status: isLive ? 'live' : 'degraded',
+            last_updated: new Date().toISOString()
         };
 
         indicesCache = result;
@@ -191,13 +200,26 @@ async function get_market_indices() {
             usdidr: { price: 16340, changePct: -0.15 },
             timestamp: new Date().toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta' }) + " WIB"
         };
-        return indicesCache || fallback;
+        return {
+            ...(indicesCache || fallback),
+            is_live: false,
+            status: 'degraded',
+            last_updated: indicesCache?.last_updated || new Date().toISOString()
+        };
     }
+}
+
+function _clearMarketDataCacheForTests() {
+    indicesCache = null;
+    indicesCacheTime = 0;
+    quoteCache.clear();
+    quoteInFlight.clear();
 }
 
 module.exports = {
     get_stock_price,
     get_stock_profile: get_stock_price,
     get_financial_report,
-    get_market_indices
+    get_market_indices,
+    _clearMarketDataCacheForTests
 };

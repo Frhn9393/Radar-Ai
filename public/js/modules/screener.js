@@ -6,21 +6,21 @@
 // ============================================================
 //  SHARED SCREENER HELPERS
 // ============================================================
-function confCell(confidence, label) {
-    confidence = Math.max(0, Math.min(100, Number.isFinite(Number(confidence)) ? Number(confidence) : 0));
-    const color = confidence >= 75 ? 'text-emerald-400' : confidence >= 55 ? 'text-amber-400' : 'text-orange-400';
-    const barColor = confidence >= 75 ? 'bg-emerald-400' : confidence >= 55 ? 'bg-amber-400' : 'bg-orange-400';
+function confCell(heuristicTrendScore, label) {
+    heuristicTrendScore = Math.max(0, Math.min(100, Number.isFinite(Number(heuristicTrendScore)) ? Number(heuristicTrendScore) : 0));
+    const color = heuristicTrendScore >= 75 ? 'text-emerald-400' : heuristicTrendScore >= 55 ? 'text-amber-400' : 'text-orange-400';
+    const barColor = heuristicTrendScore >= 75 ? 'bg-emerald-400' : heuristicTrendScore >= 55 ? 'bg-amber-400' : 'bg-orange-400';
     const isCounterTrend = /rebound|oversold/i.test(label || '');
     const badgeBg = isCounterTrend
         ? 'bg-orange-500/20 text-orange-300 ring-1 ring-orange-400/30 shadow-sm'
-        : confidence >= 75 ? 'bg-emerald-500/20 text-emerald-400 shadow-sm' : confidence >= 55 ? 'bg-amber-500/20 text-amber-400 shadow-sm' : 'bg-orange-500/20 text-orange-400 shadow-sm';
+        : heuristicTrendScore >= 75 ? 'bg-emerald-500/20 text-emerald-400 shadow-sm' : heuristicTrendScore >= 55 ? 'bg-amber-500/20 text-amber-400 shadow-sm' : 'bg-orange-500/20 text-orange-400 shadow-sm';
     const statusIcon = isCounterTrend ? '↗ ' : '';
     return `
         <td class="p-3">
             <div class="flex items-center gap-2">
-                <span class="${color} font-bold font-mono text-xs">${confidence}%</span>
+                <span class="${color} font-bold font-mono text-xs" title="Skor Heuristik Tren 0–100; bukan win rate atau probabilitas kemenangan">${heuristicTrendScore}/100</span>
                 <div class="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                    <div class="${barColor} h-full rounded-full" style="width:${confidence}%"></div>
+                    <div class="${barColor} h-full rounded-full" style="width:${heuristicTrendScore}%"></div>
                 </div>
             </div>
         </td>
@@ -141,7 +141,7 @@ function renderScalpingTable(session = 'sesi1') {
                 <td class="p-3 font-mono text-amber-300 font-semibold whitespace-nowrap text-xs">🕒 ${escapeHtml(jam)}</td>
                 <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetProfit)}</td>
                 <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.stopLoss)}</td>
-                ${confCell(row.confidence, row.label)}
+                ${confCell(row.heuristic_trend_score, row.label)}
             </tr>
         `;
     }).join('');
@@ -274,7 +274,7 @@ function renderScreenerResults(data) {
                 <td class="p-3 font-mono text-slate-300">${formatRange(row.entryZoneLow, row.entryZoneHigh, row.entryZone)}</td>
                 <td class="p-3 font-mono font-semibold text-emerald-400">${formatPrice(row.targetProfit)}</td>
                 <td class="p-3 font-mono text-rose-400">${formatPrice(row.stopLoss)}</td>
-                        ${confCell(row.confidence, row.label)}
+                        ${confCell(row.heuristic_trend_score, row.label)}
                     </tr>
                 `;
             }).join('');
@@ -309,7 +309,7 @@ function renderScreenerResults(data) {
                         <td class="p-3 font-mono font-semibold text-emerald-400">${formatPrice(row.targetPrice2)}</td>
                         <td class="p-3 font-mono text-rose-400">${formatPrice(row.cutLoss)}</td>
                         <td class="p-3 font-mono font-bold text-purple-400">${escapeHtml(row.riskReward)}</td>
-                        ${confCell(row.confidence, row.label)}
+                        ${confCell(row.heuristic_trend_score, row.label)}
                     </tr>
                 `;
             }).join('');
@@ -344,7 +344,7 @@ function renderScreenerResults(data) {
                         <td class="p-3 text-amber-400 text-xs">${escapeHtml(row.beliSore)}</td>
                         <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.targetPagi)}</td>
                         <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.stopLoss)}</td>
-                        ${confCell(row.confidence, row.label)}
+                        ${confCell(row.heuristic_trend_score, row.label)}
                     </tr>
                 `;
             }).join('');
@@ -380,7 +380,7 @@ function renderScreenerResults(data) {
                         <td class="p-3 text-pink-400 text-xs">${escapeHtml(row.entryPagi)}</td>
                         <td class="p-3 font-mono font-semibold text-emerald-400">${fmtRp.format(row.target)}</td>
                         <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.stopLoss)}</td>
-                        ${confCell(row.confidence, row.label)}
+                        ${confCell(row.heuristic_trend_score, row.label)}
                     </tr>
                 `;
             }).join('');
@@ -415,7 +415,7 @@ function renderScreenerResults(data) {
                         <td class="p-3 font-mono font-semibold text-emerald-400">${formatPrice(row.targetKonservatif)}</td>
                         <td class="p-3 font-mono font-extrabold text-emerald-300">${formatPrice(row.targetAgresif)}</td>
                         <td class="p-3 font-mono text-rose-400">${fmtRp.format(row.cutLoss)}</td>
-                        ${confCell(row.confidence, row.label)}
+                        ${confCell(row.heuristic_trend_score, row.label)}
                     </tr>
                 `;
             }).join('');

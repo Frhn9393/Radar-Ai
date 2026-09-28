@@ -4,7 +4,7 @@
 require('./tests/offlineFixtures').installOfflineFixtures();
 const { sanitizeTicker } = require('./services/utils');
 const { search_stocks } = require('./services/searchService');
-const { get_stock_price, get_market_indices } = require('./services/marketDataService');
+const { get_stock_price, get_market_indices, _clearMarketDataCacheForTests } = require('./services/marketDataService');
 const { get_technical_indicators } = require('./services/technicalService');
 const { fetch_market_news, fetch_ma_deals, extractNewsTicker } = require('./services/newsService');
 const { classifyNewsSentiment, enqueueNewsAlerts, filterAutomaticNewsWindow, findNewNewsItems, formatNewsAlert, formatNewsAlertBatch, isAutomaticNewsAlert, isStrategicCorporateAction } = require('./services/newsAlertService');
@@ -467,6 +467,18 @@ async function runAllTests() {
     const ihsgQuote = await get_stock_price('IHSG');
     assert(ihsgQuote && ihsgQuote.lastPrice > 0, `Fetch quote for IHSG index (quote: ${ihsgQuote?.lastPrice})`);
 
+    const YahooFinance = require('yahoo-finance2').default;
+    const quoteFixture = YahooFinance.prototype.quote;
+    _clearMarketDataCacheForTests();
+    YahooFinance.prototype.quote = async () => { throw new Error('Mock Yahoo Finance outage'); };
+    try {
+        const degradedIndices = await get_market_indices();
+        assert(degradedIndices.is_live === false && degradedIndices.status === 'degraded' && Number.isFinite(Date.parse(degradedIndices.last_updated)), 'Yahoo Finance outage returns explicit degraded index state with last-updated timestamp');
+    } finally {
+        YahooFinance.prototype.quote = quoteFixture;
+        _clearMarketDataCacheForTests();
+    }
+
     const indices = await get_market_indices();
     assert(indices && indices.ihsg && indices.ihsg.price > 0, `Fetch market indices (IHSG: ${indices?.ihsg?.price})`);
     assert(indices && indices.usdidr && indices.usdidr.price > 0, `Market indices contains valid USD/IDR: ${indices?.usdidr?.price}`);
@@ -508,6 +520,8 @@ async function runAllTests() {
     assert(screenerResult && Array.isArray(screenerResult.swing) && screenerResult.swing.length > 0, `Screener swing has ${screenerResult?.swing?.length} recommendations`);
     assert(screenerResult && Array.isArray(screenerResult.bsjp), 'Strict BSJP result is always an array');
     assert(screenerResult && Array.isArray(screenerResult.bpjp) && Array.isArray(screenerResult.bpjs), 'Strict BPJP/BPJS aliases are arrays');
+    assert(screenerResult.technicalScoreMetadata?.property === 'heuristic_trend_score' && screenerResult.technicalScoreMetadata.interpretation.includes('bukan win rate'), 'Screener response documents the technical heuristic score semantics');
+    assert(screenerResult.swing[0]?.heuristic_trend_score !== undefined && screenerResult.swing[0]?.confidence === undefined, 'Screener rows expose heuristic_trend_score instead of generic confidence');
     assert(screenerResult && Array.isArray(screenerResult.longterm) && screenerResult.longterm.length > 0, `Screener longterm has ${screenerResult?.longterm?.length} recommendations`);
 
     // ── 7. News & Deals Feeds ────────────────────────────────────
