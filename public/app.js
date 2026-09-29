@@ -2488,7 +2488,13 @@ async function loadForeignFlowData(forceRefresh = false) {
         if (requestVersion !== foreignFlowRequestVersion) return;
         allForeignData = data;
         const flowDisclaimer = document.getElementById('foreign-flow-disclaimer');
-        if (flowDisclaimer) flowDisclaimer.textContent = data.macro?.dataDisclaimer || 'Estimasi proxy berbasis harga dan volume, bukan catatan transaksi aktual investor asing.';
+        if (flowDisclaimer) {
+            const baseDisclaimer = data.macro?.dataDisclaimer || 'Estimasi proxy berbasis harga dan volume, bukan catatan transaksi aktual investor asing.';
+            const coverage = data.dataCoverage;
+            flowDisclaimer.textContent = coverage?.status === 'partial'
+                ? `${baseDisclaimer} Cakupan pemindaian parsial: ${coverage.successfulTickerFetches}/${coverage.requestedTickers} emiten${coverage.timedOut ? ' (batas waktu tercapai)' : ''}.`
+                : baseDisclaimer;
+        }
 
         if (data.macro) {
             if (foreignMacroNetval) {

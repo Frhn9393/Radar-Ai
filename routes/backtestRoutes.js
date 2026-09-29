@@ -1,11 +1,24 @@
 const express = require('express');
 const router = express.Router();
+const { allowRateLimitedRequest } = require('../services/requestGuard');
 const {
     getAvailableStrategies,
     runBacktest,
     quickAudit,
     runScreenerPortfolioBacktest
 } = require('../services/backtestEngine');
+
+async function enforceBacktestRateLimit(req, res, action, limit) {
+    try {
+        const allowed = await allowRateLimitedRequest(req, action, { limit, windowSeconds: 60 });
+        if (allowed) return true;
+        res.status(429).json({ error: 'Terlalu banyak permintaan backtest. Coba lagi sebentar.' });
+        return false;
+    } catch {
+        res.status(503).json({ error: 'Layanan pembatasan permintaan sementara tidak tersedia.' });
+        return false;
+    }
+}
 
 // API: List available backtest strategies
 router.get('/strategies', (req, res) => {
@@ -19,6 +32,7 @@ router.get('/strategies', (req, res) => {
 
 // API: Run backtest (supports POST JSON body)
 router.post('/run', async (req, res) => {
+    if (!await enforceBacktestRateLimit(req, res, 'backtest-run', 8)) return;
     try {
         const result = await runBacktest(req.body || {});
         res.json(result);
@@ -30,6 +44,7 @@ router.post('/run', async (req, res) => {
 
 // API: Run backtest (supports GET query params for quick access/testing)
 router.get('/run', async (req, res) => {
+    if (!await enforceBacktestRateLimit(req, res, 'backtest-run', 8)) return;
     try {
         const { ticker, strategy, period, initialCapital, tp, sl, trailing } = req.query;
         const result = await runBacktest({
@@ -50,6 +65,10 @@ router.get('/run', async (req, res) => {
 
 // API: Quick Audit for a single ticker (used in Stock Analysis modal)
 router.get('/quick/:ticker', async (req, res) => {
+    if (!/^[A-Z0-9]{2,5}$/.test(String(req.params.ticker || '').trim().toUpperCase().replace(/\.JK$/i, ''))) {
+        return res.status(400).json({ error: 'Kode emiten tidak valid.' });
+    }
+    if (!await enforceBacktestRateLimit(req, res, 'backtest-quick', 30)) return;
     try {
         const ticker = (req.params.ticker || '').trim();
         const audit = await quickAudit(ticker);
@@ -60,6 +79,7 @@ router.get('/quick/:ticker', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
+    if (!await enforceBacktestRateLimit(req, res, 'backtest-portfolio', 5)) return;
     try {
         const result = await runScreenerPortfolioBacktest(req.body || {});
         res.json(result);
@@ -69,6 +89,7 @@ router.post('/', async (req, res) => {
 });
 
 router.get('/', async (req, res) => {
+    if (!await enforceBacktestRateLimit(req, res, 'backtest-portfolio', 5)) return;
     try {
         const tickers = String(req.query.tickers || req.query.ticker || '').split(',').map(value => value.trim()).filter(Boolean);
         const result = await runScreenerPortfolioBacktest({ tickers, period: req.query.period || '3m', initialCapital: req.query.initialCapital ? Number(req.query.initialCapital) : 100000000 });

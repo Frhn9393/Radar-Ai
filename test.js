@@ -163,6 +163,19 @@ function testTelegramWebhookRequiresConfiguredSecret() {
     }
 }
 
+function testBacktestQuickRouteRejectsInvalidTicker() {
+    const router = require('./routes/backtestRoutes');
+    const routeLayer = router.stack.find(layer => layer.route?.path === '/quick/:ticker');
+    let statusCode = 200;
+    let body = null;
+    const response = {
+        status(code) { statusCode = code; return this; },
+        json(value) { body = value; return this; }
+    };
+    routeLayer.route.stack[0].handle({ params: { ticker: '<script>' } }, response);
+    assert(statusCode === 400 && body?.error === 'Kode emiten tidak valid.', 'Quick backtest API rejects malformed ticker codes before running the audit');
+}
+
 async function testTelegramConnectionGuards() {
     const sameOriginRequest = {
         ip: '127.0.0.1',
@@ -487,6 +500,7 @@ async function runAllTests() {
     await testRadarCommand();
     testCandlestickAiEngine();
     testTelegramWebhookRequiresConfiguredSecret();
+    testBacktestQuickRouteRejectsInvalidTicker();
     await testTelegramUserStore();
     await testTelegramAdminAndCorporateNews();
     assert(emptyCommandMessages.length === 0, 'Legacy standalone screener commands are no longer handled');
@@ -574,7 +588,7 @@ async function runAllTests() {
 
     // ── 8. Foreign Flow Engine Test ─────────────────────────────
     console.log('\n▶ [8/8] Testing foreignFlowService...');
-    const { getTickerForeignFlow, getForeignFlowData, rankStreaks } = require('./services/foreignFlowService');
+    const { getTickerForeignFlow, getForeignFlowData, rankStreaks, buildDataCoverage } = require('./services/foreignFlowService');
     const bbcaForeign = await getTickerForeignFlow('BBCA');
     assert(bbcaForeign && bbcaForeign.daily && bbcaForeign.weekly && bbcaForeign.monthly, 'getTickerForeignFlow(BBCA) returns daily, weekly, monthly attributes');
     assert(typeof bbcaForeign.daily.ffpi === 'number', `BBCA daily FFPI is a valid number: ${bbcaForeign?.daily?.ffpi}`);
@@ -585,6 +599,8 @@ async function runAllTests() {
     assert(allForeign && allForeign.macro && allForeign.daily && allForeign.weekly && allForeign.monthly, 'getForeignFlowData() returns complete multi-timeframe dataset');
     assert(allForeign.methodologyMetadata?.auditStatus === 'ESTIMATED_PROXY' && allForeign.macro.dataDisclaimer?.includes('bukan data transaksi'), 'Foreign-flow response identifies its values as an estimate rather than actual foreign transactions');
     assert(allForeign.macro.totalEmitenTracked > 0, `Macro tracking ${allForeign?.macro?.totalEmitenTracked} liquid stocks`);
+    assert(allForeign.dataCoverage?.status === 'complete' && allForeign.dataCoverage.successfulTickerFetches === allForeign.dataCoverage.requestedTickers, 'Foreign-flow scan reports complete ticker coverage for a successful fixture run');
+    assert(buildDataCoverage(6, 10, true).status === 'partial' && buildDataCoverage(6, 10, true).coveragePct === 60, 'Foreign-flow coverage metadata reports timed-out scans as partial');
     assert(Array.isArray(allForeign.daily.topBuy) && allForeign.daily.topBuy.length > 0, `Daily Top Buy has ${allForeign?.daily?.topBuy?.length} emiten`);
     assert(Array.isArray(allForeign.daily.topSell) && allForeign.daily.topSell.length > 0, `Daily Top Sell has ${allForeign?.daily?.topSell?.length} emiten`);
     assert(Array.isArray(allForeign.streak?.streaks) && allForeign.streak.streaks.length > 0, `Active streak tracker detected ${allForeign?.streak?.streaks?.length} consecutive inflow emiten`);

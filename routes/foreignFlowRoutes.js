@@ -24,13 +24,13 @@ router.get('/', async (req, res) => {
         const data = await getForeignFlowData(forceRefresh);
 
         if (timeframe === 'daily') {
-            return res.json({ macro: data.macro, daily: data.daily, ...data.daily, methodologyMetadata: data.methodologyMetadata });
+            return res.json({ macro: data.macro, daily: data.daily, ...data.daily, methodologyMetadata: data.methodologyMetadata, dataCoverage: data.dataCoverage });
         } else if (timeframe === 'weekly') {
-            return res.json({ macro: data.macro, weekly: data.weekly, ...data.weekly, methodologyMetadata: data.methodologyMetadata });
+            return res.json({ macro: data.macro, weekly: data.weekly, ...data.weekly, methodologyMetadata: data.methodologyMetadata, dataCoverage: data.dataCoverage });
         } else if (timeframe === 'monthly') {
-            return res.json({ macro: data.macro, monthly: data.monthly, ...data.monthly, methodologyMetadata: data.methodologyMetadata });
+            return res.json({ macro: data.macro, monthly: data.monthly, ...data.monthly, methodologyMetadata: data.methodologyMetadata, dataCoverage: data.dataCoverage });
         } else if (timeframe === 'streak') {
-            return res.json({ macro: data.macro, streak: data.streak, ...data.streak, methodologyMetadata: data.methodologyMetadata });
+            return res.json({ macro: data.macro, streak: data.streak, ...data.streak, methodologyMetadata: data.methodologyMetadata, dataCoverage: data.dataCoverage });
         }
 
         res.json(data);

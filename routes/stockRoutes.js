@@ -93,6 +93,13 @@ router.get('/search-suggest', (req, res) => {
 
 // Batch realtime quotes for the Smart Portfolio panel.
 router.get('/portfolio/quotes', async (req, res) => {
+    try {
+        if (!await allowRateLimitedRequest(req, 'portfolio-quotes', { limit: 10, windowSeconds: 60 })) {
+            return res.status(429).json({ error: 'Terlalu banyak permintaan harga portofolio. Coba lagi sebentar.' });
+        }
+    } catch {
+        return res.status(503).json({ error: 'Layanan pembatasan permintaan sementara tidak tersedia.' });
+    }
     const tickers = String(req.query.tickers || '').split(',')
         .map(t => t.trim().toUpperCase().replace(/\.JK$/i, ''))
         .filter(Boolean)

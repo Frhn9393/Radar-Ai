@@ -37,6 +37,7 @@ let foreignFlowCacheTime = 0;
 let foreignFlowInFlight = null;
 const CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes
 const YAHOO_REQUEST_TIMEOUT_MS = 3000;
+const FOREIGN_FLOW_SCAN_BUDGET_MS = 7500;
 const MIN_STREAK_DAYS = 4;
 
 // Estimated participation tiers used for a price/volume proxy, not reported foreign transactions.
@@ -385,6 +386,18 @@ function processQuotesForForeignFlow(ticker, quotes, liveQuote = null) {
     };
 }
 
+function buildDataCoverage(successful, requested, timedOut = false) {
+    const requestedTickers = Math.max(0, Number(requested) || 0);
+    const successfulTickerFetches = Math.min(requestedTickers, Math.max(0, Number(successful) || 0));
+    return {
+        status: timedOut || successfulTickerFetches < requestedTickers ? 'partial' : 'complete',
+        requestedTickers,
+        successfulTickerFetches,
+        coveragePct: requestedTickers ? Number((successfulTickerFetches / requestedTickers * 100).toFixed(1)) : 100,
+        timedOut: Boolean(timedOut)
+    };
+}
+
 function rankStreaks(streaks) {
     return (Array.isArray(streaks) ? streaks : [])
         .filter(item => item && Number(item.streakDays) >= MIN_STREAK_DAYS && Number(item.streakTotalVal) > 0)
@@ -417,10 +430,10 @@ async function computeForeignFlowSnapshot() {
 
     const period1 = new Date(Date.now() - 60 * 24 * 3600 * 1000); // 60 days of historical data
 
-    async function evaluateTicker(ticker) {
+    async function evaluateTicker(ticker, signal) {
         try {
             const symbol = `${ticker}.JK`;
-            const chart = await withTimeout(yahooFinance.chart(symbol, { period1, interval: '1d' }), YAHOO_REQUEST_TIMEOUT_MS, `Yahoo ${symbol}`);
+            const chart = await withTimeout(yahooFinance.chart(symbol, { period1, interval: '1d' }, { fetchOptions: { signal } }), YAHOO_REQUEST_TIMEOUT_MS, `Yahoo ${symbol}`);
             if (!chart || !chart.quotes || chart.quotes.length === 0) return;
 
             const res = processQuotesForForeignFlow(ticker, chart.quotes);
@@ -437,10 +450,19 @@ async function computeForeignFlowSnapshot() {
 
     // Process in concurrency chunks of 25 for rapid processing
     const CHUNK_SIZE = 25;
-    for (let i = 0; i < UNIQUE_FOREIGN_UNIVERSE.length; i += CHUNK_SIZE) {
-        const chunk = UNIQUE_FOREIGN_UNIVERSE.slice(i, i + CHUNK_SIZE);
-        await Promise.allSettled(chunk.map(t => evaluateTicker(t)));
+    const scanController = new AbortController();
+    const scanTimer = setTimeout(() => scanController.abort(), FOREIGN_FLOW_SCAN_BUDGET_MS);
+    try {
+        for (let i = 0; i < UNIQUE_FOREIGN_UNIVERSE.length; i += CHUNK_SIZE) {
+            if (scanController.signal.aborted) break;
+            const chunk = UNIQUE_FOREIGN_UNIVERSE.slice(i, i + CHUNK_SIZE);
+            await Promise.allSettled(chunk.map(t => evaluateTicker(t, scanController.signal)));
+        }
+    } finally {
+        clearTimeout(scanTimer);
     }
+    const successfulTickerFetches = dailyList.length;
+    const dataCoverage = buildDataCoverage(successfulTickerFetches, UNIQUE_FOREIGN_UNIVERSE.length, scanController.signal.aborted);
 
     // Sort Daily: Top Buy (positive NFF descending) & Top Sell (negative NFF ascending)
     const topBuyDaily = [...dailyList]
@@ -530,7 +552,8 @@ async function computeForeignFlowSnapshot() {
             model: 'Estimated Price/Volume Participation Proxy',
             dataDisclaimer: 'Estimasi, bukan data transaksi aktual investor asing.',
             timestamp: new Date().toISOString()
-        }
+        },
+        dataCoverage
     };
 
     foreignFlowCache = results;
@@ -565,5 +588,6 @@ module.exports = {
     getForeignFlowData: computeAllForeignFlow,
     getTickerForeignFlow,
     processQuotesForForeignFlow,
-    rankStreaks
+    rankStreaks,
+    buildDataCoverage
 };
