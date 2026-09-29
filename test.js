@@ -20,7 +20,8 @@ const { fetchBrokerTop, requestBrokerTop, parseStockbitResponse, _clearCacheForT
 const { fetchBroksum } = require('./services/broksumService');
 const { validateDatasetQuality } = require('./scripts/candlestickDataset');
 const { analyzeStock, runScreener, hasUsableRealtimeData } = require('./services/stockService');
-const { isSameOriginRequest, allowRateLimitedRequest } = require('./services/requestGuard');
+const { isSameOriginRequest, getClientIdentity, allowRateLimitedRequest } = require('./services/requestGuard');
+const { csvRow } = require('./public/js/modules/csvExport');
 
 let totalTests = 0;
 let passedTests = 0;
@@ -174,6 +175,22 @@ async function testTelegramConnectionGuards() {
     assert(isSameOriginRequest(sameOriginRequest), 'Telegram alert endpoints accept a request from the same origin');
     assert(!isSameOriginRequest(crossOriginRequest), 'Telegram alert endpoints reject cross-origin requests');
     assert(!isSameOriginRequest(missingOriginRequest), 'Telegram alert endpoints reject requests without an Origin header');
+    assert(csvRow(['normal', 'say "hello"', 'line\nbreak']) === '"normal","say ""hello""","line break"\n', 'CSV export quotes cells and normalizes embedded line breaks');
+    assert(csvRow(['=1+1', '+SUM(A1:A2)', '-cmd|x', '@formula', -125, '12.5%']) === `"'=1+1","'+SUM(A1:A2)","'-cmd|x","'@formula","-125","12.5%"\n`, 'CSV export neutralizes spreadsheet formulas while preserving numeric values');
+
+    const priorVercel = process.env.VERCEL;
+    try {
+        delete process.env.VERCEL;
+        const spoofedForwardedRequest = { get: name => name.toLowerCase() === 'x-forwarded-for' ? '198.51.100.9' : '', ip: '203.0.113.4', socket: { remoteAddress: '203.0.113.4' } };
+        const actualAddressRequest = { get: () => '', ip: '203.0.113.4', socket: { remoteAddress: '203.0.113.4' } };
+        assert(getClientIdentity(spoofedForwardedRequest) === getClientIdentity(actualAddressRequest), 'Rate-limit identity ignores untrusted X-Forwarded-For outside Vercel');
+        process.env.VERCEL = '1';
+        const trustedVercelRequest = { get: name => name.toLowerCase() === 'x-forwarded-for' ? '198.51.100.9' : '', ip: '203.0.113.4' };
+        assert(getClientIdentity(trustedVercelRequest) !== getClientIdentity(actualAddressRequest), 'Rate-limit identity uses a valid Vercel forwarded client IP');
+    } finally {
+        if (priorVercel === undefined) delete process.env.VERCEL;
+        else process.env.VERCEL = priorVercel;
+    }
 
     const rateLimitKey = `test-${Date.now()}-${Math.random()}`;
     assert(await allowRateLimitedRequest(sameOriginRequest, rateLimitKey, { limit: 1, windowSeconds: 60 }), 'Telegram side-effect rate limiter allows the first request');
@@ -393,7 +410,7 @@ async function runAllTests() {
     assert(extractNewsTicker('Astra (ASII) Bakal Fokus ke 3 Segmen') === 'ASII', 'Ticker parser resolves an explicitly formatted issuer code');
     const formattedAlert = formatNewsAlert({ ticker: 'BBRI', title: 'Laba tumbuh', link: 'https://example.com/news' });
     assert(formattedAlert.includes('Emiten: $BBRI') && formattedAlert.includes('Link: https://example.com/news'), 'News alert includes issuer and source link');
-    const { generateScreenerSignal } = require('./services/backtestEngine');
+    const { generateScreenerSignal, resolveEntryFillPrice, resolveIntradayExit, advanceTrailingStop } = require('./services/backtestEngine');
     const historicalBars = Array.from({ length: 20 }, (_, index) => ({ date: `2026-01-${String(index + 1).padStart(2, '0')}`, open: 100, high: 105, low: 99, close: index === 19 ? 104 : 100, volume: index === 19 ? 200 : 100 }));
     assert(generateScreenerSignal('DAYTRADE', historicalBars, 19), 'Historical screener backtest accepts positive change above +2% with volatility and volume');
     assert(!generateScreenerSignal('DAYTRADE', historicalBars.map((bar, index) => index === 19 ? { ...bar, close: 90 } : bar), 19), 'Historical daytrade backtest rejects negative price change');
@@ -401,6 +418,22 @@ async function runAllTests() {
     assert(generateScreenerSignal('DAYTRADE', historicalBars.map((bar, index) => index === 19 ? { ...bar, close: 102.01 } : bar), 19), 'Historical daytrade backtest accepts change strictly above +2%');
     assert(!generateScreenerSignal('DAYTRADE', historicalBars.map((bar, index) => index === 19 ? { ...bar, volume: 180 } : bar), 19), 'Historical screener backtest respects strict volume threshold');
     assert(generateScreenerSignal('SWING', historicalBars.map((bar, index) => ({ ...bar, high: 110, close: index === 19 ? 106 : 100 })), 19), 'Historical swing backtest uses only available moving-average and volume data');
+
+    const signalBar = { date: '2026-01-20', close: 100 };
+    const nextSession = { date: '2026-01-21', open: 108, high: 109, low: 107, close: 108 };
+    assert(resolveEntryFillPrice(signalBar, nextSession) === 108, 'Backtest enters at the next session open, not the signal candle close');
+    assert(resolveEntryFillPrice(signalBar, null) === null && resolveEntryFillPrice(signalBar, { open: 0 }) === null, 'Backtest refuses a missing or invalid next-session fill');
+    const collisionPosition = { entryPrice: 100, stopLoss: 95, takeProfit: 105 };
+    const collisionBar = { high: 106, low: 94 };
+    const collisionExit = resolveIntradayExit(collisionPosition, collisionBar, 5, 5);
+    assert(collisionExit?.exitPrice === 95 && collisionExit.exitReason.startsWith('STOP LOSS'), 'Backtest resolves same-day stop/target collision conservatively as stop loss');
+    assert(resolveIntradayExit(collisionPosition, { open: 90, high: 93, low: 89 }, 5, 5)?.exitPrice === 90, 'Backtest models a stop gap at the worse next-session open');
+    assert(resolveIntradayExit(collisionPosition, { open: 106, high: 108, low: 105 }, 5, 5)?.exitPrice === 106, 'Backtest models a take-profit gap at the next-session open');
+    const trailingPosition = { entryPrice: 100, stopLoss: 95, takeProfit: 120, highestPriceSinceEntry: 100 };
+    const highThenLowUnknownBar = { high: 110, low: 97 };
+    assert(resolveIntradayExit(trailingPosition, highThenLowUnknownBar, 20, 5) === null, 'A new same-candle trailing stop is not retroactively applied to that candle low');
+    assert(advanceTrailingStop(trailingPosition, highThenLowUnknownBar, 5) === 104.5, 'Intraday high advances the trailing stop for subsequent candles');
+    assert(resolveIntradayExit(trailingPosition, { high: 106, low: 104 }, 20, 5)?.exitPrice === 104.5, 'Advanced trailing stop is enforced on the following candle');
 
     console.log('\n▶ Testing strict screener eligibility and null-data handling...');
     const strictBsjp = { isCurrentJakartaDay: true, close: 98, high: 100, tickSize: 1, volumeToday: 151, ma5Volume: 100, rsi: 60 };

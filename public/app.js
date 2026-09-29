@@ -2186,6 +2186,21 @@ modalBacktest?.addEventListener('click', (e) => {
 
 // --- END MODULE: screener.js ---
 
+// --- START MODULE: csvExport.js ---
+function csvRow(values) {
+    const cells = values.map(value => {
+        let text = String(value ?? '').replace(/\r\n?|\n/g, ' ');
+        const numericLiteral = /^-?(?:\d+\.?\d*|\.\d+)%?$/.test(text);
+        if (!numericLiteral && /^[\t ]*[=+@-]/.test(text)) text = `'${text}`;
+        return `"${text.replace(/"/g, '""')}"`;
+    });
+    return `${cells.join(',')}\n`;
+}
+
+if (typeof module !== 'undefined' && module.exports) module.exports = { csvRow };
+
+// --- END MODULE: csvExport.js ---
+
 // --- START MODULE: pdfExport.js ---
 // ============================================================
 //  MODULE: pdfExport.js
@@ -2395,6 +2410,8 @@ document.getElementById('btn-export-screener-pdf')?.addEventListener('click', ex
 //  5B. PROXY HARGA DAN VOLUME
 // ============================================================
 
+let foreignFlowRequestVersion = 0;
+
 function fmtRpMiliar(val) {
     if (val === null || val === undefined || isNaN(val)) return 'Rp 0';
     const num = Number(val);
@@ -2459,6 +2476,7 @@ foreignSectorSelect?.addEventListener('change', () => renderForeignTables());
 btnRefreshForeign?.addEventListener('click', () => loadForeignFlowData(true));
 
 async function loadForeignFlowData(forceRefresh = false) {
+    const requestVersion = ++foreignFlowRequestVersion;
     foreignLoading?.classList.remove('hidden');
     iconRefreshForeign?.classList.add('animate-spin');
 
@@ -2467,6 +2485,7 @@ async function loadForeignFlowData(forceRefresh = false) {
         const res = await fetch(url);
         if (!res.ok) throw new Error('Gagal mengambil estimasi proxy harga dan volume');
         const data = await res.json();
+        if (requestVersion !== foreignFlowRequestVersion) return;
         allForeignData = data;
         const flowDisclaimer = document.getElementById('foreign-flow-disclaimer');
         if (flowDisclaimer) flowDisclaimer.textContent = data.macro?.dataDisclaimer || 'Estimasi proxy berbasis harga dan volume, bukan catatan transaksi aktual investor asing.';
@@ -2496,10 +2515,12 @@ async function loadForeignFlowData(forceRefresh = false) {
 
         renderForeignTables();
     } catch (err) {
-        console.error('Error loadForeignFlowData:', err);
+        if (requestVersion === foreignFlowRequestVersion) console.error('Error loadForeignFlowData:', err);
     } finally {
-        foreignLoading?.classList.add('hidden');
-        iconRefreshForeign?.classList.remove('animate-spin');
+        if (requestVersion === foreignFlowRequestVersion) {
+            foreignLoading?.classList.add('hidden');
+            iconRefreshForeign?.classList.remove('animate-spin');
+        }
     }
 }
 
@@ -3137,9 +3158,14 @@ async function loadMarketIndices() {
     if (!track) return;
     try {
         const res = await fetch('/api/market-indices');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         const indices = data.indices || [];
         if (!indices.length) return;
+        track.dataset.marketDataStatus = data.status || (data.is_live === false ? 'degraded' : 'live');
+        track.title = data.is_live === false
+            ? `Indeks menggunakan data fallback; terakhir diperbarui ${data.last_updated || 'tidak diketahui'}`
+            : `Data indeks ${data.status || 'live'}; diperbarui ${data.last_updated || 'baru saja'}`;
 
         const htmlSet = indices.map(idx => {
             const isUp = (idx.changePct || 0) >= 0;
@@ -3238,7 +3264,10 @@ btnRefreshAll?.addEventListener('click', () => {
     if (typeof loadMarketIndices === 'function') tasks.push(loadMarketIndices());
     if (typeof loadForeignFlowData === 'function') tasks.push(loadForeignFlowData(true));
 
-    Promise.all(tasks).finally(() => {
+    Promise.allSettled(tasks).then(results => {
+        const failed = results.filter(result => result.status === 'rejected').length;
+        if (failed) console.warn(`${failed} dashboard refresh task(s) failed.`);
+    }).finally(() => {
         setTimeout(() => icon?.classList.remove('animate-spin'), 600);
     });
 });
@@ -3257,22 +3286,22 @@ btnExportData?.addEventListener('click', () => {
 
         // Daily Top Buy
         (allForeignData.daily?.topBuy || []).forEach(item => {
-            csv += `"Proxy Net Buy 1D","${item.ticker}","${item.name || ''}","${item.sector || ''}","${item.lastPrice || 0}","${item.changePct || 0}","${((item.netForeignVal || 0) / 1e9).toFixed(2)}","${((item.weeklyNetVal || 0) / 1e9).toFixed(2)}","${item.vwap || item.foreignVWAP || 0}","${item.ffpi || 0}","${item.streakDays || 0}","${((item.streakTotalVal || 0) / 1e9).toFixed(2)}","${(item.status || 'PROXY BELI').replace(/"/g, '""')}"\n`;
+            csv += csvRow(['Proxy Net Buy 1D', item.ticker, item.name, item.sector, item.lastPrice || 0, item.changePct || 0, ((item.netForeignVal || 0) / 1e9).toFixed(2), ((item.weeklyNetVal || 0) / 1e9).toFixed(2), item.vwap || item.foreignVWAP || 0, item.ffpi || 0, item.streakDays || 0, ((item.streakTotalVal || 0) / 1e9).toFixed(2), item.status || 'PROXY BELI']);
         });
 
         // Daily Top Sell
         (allForeignData.daily?.topSell || []).forEach(item => {
-            csv += `"Proxy Net Sell 1D","${item.ticker}","${item.name || ''}","${item.sector || ''}","${item.lastPrice || 0}","${item.changePct || 0}","${((item.netForeignVal || 0) / 1e9).toFixed(2)}","${((item.weeklyNetVal || 0) / 1e9).toFixed(2)}","${item.vwap || item.foreignVWAP || 0}","${item.ffpi || 0}","${item.streakDays || 0}","${((item.streakTotalVal || 0) / 1e9).toFixed(2)}","${(item.status || 'PROXY JUAL').replace(/"/g, '""')}"\n`;
+            csv += csvRow(['Proxy Net Sell 1D', item.ticker, item.name, item.sector, item.lastPrice || 0, item.changePct || 0, ((item.netForeignVal || 0) / 1e9).toFixed(2), ((item.weeklyNetVal || 0) / 1e9).toFixed(2), item.vwap || item.foreignVWAP || 0, item.ffpi || 0, item.streakDays || 0, ((item.streakTotalVal || 0) / 1e9).toFixed(2), item.status || 'PROXY JUAL']);
         });
 
         // Weekly Accumulation
         (allForeignData.weekly?.topAccumulation || []).forEach(item => {
-            csv += `"Weekly Accumulation 5D","${item.ticker}","${item.name || ''}","${item.sector || ''}","${item.lastPrice || 0}","${item.changePct || 0}","${((item.netForeignVal || 0) / 1e9).toFixed(2)}","${((item.weeklyNetVal || 0) / 1e9).toFixed(2)}","${item.vwap || 0}","${item.ffpi || 0}","${item.streakDays || 0}","${((item.streakTotalVal || 0) / 1e9).toFixed(2)}","${(item.phase || 'Akumulasi').replace(/"/g, '""')}"\n`;
+            csv += csvRow(['Weekly Accumulation 5D', item.ticker, item.name, item.sector, item.lastPrice || 0, item.changePct || 0, ((item.netForeignVal || 0) / 1e9).toFixed(2), ((item.weeklyNetVal || 0) / 1e9).toFixed(2), item.vwap || 0, item.ffpi || 0, item.streakDays || 0, ((item.streakTotalVal || 0) / 1e9).toFixed(2), item.phase || 'Akumulasi']);
         });
 
         // Inflow Streaks
         (allForeignData.streak?.streaks || []).forEach(item => {
-            csv += `"Streak Proxy Harga/Volume","${item.ticker}","${item.name || ''}","${item.sector || ''}","${item.lastPrice || 0}","${item.changePct || 0}","${((item.netForeignVal || 0) / 1e9).toFixed(2)}","${((item.weeklyNetVal || 0) / 1e9).toFixed(2)}","${item.foreignVWAP || 0}","${item.ffpi || 0}","${item.streakDays || 0}","${((item.streakTotalVal || 0) / 1e9).toFixed(2)}","Streak ${item.streakDays} Hari"\n`;
+            csv += csvRow(['Streak Proxy Harga/Volume', item.ticker, item.name, item.sector, item.lastPrice || 0, item.changePct || 0, ((item.netForeignVal || 0) / 1e9).toFixed(2), ((item.weeklyNetVal || 0) / 1e9).toFixed(2), item.foreignVWAP || 0, item.ffpi || 0, item.streakDays || 0, ((item.streakTotalVal || 0) / 1e9).toFixed(2), `Streak ${item.streakDays} Hari`]);
         });
 
         const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -3306,7 +3335,7 @@ btnExportData?.addEventListener('click', () => {
         cats.forEach(c => {
             const list = lastScreenerData[c.key] || [];
             list.forEach((item, idx) => {
-                csv += `"${c.label}","#${idx + 1}","${item.ticker}","${item.price}","${item.changePct}%","${item.sinyalEntri || '-'}","${item.supertrendBadge || '-'}","${item.rsi || '-'}","${item.ema200 || '-'}","${item.support || '-'}","${item.targetKonservatif || '-'}","${item.targetAgresif || '-'}","${item.cutLoss || '-'}","${item.horizon || '-'}","${item.backtest?.winRate || 'Belum dihitung'}","${item.backtest?.profitFactor || 'Belum dihitung'}"\n`;
+                csv += csvRow([c.label, `#${idx + 1}`, item.ticker, item.price, `${item.changePct}%`, item.sinyalEntri || '-', item.supertrendBadge || '-', item.rsi || '-', item.ema200 || '-', item.support || '-', item.targetKonservatif || '-', item.targetAgresif || '-', item.cutLoss || '-', item.horizon || '-', item.backtest?.winRate || 'Belum dihitung', item.backtest?.profitFactor || 'Belum dihitung']);
             });
         });
 
@@ -3329,7 +3358,7 @@ btnExportData?.addEventListener('click', () => {
 
     let csv = 'ID,Status,Akurasi,Emiten,Sumber,Estimasi Nilai Deal,Dampak,Link Berita,Judul\n';
     allDeals.forEach(d => {
-        csv += `"${d.id}","${d.typeLabel}","${d.accuracy}%","${d.tickers.join(' ')}","${d.source}","${d.dealValue}","${d.impact}","${d.link || ''}","${d.title.replace(/"/g, '""')}"\n`;
+        csv += csvRow([d.id, d.typeLabel, `${d.accuracy}%`, (d.tickers || []).join(' '), d.source, d.dealValue, d.impact, d.link || '', d.title]);
     });
 
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -3987,7 +4016,7 @@ inputMobileSearch?.addEventListener('input', (e) => {
                 <div class="mobile-search-item bg-[#0d1424] hover:bg-[#131e33] p-3.5 rounded-xl flex items-center justify-between cursor-pointer transition shadow-md" data-ticker="${escapeHtml(item.ticker)}">
                     <div class="flex items-center gap-3 min-w-0">
                         <div class="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-300 font-mono font-black text-sm shrink-0">
-                            $${item.ticker.slice(0, 3)}
+                            $${escapeHtml(String(item.ticker || '').slice(0, 3))}
                         </div>
                         <div class="min-w-0">
                             <div class="flex items-center gap-2">

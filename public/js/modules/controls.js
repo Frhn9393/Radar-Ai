@@ -74,7 +74,10 @@ btnRefreshAll?.addEventListener('click', () => {
     if (typeof loadMarketIndices === 'function') tasks.push(loadMarketIndices());
     if (typeof loadForeignFlowData === 'function') tasks.push(loadForeignFlowData(true));
 
-    Promise.all(tasks).finally(() => {
+    Promise.allSettled(tasks).then(results => {
+        const failed = results.filter(result => result.status === 'rejected').length;
+        if (failed) console.warn(`${failed} dashboard refresh task(s) failed.`);
+    }).finally(() => {
         setTimeout(() => icon?.classList.remove('animate-spin'), 600);
     });
 });
@@ -93,22 +96,22 @@ btnExportData?.addEventListener('click', () => {
 
         // Daily Top Buy
         (allForeignData.daily?.topBuy || []).forEach(item => {
-            csv += `"Proxy Net Buy 1D","${item.ticker}","${item.name || ''}","${item.sector || ''}","${item.lastPrice || 0}","${item.changePct || 0}","${((item.netForeignVal || 0) / 1e9).toFixed(2)}","${((item.weeklyNetVal || 0) / 1e9).toFixed(2)}","${item.vwap || item.foreignVWAP || 0}","${item.ffpi || 0}","${item.streakDays || 0}","${((item.streakTotalVal || 0) / 1e9).toFixed(2)}","${(item.status || 'PROXY BELI').replace(/"/g, '""')}"\n`;
+            csv += csvRow(['Proxy Net Buy 1D', item.ticker, item.name, item.sector, item.lastPrice || 0, item.changePct || 0, ((item.netForeignVal || 0) / 1e9).toFixed(2), ((item.weeklyNetVal || 0) / 1e9).toFixed(2), item.vwap || item.foreignVWAP || 0, item.ffpi || 0, item.streakDays || 0, ((item.streakTotalVal || 0) / 1e9).toFixed(2), item.status || 'PROXY BELI']);
         });
 
         // Daily Top Sell
         (allForeignData.daily?.topSell || []).forEach(item => {
-            csv += `"Proxy Net Sell 1D","${item.ticker}","${item.name || ''}","${item.sector || ''}","${item.lastPrice || 0}","${item.changePct || 0}","${((item.netForeignVal || 0) / 1e9).toFixed(2)}","${((item.weeklyNetVal || 0) / 1e9).toFixed(2)}","${item.vwap || item.foreignVWAP || 0}","${item.ffpi || 0}","${item.streakDays || 0}","${((item.streakTotalVal || 0) / 1e9).toFixed(2)}","${(item.status || 'PROXY JUAL').replace(/"/g, '""')}"\n`;
+            csv += csvRow(['Proxy Net Sell 1D', item.ticker, item.name, item.sector, item.lastPrice || 0, item.changePct || 0, ((item.netForeignVal || 0) / 1e9).toFixed(2), ((item.weeklyNetVal || 0) / 1e9).toFixed(2), item.vwap || item.foreignVWAP || 0, item.ffpi || 0, item.streakDays || 0, ((item.streakTotalVal || 0) / 1e9).toFixed(2), item.status || 'PROXY JUAL']);
         });
 
         // Weekly Accumulation
         (allForeignData.weekly?.topAccumulation || []).forEach(item => {
-            csv += `"Weekly Accumulation 5D","${item.ticker}","${item.name || ''}","${item.sector || ''}","${item.lastPrice || 0}","${item.changePct || 0}","${((item.netForeignVal || 0) / 1e9).toFixed(2)}","${((item.weeklyNetVal || 0) / 1e9).toFixed(2)}","${item.vwap || 0}","${item.ffpi || 0}","${item.streakDays || 0}","${((item.streakTotalVal || 0) / 1e9).toFixed(2)}","${(item.phase || 'Akumulasi').replace(/"/g, '""')}"\n`;
+            csv += csvRow(['Weekly Accumulation 5D', item.ticker, item.name, item.sector, item.lastPrice || 0, item.changePct || 0, ((item.netForeignVal || 0) / 1e9).toFixed(2), ((item.weeklyNetVal || 0) / 1e9).toFixed(2), item.vwap || 0, item.ffpi || 0, item.streakDays || 0, ((item.streakTotalVal || 0) / 1e9).toFixed(2), item.phase || 'Akumulasi']);
         });
 
         // Inflow Streaks
         (allForeignData.streak?.streaks || []).forEach(item => {
-            csv += `"Streak Proxy Harga/Volume","${item.ticker}","${item.name || ''}","${item.sector || ''}","${item.lastPrice || 0}","${item.changePct || 0}","${((item.netForeignVal || 0) / 1e9).toFixed(2)}","${((item.weeklyNetVal || 0) / 1e9).toFixed(2)}","${item.foreignVWAP || 0}","${item.ffpi || 0}","${item.streakDays || 0}","${((item.streakTotalVal || 0) / 1e9).toFixed(2)}","Streak ${item.streakDays} Hari"\n`;
+            csv += csvRow(['Streak Proxy Harga/Volume', item.ticker, item.name, item.sector, item.lastPrice || 0, item.changePct || 0, ((item.netForeignVal || 0) / 1e9).toFixed(2), ((item.weeklyNetVal || 0) / 1e9).toFixed(2), item.foreignVWAP || 0, item.ffpi || 0, item.streakDays || 0, ((item.streakTotalVal || 0) / 1e9).toFixed(2), `Streak ${item.streakDays} Hari`]);
         });
 
         const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -142,7 +145,7 @@ btnExportData?.addEventListener('click', () => {
         cats.forEach(c => {
             const list = lastScreenerData[c.key] || [];
             list.forEach((item, idx) => {
-                csv += `"${c.label}","#${idx + 1}","${item.ticker}","${item.price}","${item.changePct}%","${item.sinyalEntri || '-'}","${item.supertrendBadge || '-'}","${item.rsi || '-'}","${item.ema200 || '-'}","${item.support || '-'}","${item.targetKonservatif || '-'}","${item.targetAgresif || '-'}","${item.cutLoss || '-'}","${item.horizon || '-'}","${item.backtest?.winRate || 'Belum dihitung'}","${item.backtest?.profitFactor || 'Belum dihitung'}"\n`;
+                csv += csvRow([c.label, `#${idx + 1}`, item.ticker, item.price, `${item.changePct}%`, item.sinyalEntri || '-', item.supertrendBadge || '-', item.rsi || '-', item.ema200 || '-', item.support || '-', item.targetKonservatif || '-', item.targetAgresif || '-', item.cutLoss || '-', item.horizon || '-', item.backtest?.winRate || 'Belum dihitung', item.backtest?.profitFactor || 'Belum dihitung']);
             });
         });
 
@@ -165,7 +168,7 @@ btnExportData?.addEventListener('click', () => {
 
     let csv = 'ID,Status,Akurasi,Emiten,Sumber,Estimasi Nilai Deal,Dampak,Link Berita,Judul\n';
     allDeals.forEach(d => {
-        csv += `"${d.id}","${d.typeLabel}","${d.accuracy}%","${d.tickers.join(' ')}","${d.source}","${d.dealValue}","${d.impact}","${d.link || ''}","${d.title.replace(/"/g, '""')}"\n`;
+        csv += csvRow([d.id, d.typeLabel, `${d.accuracy}%`, (d.tickers || []).join(' '), d.source, d.dealValue, d.impact, d.link || '', d.title]);
     });
 
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });

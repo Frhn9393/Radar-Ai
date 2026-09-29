@@ -50,6 +50,46 @@ function generateScreenerSignal(strategy, bars, index) {
     return false;
 }
 
+// Daily OHLC data does not reveal whether a candle's high or low happened first.
+// Resolve a same-session stop/target collision conservatively as a stop loss.
+function resolveIntradayExit(position, bar, tpTargetPct, slTargetPct) {
+    if (Number(bar.open) <= position.stopLoss) {
+        const lossPct = ((Number(bar.open) - position.entryPrice) / position.entryPrice) * 100;
+        return {
+            exitPrice: Number(bar.open),
+            exitReason: lossPct >= 0 ? `TRAILING STOP HIT (+${lossPct.toFixed(1)}%)` : `STOP LOSS (-${slTargetPct}%)`
+        };
+    }
+    if (Number(bar.open) >= position.takeProfit) {
+        return { exitPrice: Number(bar.open), exitReason: `TARGET PROFIT (+${tpTargetPct}%)` };
+    }
+    if (bar.low <= position.stopLoss) {
+        const lossPct = ((position.stopLoss - position.entryPrice) / position.entryPrice) * 100;
+        return {
+            exitPrice: position.stopLoss,
+            exitReason: lossPct >= 0 ? `TRAILING STOP HIT (+${lossPct.toFixed(1)}%)` : `STOP LOSS (-${slTargetPct}%)`
+        };
+    }
+    if (bar.high >= position.takeProfit) {
+        return { exitPrice: position.takeProfit, exitReason: `TARGET PROFIT (+${tpTargetPct}%)` };
+    }
+    return null;
+}
+
+function resolveEntryFillPrice(signalBar, nextBar) {
+    if (!signalBar || !nextBar) return null;
+    const price = Number(nextBar.open);
+    return Number.isFinite(price) && price > 0 ? price : null;
+}
+
+function advanceTrailingStop(position, bar, trailingPct) {
+    if (bar.high <= position.highestPriceSinceEntry) return position.stopLoss;
+    position.highestPriceSinceEntry = bar.high;
+    const newTrailingStop = position.highestPriceSinceEntry * (1 - (trailingPct / 100));
+    if (newTrailingStop > position.stopLoss) position.stopLoss = newTrailingStop;
+    return position.stopLoss;
+}
+
 async function runScreenerPortfolioBacktest({ tickers = [], period = '3m', initialCapital = 100000000 } = {}) {
     const cleanTickers = [...new Set((Array.isArray(tickers) ? tickers : []).map(sanitizeTicker).filter(ticker => /^[A-Z0-9]{2,5}$/.test(ticker)))].slice(0, 8);
     if (!cleanTickers.length) throw new Error('Masukkan minimal satu kode emiten yang valid.');
@@ -398,36 +438,56 @@ async function runBacktest(options = {}) {
 
     // Buy and Hold Benchmark tracking
     const initialBarPrice = bars[startIndex].close;
+    let pendingEntry = null;
 
     for (let i = startIndex; i < bars.length; i++) {
         const bar = bars[i];
         const prevBar = bars[i - 1];
+
+        // A signal is only known after its daily candle closes, so its earliest
+        // executable price is the next session's open. Fill pending entries here.
+        if (position === null && pendingEntry?.signalIndex === i - 1) {
+            const scheduledEntry = pendingEntry;
+            pendingEntry = null;
+            const entryPrice = resolveEntryFillPrice(bars[i - 1], bar);
+            if (entryPrice !== null) {
+                const capitalToAllocate = cash * 0.95;
+                const pricePerLot = entryPrice * 100;
+                const lots = Math.floor(capitalToAllocate / pricePerLot);
+                if (lots >= 1) {
+                    const shares = lots * 100;
+                    const grossCost = shares * entryPrice;
+                    const buyFee = grossCost * (buyFeePct / 100);
+                    const totalCostBasis = grossCost + buyFee;
+                    cash -= totalCostBasis;
+                    position = {
+                        entryIndex: i,
+                        entryDate: bar.date,
+                        entryPrice,
+                        shares,
+                        lots,
+                        costBasis: totalCostBasis,
+                        takeProfit: Math.round(entryPrice * (1 + (tpTargetPct / 100))),
+                        stopLoss: Math.round(entryPrice * (1 - (slTargetPct / 100))),
+                        highestPriceSinceEntry: entryPrice,
+                        signalName: scheduledEntry.signalName
+                    };
+                }
+            }
+        }
 
         // 1. Manage Active Position (Check Stop Loss, Take Profit, Trailing Stop, Strategy Exit)
         if (position !== null) {
             let exitReason = null;
             let exitPrice = bar.close;
 
-            // Track highest price for trailing stop
-            if (bar.high > position.highestPriceSinceEntry) {
-                position.highestPriceSinceEntry = bar.high;
-                // Move trailing stop up
-                const newTrailingStop = position.highestPriceSinceEntry * (1 - (trailingPct / 100));
-                if (newTrailingStop > position.stopLoss) {
-                    position.stopLoss = newTrailingStop;
-                }
-            }
-
-            // Check Hard Take Profit hit intraday
-            if (bar.high >= position.takeProfit) {
-                exitReason = `TARGET PROFIT (+${tpTargetPct}%)`;
-                exitPrice = position.takeProfit;
-            }
-            // Check Stop Loss / Trailing Stop hit intraday
-            else if (bar.low <= position.stopLoss) {
-                const lossPct = ((position.stopLoss - position.entryPrice) / position.entryPrice) * 100;
-                exitReason = lossPct >= 0 ? `TRAILING STOP HIT (+${lossPct.toFixed(1)}%)` : `STOP LOSS (-${slTargetPct}%)`;
-                exitPrice = position.stopLoss;
+            // Apply the stop/target already in force before observing today's high.
+            // This avoids using the day's high to raise a stop and then pretending
+            // that the raised stop was necessarily hit later in that same candle.
+            const intradayExit = resolveIntradayExit(position, bar, tpTargetPct, slTargetPct);
+            if (intradayExit) {
+                exitReason = intradayExit.exitReason;
+                exitPrice = intradayExit.exitPrice;
             }
             // Strategy Specific Dynamic Exits
             else if (strategyKey === 'SUPERTREND_SWING' && bar.supertrendDir === -1 && prevBar.supertrendDir === 1) {
@@ -447,6 +507,10 @@ async function runBacktest(options = {}) {
                 exitReason = 'PERIODE BACKTEST SELESAI (MARK-TO-MARKET)';
                 exitPrice = bar.close;
             }
+
+            // Update the trailing stop only after today's stop/target tests. It
+            // becomes active from the next bar, when OHLC ordering is observable.
+            if (!exitReason) advanceTrailingStop(position, bar, trailingPct);
 
             // Execute Exit Order
             if (exitReason) {
@@ -480,7 +544,7 @@ async function runBacktest(options = {}) {
         }
 
         // 2. Check Strategy Entry Conditions (Only if no active position)
-        if (position === null && i < bars.length - 1) {
+        if (position === null && !pendingEntry && i < bars.length - 1) {
             let shouldEnter = false;
             let signalName = '';
 
@@ -527,33 +591,7 @@ async function runBacktest(options = {}) {
             }
 
             if (shouldEnter) {
-                const entryPrice = bar.close;
-                // Maximum allocate 95% of available cash
-                const capitalToAllocate = cash * 0.95;
-                const pricePerLot = entryPrice * 100;
-                const lots = Math.floor(capitalToAllocate / pricePerLot);
-
-                if (lots >= 1) {
-                    const shares = lots * 100;
-                    const grossCost = shares * entryPrice;
-                    const buyFee = grossCost * (buyFeePct / 100);
-                    const totalCostBasis = grossCost + buyFee;
-
-                    cash -= totalCostBasis;
-
-                    position = {
-                        entryIndex: i,
-                        entryDate: bar.date,
-                        entryPrice,
-                        shares,
-                        lots,
-                        costBasis: totalCostBasis,
-                        takeProfit: Math.round(entryPrice * (1 + (tpTargetPct / 100))),
-                        stopLoss: Math.round(entryPrice * (1 - (slTargetPct / 100))),
-                        highestPriceSinceEntry: entryPrice,
-                        signalName
-                    };
-                }
+                pendingEntry = { signalIndex: i, signalName };
             }
         }
 
@@ -689,5 +727,8 @@ module.exports = {
     runBacktest,
     quickAudit,
     runScreenerPortfolioBacktest,
-    generateScreenerSignal
+    generateScreenerSignal,
+    resolveEntryFillPrice,
+    resolveIntradayExit,
+    advanceTrailingStop
 };

@@ -14,6 +14,7 @@ const moduleOrder = [
     'stockChart.js',
     'search.js',
     'screener.js',
+    'csvExport.js',
     'pdfExport.js',
     'foreignFlow.js',
     'watchlist.js',

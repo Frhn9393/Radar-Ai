@@ -11,9 +11,14 @@ async function loadMarketIndices() {
     if (!track) return;
     try {
         const res = await fetch('/api/market-indices');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         const indices = data.indices || [];
         if (!indices.length) return;
+        track.dataset.marketDataStatus = data.status || (data.is_live === false ? 'degraded' : 'live');
+        track.title = data.is_live === false
+            ? `Indeks menggunakan data fallback; terakhir diperbarui ${data.last_updated || 'tidak diketahui'}`
+            : `Data indeks ${data.status || 'live'}; diperbarui ${data.last_updated || 'baru saja'}`;
 
         const htmlSet = indices.map(idx => {
             const isUp = (idx.changePct || 0) >= 0;

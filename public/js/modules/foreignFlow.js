@@ -7,6 +7,8 @@
 //  5B. PROXY HARGA DAN VOLUME
 // ============================================================
 
+let foreignFlowRequestVersion = 0;
+
 function fmtRpMiliar(val) {
     if (val === null || val === undefined || isNaN(val)) return 'Rp 0';
     const num = Number(val);
@@ -71,6 +73,7 @@ foreignSectorSelect?.addEventListener('change', () => renderForeignTables());
 btnRefreshForeign?.addEventListener('click', () => loadForeignFlowData(true));
 
 async function loadForeignFlowData(forceRefresh = false) {
+    const requestVersion = ++foreignFlowRequestVersion;
     foreignLoading?.classList.remove('hidden');
     iconRefreshForeign?.classList.add('animate-spin');
 
@@ -79,6 +82,7 @@ async function loadForeignFlowData(forceRefresh = false) {
         const res = await fetch(url);
         if (!res.ok) throw new Error('Gagal mengambil estimasi proxy harga dan volume');
         const data = await res.json();
+        if (requestVersion !== foreignFlowRequestVersion) return;
         allForeignData = data;
         const flowDisclaimer = document.getElementById('foreign-flow-disclaimer');
         if (flowDisclaimer) flowDisclaimer.textContent = data.macro?.dataDisclaimer || 'Estimasi proxy berbasis harga dan volume, bukan catatan transaksi aktual investor asing.';
@@ -108,10 +112,12 @@ async function loadForeignFlowData(forceRefresh = false) {
 
         renderForeignTables();
     } catch (err) {
-        console.error('Error loadForeignFlowData:', err);
+        if (requestVersion === foreignFlowRequestVersion) console.error('Error loadForeignFlowData:', err);
     } finally {
-        foreignLoading?.classList.add('hidden');
-        iconRefreshForeign?.classList.remove('animate-spin');
+        if (requestVersion === foreignFlowRequestVersion) {
+            foreignLoading?.classList.add('hidden');
+            iconRefreshForeign?.classList.remove('animate-spin');
+        }
     }
 }
 

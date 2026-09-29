@@ -1,4 +1,5 @@
 const { createHash } = require('crypto');
+const { isIP } = require('net');
 const { getRedisConfig } = require('./telegramUserStore');
 
 const localWindows = new Map();
@@ -22,8 +23,12 @@ function isSameOriginRequest(req) {
 }
 
 function getClientIdentity(req) {
-    const forwarded = String(req?.get?.('x-forwarded-for') || '').split(',')[0].trim();
-    const address = forwarded || req?.ip || req?.socket?.remoteAddress || 'unknown';
+    const platformForwarded = process.env.VERCEL
+        ? String(req?.get?.('x-forwarded-for') || '').split(',')[0].trim()
+        : '';
+    const address = isIP(platformForwarded)
+        ? platformForwarded
+        : req?.ip || req?.socket?.remoteAddress || 'unknown';
     return createHash('sha256').update(String(address)).digest('hex').slice(0, 32);
 }
 
@@ -56,4 +61,4 @@ async function allowRateLimitedRequest(req, action, { limit = 5, windowSeconds =
     return current < max;
 }
 
-module.exports = { isSameOriginRequest, allowRateLimitedRequest };
+module.exports = { isSameOriginRequest, getClientIdentity, allowRateLimitedRequest };

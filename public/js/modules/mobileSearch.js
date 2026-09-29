@@ -107,7 +107,7 @@ inputMobileSearch?.addEventListener('input', (e) => {
                 <div class="mobile-search-item bg-[#0d1424] hover:bg-[#131e33] p-3.5 rounded-xl flex items-center justify-between cursor-pointer transition shadow-md" data-ticker="${escapeHtml(item.ticker)}">
                     <div class="flex items-center gap-3 min-w-0">
                         <div class="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-300 font-mono font-black text-sm shrink-0">
-                            $${item.ticker.slice(0, 3)}
+                            $${escapeHtml(String(item.ticker || '').slice(0, 3))}
                         </div>
                         <div class="min-w-0">
                             <div class="flex items-center gap-2">

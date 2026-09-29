@@ -34,6 +34,9 @@ jobs:
       - name: Collect latest IDX OHLCV, merge dataset, and retrain model
         run: npm run train:candlestick
 
+      - name: Verify application test suite before publishing retrained artifacts
+        run: npm test
+
       - name: Commit refreshed dataset and model
         run: |
           git config user.name "github-actions[bot]"
