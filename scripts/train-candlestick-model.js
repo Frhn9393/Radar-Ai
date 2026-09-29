@@ -3,7 +3,7 @@ const path = require('path');
 const YahooFinance = require('yahoo-finance2').default;
 const { UNIQUE_WATCHLIST } = require('../services/screenerService');
 const { extractFeatureAt, FEATURE_NAMES, PATTERN_NAMES, makeFeatureVector } = require('../services/candlestickAiEngine');
-const { parseDatasetCsv, mergeDatasetRows, serializeDatasetCsv, validateDatasetQuality } = require('./candlestickDataset');
+const { parseDatasetCsv, mergeDatasetRows, serializeDatasetCsv, validateDatasetQuality, findUnderSupportedPatterns } = require('./candlestickDataset');
 
 const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
 const YEARS = 10;
@@ -176,7 +176,7 @@ async function main() {
     const cutoffDate = new Date(Date.now() - YEARS * 365.25 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
     const mergedRows = mergeDatasetRows(existingRows, freshRows, cutoffDate, HEADER);
     const csvContents = serializeDatasetCsv(mergedRows, HEADER);
-    const quality = validateDatasetQuality(mergedRows, HEADER);
+    const quality = validateDatasetQuality(mergedRows, HEADER, { minimumPatternSamples: 0 });
     const { tickerCount, fileBytes } = quality;
     if (!quality.ok) throw new Error(`Merged dataset failed quality gates: ${quality.issues.join('; ')}.`);
 
@@ -184,9 +184,28 @@ async function main() {
     const outcomeSafetyCutoff = new Date(new Date(cutoff).getTime() - 30 * 86400_000).toISOString().slice(0, 10);
     const aggregatePatternCounts = Object.fromEntries(PATTERN_NAMES.map(([name]) => [name, 0]));
     for (const row of mergedRows) for (const [name] of PATTERN_NAMES) aggregatePatternCounts[name] += Number(row[name]) ? 1 : 0;
-    const underSupportedPatterns = Object.entries(aggregatePatternCounts).filter(([, count]) => count < 2000);
+    const underSupportedPatterns = findUnderSupportedPatterns(aggregatePatternCounts, 2000);
     if (underSupportedPatterns.length) {
-        throw new Error(`Model publication cancelled: pattern sample minimum is 2,000; ${underSupportedPatterns.map(([name, count]) => `${name}=${count}`).join(', ')}.`);
+        writeFileAtomically(DATASET_PATH, csvContents);
+        const report = {
+            rowCount: mergedRows.length,
+            freshRows: freshRows.length,
+            labelledRows: mergedRows.filter(row => row.labelWin !== null).length,
+            unlabelledRecentRows: mergedRows.filter(row => row.labelWin === null).length,
+            latestOhlcvDate: mergedRows.reduce((latest, row) => row.date > latest ? row.date : latest, ''),
+            tickerCount,
+            fileBytes,
+            datasetQuality: quality,
+            patternCounts: aggregatePatternCounts,
+            patternTargetMet: Object.fromEntries(Object.entries(aggregatePatternCounts).map(([name, count]) => [name, count >= 2000])),
+            modelPublicationStatus: 'BLOCKED_PATTERN_SUPPORT',
+            modelPublicationIssues: underSupportedPatterns.map(([name, count]) => `${name}=${count} (need 2000)`),
+            validation: null,
+            selectedTickers: instruments.map(({ ticker, avgTurnover20, splitEvents }) => ({ ticker, avgTurnover20: Math.round(avgTurnover20), splitEvents }))
+        };
+        writeFileAtomically(REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`);
+        console.warn(`Model publication skipped; existing model retained. Under-supported patterns: ${report.modelPublicationIssues.join(', ')}.`);
+        return;
     }
     const patternRows = mergedRows.filter(row => row.labelWin !== null && PATTERN_NAMES.some(([name]) => Number(row[name])));
     const training = patternRows.filter(row => row.date < outcomeSafetyCutoff).map(row => ({ features: makeFeatureVector(featureFromDatasetRow(row)), labelWin: Number(row.labelWin) }));

@@ -63,4 +63,8 @@ function serializeDatasetCsv(rows, header) {
     }).join(','))].join('\n')}\n`;
 }
 
-module.exports = { parseDatasetCsv, isValidDatasetRow, mergeDatasetRows, serializeDatasetCsv, validateDatasetQuality };
+function findUnderSupportedPatterns(patternCounts, minimumPatternSamples = 2000) {
+    return Object.entries(patternCounts || {}).filter(([, count]) => Number(count) < minimumPatternSamples);
+}
+
+module.exports = { parseDatasetCsv, isValidDatasetRow, mergeDatasetRows, serializeDatasetCsv, validateDatasetQuality, findUnderSupportedPatterns };

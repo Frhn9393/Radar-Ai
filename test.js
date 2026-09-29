@@ -18,7 +18,7 @@ const { TELEGRAM_COMMANDS } = require('./services/telegramService');
 const { analyzeCandlesticks, getCandlePatterns, FEATURE_NAMES } = require('./services/candlestickAiEngine');
 const { fetchBrokerTop, requestBrokerTop, parseStockbitResponse, _clearCacheForTests } = require('./services/customMarketFeed');
 const { fetchBroksum } = require('./services/broksumService');
-const { validateDatasetQuality } = require('./scripts/candlestickDataset');
+const { validateDatasetQuality, findUnderSupportedPatterns } = require('./scripts/candlestickDataset');
 const { analyzeStock, runScreener, hasUsableRealtimeData } = require('./services/stockService');
 const { isSameOriginRequest, getClientIdentity, allowRateLimitedRequest } = require('./services/requestGuard');
 const { csvRow } = require('./public/js/modules/csvExport');
@@ -487,6 +487,7 @@ async function runAllTests() {
     const patternHeader = [...datasetHeader, 'hammer', 'morningStar'];
     const unsupportedPatternQuality = validateDatasetQuality([{ ...validDatasetRow, hammer: 1, morningStar: 0 }], patternHeader, { minimumRows: 1, minimumTickers: 1, minimumBytes: 1, minimumPatternSamples: 2 });
     assert(!unsupportedPatternQuality.ok && unsupportedPatternQuality.issues.some(issue => issue.includes('pattern samples below')), 'Candlestick quality gate blocks publication when a pattern sample count is under minimum');
+    assert(findUnderSupportedPatterns({ hammer: 2200, threeWhiteSoldiers: 906 }, 2000).map(([pattern]) => pattern).join(',') === 'threeWhiteSoldiers', 'Retraining reports under-supported patterns without publishing an unqualified model');
     assert(!isStrictBsjpEligible({ ...strictBsjp, isCurrentJakartaDay: false }), 'BSJP rejects stale Yahoo daily candle');
     assert(!isStrictBpjpEligible({ ...strictBpjp, isCurrentJakartaDay: false }), 'BPJP rejects stale Yahoo daily candle');
     assert(!isStrictIntradayEligible({ ...strictIntraday, isCurrentJakartaDay: false }), 'Scalping/Daytrade rejects stale Yahoo daily candle');
