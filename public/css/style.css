@@ -401,3 +401,59 @@ table.table-sticky-col td:first-child {
     opacity: 1;
     transform: translateY(0);
 }
+
+/* ============================================================
+   6. NEWS CARD BADGE & TITLE SPACING
+   ============================================================ */
+/* Badge source row needs consistent vertical spacing from title */
+.news-card-item > div:first-child > .flex:first-child {
+    margin-bottom: 8px !important;
+}
+
+/* Uniform title height across 3-column grid for visual alignment */
+.news-card-item h4 {
+    line-height: 1.4 !important;
+    min-height: 2.8em;
+}
+
+/* ============================================================
+   7. EQUALIZE FUNDAMENTAL & KONSENSUS CARD HEIGHTS
+   ============================================================ */
+/* AI Summary + Konsensus row: stretch both cards to equal height */
+#modal-financial-summary-card,
+#modal-financial-summary-card + div {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Inner content fills available space */
+#modal-financial-summary-card > p {
+    flex: 1;
+}
+
+/* ============================================================
+   8. TECHNICAL ANALYSIS AI TEXT WRAPPING
+   ============================================================ */
+/* Prevent hard word-break on probability/sample labels */
+#modal-ai-patterns-confidence,
+#modal-ai-validation {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    white-space: normal !important;
+    text-align: right;
+    max-width: 60%;
+}
+
+/* Technical row labels - prevent cramped right-side values */
+#modal-valuation-card .flex.justify-between > span:last-child,
+#modal-financial-card .flex.justify-between > span:last-child {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+/* ============================================================
+   9. DEAL CARD BADGE ROW VERTICAL SPACING
+   ============================================================ */
+.card-radar > div:first-child > .flex:first-child {
+    margin-bottom: 4px;
+}

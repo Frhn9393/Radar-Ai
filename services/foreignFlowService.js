@@ -1,14 +1,16 @@
 const YahooFinance = require('yahoo-finance2').default;
-const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
+const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'], queue: { concurrency: 35 } });
 const { sanitizeTicker } = require('./utils');
 const { ALL_IDX_STOCKS } = require('./searchService');
 
-// Map stock sector for quick lookup
+// Map stock sector and name for quick lookup
 const STOCK_SECTOR_MAP = new Map();
+const STOCK_NAME_MAP = new Map();
 if (Array.isArray(ALL_IDX_STOCKS)) {
     ALL_IDX_STOCKS.forEach(s => {
         if (s && s.ticker) {
             STOCK_SECTOR_MAP.set(s.ticker, s.sector || 'Emiten BEI');
+            STOCK_NAME_MAP.set(s.ticker, s.name || s.ticker);
         }
     });
 }
@@ -76,11 +78,14 @@ function getBaseForeignParticipation(ticker) {
 //  CORE ALGORITHM: Estimated Price/Volume Participation Proxy & Streak Engine
 // ═══════════════════════════════════════════════════════════════
 function processQuotesForForeignFlow(ticker, quotes, liveQuote = null) {
-    const valid = quotes.filter(q => q && q.close !== null && q.high !== null && q.low !== null && q.volume !== null && !isNaN(q.close));
+    const valid = quotes
+        .filter(q => q && q.close !== null && q.high !== null && q.low !== null && q.volume !== null && !isNaN(q.close))
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
     if (valid.length < 15) return null;
 
     const n = valid.length;
     const sector = STOCK_SECTOR_MAP.get(ticker) || 'Bursa Efek Indonesia';
+    const name = STOCK_NAME_MAP.get(ticker) || ticker;
     const baseWeight = getBaseForeignParticipation(ticker);
 
     // Calculate rolling 20-day Average Daily Volume (ADV20) for volume surge tracking
@@ -190,6 +195,7 @@ function processQuotesForForeignFlow(ticker, quotes, liveQuote = null) {
 
     const daily = {
         ticker,
+        name,
         sector,
         price: latest.close,
         currentPrice: latest.close,
@@ -239,6 +245,7 @@ function processQuotesForForeignFlow(ticker, quotes, liveQuote = null) {
 
     const weekly = {
         ticker,
+        name,
         sector,
         price: latest.close,
         currentPrice: latest.close,
@@ -283,6 +290,7 @@ function processQuotesForForeignFlow(ticker, quotes, liveQuote = null) {
 
     const monthly = {
         ticker,
+        name,
         sector,
         price: latest.close,
         currentPrice: latest.close,
@@ -319,7 +327,8 @@ function processQuotesForForeignFlow(ticker, quotes, liveQuote = null) {
 
     let streakItem = null;
     if (streakDays >= MIN_STREAK_DAYS) {
-        const streakStartClose = dailyMetrics[dailyMetrics.length - streakDays].close;
+        const startIdx = Math.max(0, dailyMetrics.length - streakDays);
+        const streakStartClose = dailyMetrics[startIdx] ? dailyMetrics[startIdx].close : latest.close;
         const streakPriceGain = streakStartClose > 0 ? ((latest.close - streakStartClose) / streakStartClose) * 100 : 0;
         const avgDailyInflow = Math.round(streakTotalVal / streakDays);
 
@@ -349,6 +358,7 @@ function processQuotesForForeignFlow(ticker, quotes, liveQuote = null) {
 
         streakItem = {
             ticker,
+            name,
             sector,
             price: latest.close,
             currentPrice: latest.close,
@@ -401,9 +411,13 @@ function buildDataCoverage(successful, requested, timedOut = false) {
 function rankStreaks(streaks) {
     return (Array.isArray(streaks) ? streaks : [])
         .filter(item => item && Number(item.streakDays) >= MIN_STREAK_DAYS && Number(item.streakTotalVal) > 0)
-        .sort((a, b) => Number(b.streakDays) - Number(a.streakDays) ||
-            Number(b.streakTotalVal) - Number(a.streakTotalVal) ||
-            String(a.ticker || '').localeCompare(String(b.ticker || '')));
+        .sort((a, b) => {
+            const daysDiff = (Number(b.streakDays) || 0) - (Number(a.streakDays) || 0);
+            if (daysDiff !== 0) return daysDiff;
+            const valDiff = (Number(b.streakTotalVal) || 0) - (Number(a.streakTotalVal) || 0);
+            if (valDiff !== 0) return valDiff;
+            return String(a.ticker || '').localeCompare(String(b.ticker || ''));
+        });
 }
 
 // ═══════════════════════════════════════════════════════════════

@@ -614,6 +614,69 @@ async function runAllTests() {
     const rankedFixtureStreaks = rankStreaks(mixedCapStreakFixture);
     assert(rankedFixtureStreaks.map(item => item.ticker).join(',') === 'SMALL1,BIG2,SMALL2' && !rankedFixtureStreaks.some(item => item.ticker === 'BIG1'), 'Streak ranking keeps all positive 4+ day candidates, prioritizes streak length over nominal inflow, and excludes shorter streaks');
     assert(allForeign.streak.streaks.every(item => item.streakDays >= 4), 'Streak payload contains only positive-proxy streaks of at least four days');
+    assert(allForeign.streak.streaks.every(item => item.streakTotalVal > 0), 'Every streak item has positive accumulated inflow value');
+    assert(allForeign.streak.streaks.every(item => typeof item.name === 'string' && item.name.length > 0), 'Every streak item includes resolved company name');
+
+    // Verify streak ranking is strictly descending (primary: streakDays desc, secondary: streakTotalVal desc)
+    let isProperlyRanked = true;
+    for (let i = 0; i < allForeign.streak.streaks.length - 1; i++) {
+        const curr = allForeign.streak.streaks[i];
+        const next = allForeign.streak.streaks[i + 1];
+        if (curr.streakDays < next.streakDays) {
+            isProperlyRanked = false;
+            break;
+        } else if (curr.streakDays === next.streakDays && curr.streakTotalVal < next.streakTotalVal) {
+            isProperlyRanked = false;
+            break;
+        }
+    }
+    assert(isProperlyRanked, 'All streak items are sorted strictly by streakDays descending with streakTotalVal as tie-breaker');
+
+    // Verify deterministic tie-breaker (same days, different totalVal; same days & totalVal, alphabetical)
+    const tieBreakerFixture = [
+        { ticker: 'ZETA', streakDays: 5, streakTotalVal: 10_000_000_000 },
+        { ticker: 'ALPHA', streakDays: 5, streakTotalVal: 10_000_000_000 },
+        { ticker: 'BETA', streakDays: 5, streakTotalVal: 20_000_000_000 },
+        { ticker: 'SHORT', streakDays: 3, streakTotalVal: 99_000_000_000 },
+        { ticker: 'ZERO_VAL', streakDays: 5, streakTotalVal: 0 },
+        { ticker: 'NEG_VAL', streakDays: 5, streakTotalVal: -500 }
+    ];
+    const rankedTie = rankStreaks(tieBreakerFixture);
+    assert(rankedTie.length === 3, 'Streak ranking rejects streaks < 4 days or totalVal <= 0');
+    assert(rankedTie[0].ticker === 'BETA', 'Higher streakTotalVal breaks streakDays tie');
+    assert(rankedTie[1].ticker === 'ALPHA' && rankedTie[2].ticker === 'ZETA', 'Alphabetical tie-breaker applies when streakDays and streakTotalVal are identical');
+
+    // Direct unit test of streak calculation logic with synthetic OHLCV bars
+    const { processQuotesForForeignFlow: testProcessQuotes } = require('./services/foreignFlowService');
+    function makeTestBars(count, pattern) {
+        const bars = [];
+        const now = Date.now();
+        for (let i = 0; i < count; i++) {
+            const date = new Date(now - (count - i) * 86400000);
+            const isUp = pattern[i] === '+';
+            const close = 1000 + (isUp ? (i + 1) * 10 : -(i + 1) * 10);
+            const open = isUp ? close - 5 : close + 5;
+            const high = Math.max(open, close) + 2;
+            const low = Math.min(open, close) - 2;
+            bars.push({ date, open, high, low, close, volume: 100000 });
+        }
+        return bars;
+    }
+    // 4 consecutive positive days at the end
+    const pat4 = ['+','+','+','+','+','+','+','+','+','+','+','-','+','+','+','+'];
+    const res4 = testProcessQuotes('BBCA', makeTestBars(16, pat4));
+    assert(res4 && res4.streak && res4.streak.streakDays === 4, 'Streak engine accurately identifies unbroken 4-day inflow sequence');
+    assert(res4.streak.name === 'Bank Central Asia Tbk', 'Streak item contains accurate emiten name');
+
+    // 3 consecutive positive days at the end (< 4 days -> disqualified)
+    const pat3 = ['+','+','+','+','+','+','+','+','+','+','+','+','-','+','+','+'];
+    const res3 = testProcessQuotes('BBCA', makeTestBars(16, pat3));
+    assert(res3 && res3.streak === null, 'Streak engine rejects sequences of only 3 positive days');
+
+    // Latest day is negative (disqualified even if prior days were positive)
+    const patDown = ['+','+','+','+','+','+','+','+','+','+','+','+','+','+','+','-'];
+    const resDown = testProcessQuotes('BBCA', makeTestBars(16, patDown));
+    assert(resDown && resDown.streak === null, 'Streak breaks immediately when latest day has non-positive inflow');
 
     // ── 9. Enhanced Financial Health & AI Summary (6 Core Rules) ──
     console.log('\n▶ [9/9] Testing Enhanced Financial Health & AI Summary (6 Core Rules)...');

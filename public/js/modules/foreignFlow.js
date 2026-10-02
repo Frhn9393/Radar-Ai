@@ -380,7 +380,8 @@ function renderForeignMonthlyTable() {
 function renderForeignStreakTable() {
     if (!tbodyForeignStreak || !allForeignData?.streak) return;
 
-    const rawList = allForeignData.streak.streaks || (Array.isArray(allForeignData.streak) ? allForeignData.streak : []);
+    const rawList = (allForeignData.streak.streaks || (Array.isArray(allForeignData.streak) ? allForeignData.streak : []))
+        .filter(item => item && Number(item.streakDays) >= 4 && Number(item.streakTotalVal) > 0);
     const filteredList = filterForeignList(rawList);
 
     if (filteredList.length === 0) {
@@ -390,7 +391,7 @@ function renderForeignStreakTable() {
 
     tbodyForeignStreak.innerHTML = filteredList.map((row, idx) => {
         const currentPrice = row.currentPrice || row.price || 0;
-        const streakDays = row.streakDays || 2;
+        const streakDays = Number(row.streakDays) || 0;
         const flame = streakDays >= 7 ? '💎💎💎' : streakDays >= 5 ? '🔥🔥🔥' : streakDays >= 3 ? '🔥🔥' : '🔥';
         const streakTotalVal = row.streakTotalVal || 0;
         const avgDaily = row.streakAvgDailyVal !== undefined && row.streakAvgDailyVal !== null
@@ -417,7 +418,7 @@ function renderForeignStreakTable() {
                         ${getForeignRankBadge(idx + 1)}
                         <span class="font-bold text-cyan-400 hover:underline text-sm">${escapeHtml(row.ticker)}</span>
                     </div>
-                    <p class="text-[10px] text-slate-400 truncate max-w-[150px] sm:max-w-[200px] mt-0.5">${escapeHtml(row.sector || 'IDX')}</p>
+                    <p class="text-[10px] text-slate-400 truncate max-w-[150px] sm:max-w-[200px] mt-0.5">${escapeHtml(row.name || row.sector || 'IDX')}</p>
                 </td>
                 <td class="p-3 font-mono font-semibold text-white">${fmtRp.format(currentPrice)}</td>
                 <td class="p-3">
