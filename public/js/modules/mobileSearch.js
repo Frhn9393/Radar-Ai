@@ -149,3 +149,46 @@ inputMobileSearch?.addEventListener('keydown', (e) => {
         closeMobileSearch();
     }
 });
+
+// Close mobile search on backdrop click (clicking outside the search content area)
+modalMobileSearch?.addEventListener('click', (e) => {
+    if (e.target === modalMobileSearch) {
+        closeMobileSearch();
+    }
+});
+
+// Handle mobile back button (popstate) to dismiss search overlay
+let mobileSearchHistoryPushed = false;
+
+function pushMobileSearchHistory() {
+    if (!mobileSearchHistoryPushed) {
+        history.pushState({ mobileSearch: true }, '');
+        mobileSearchHistoryPushed = true;
+    }
+}
+
+function popMobileSearchHistory() {
+    mobileSearchHistoryPushed = false;
+}
+
+const origOpenMobileSearch = openMobileSearch;
+openMobileSearch = function () {
+    origOpenMobileSearch();
+    pushMobileSearchHistory();
+};
+
+const origCloseMobileSearch = closeMobileSearch;
+closeMobileSearch = function () {
+    origCloseMobileSearch();
+    if (mobileSearchHistoryPushed) {
+        history.back();
+    }
+    popMobileSearchHistory();
+};
+
+window.addEventListener('popstate', (e) => {
+    if (mobileSearchHistoryPushed && modalMobileSearch && !modalMobileSearch.classList.contains('hidden')) {
+        popMobileSearchHistory();
+        origCloseMobileSearch();
+    }
+});

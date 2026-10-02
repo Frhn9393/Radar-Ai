@@ -383,3 +383,21 @@ table.table-sticky-col td:first-child {
     line-height: 1rem !important;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace !important;
 }
+
+/* ============================================================
+   5. MOBILE SEARCH OVERLAY ANIMATION
+   ============================================================ */
+#modal-mobile-search {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+#modal-mobile-search.hidden {
+    opacity: 0;
+    transform: translateY(-12px);
+    pointer-events: none;
+}
+
+#modal-mobile-search:not(.hidden) {
+    opacity: 1;
+    transform: translateY(0);
+}
