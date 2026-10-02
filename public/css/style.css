@@ -217,51 +217,123 @@ body {
     white-space: nowrap !important;
 }
 
-/* Header parent container allows overflow without clipping */
+/* ============================================================
+   1. TOP NAVBAR DYNAMIC & RESPONSIVE (3-ZONE FLEXBOX LAYOUT)
+   ============================================================ */
 header .flex {
     overflow: visible;
 }
 
-/* Main Top Navigation Pills Container */
+.header-container {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    flex-wrap: nowrap !important;
+}
+
+/* Zona 1: Logo Brand (Kiri) */
+.header-brand-zone {
+    display: flex !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+}
+
+.brand-logo-container {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+}
+
+/* Zona 2: Menu Navigasi Tengah Dinamis & Scrollable */
 #header-nav {
-    display: flex;
-    flex-wrap: nowrap;
-    align-items: center;
+    display: flex !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: center !important;
     gap: 8px !important;
-    padding: 4px 8px;
-    background-color: #060910;
-    border-radius: 9999px;
-    white-space: nowrap;
-    overflow-x: auto;
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-    max-width: 100%;
+    padding: 4px 8px !important;
+    background-color: #060910 !important;
+    border-radius: 9999px !important;
+    white-space: nowrap !important;
+    overflow-x: auto !important;
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
 }
 
 #header-nav::-webkit-scrollbar {
-    display: none;
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
 }
 
 #header-nav .nav-tab {
-    flex-shrink: 0;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
 }
 
-/* Sembunyikan baris navigasi menu atas pada tampilan mobile (<= 768px) */
+/* Zona 3: Action / Search Bar (Kanan) */
+#header-right-controls {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    flex-shrink: 0 !important;
+    justify-content: flex-end !important;
+}
+
+.header-search-wrapper {
+    flex-shrink: 0 !important;
+    width: 230px !important;
+    min-width: 200px !important;
+    max-width: 260px !important;
+}
+
+/* Responsif Mobile (<= 768px): Header 1 baris ringkas (Logo kiri, Action bar kanan) */
 @media (max-width: 768px) {
+    .header-container {
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        gap: 8px !important;
+    }
+    .header-brand-zone {
+        width: 100% !important;
+        justify-content: space-between !important;
+    }
     #header-nav {
+        display: none !important;
+    }
+    #header-right-controls {
         display: none !important;
     }
     .mobile-header-actions {
         display: flex !important;
+        flex-shrink: 0 !important;
     }
     #mobile-bottom-nav {
         display: flex !important;
     }
 }
 
-/* Tampilkan navigasi horizontal atas pada desktop (>= 769px) */
+/* Responsif Tablet & Desktop (>= 769px): 3 Zona dalam 1 baris rapi */
 @media (min-width: 769px) {
+    .header-container {
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        gap: 12px !important;
+    }
+    .header-brand-zone {
+        width: auto !important;
+        justify-content: flex-start !important;
+    }
     #header-nav {
+        display: flex !important;
+    }
+    #header-right-controls {
         display: flex !important;
     }
     .mobile-header-actions {
