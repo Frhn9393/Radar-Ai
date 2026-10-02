@@ -40,7 +40,7 @@ let foreignFlowInFlight = null;
 const CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes
 const YAHOO_REQUEST_TIMEOUT_MS = 3000;
 const FOREIGN_FLOW_SCAN_BUDGET_MS = 7500;
-const MIN_STREAK_DAYS = 4;
+const MIN_STREAK_DAYS = 2;
 
 // Estimated participation tiers used for a price/volume proxy, not reported foreign transactions.
 const TIER_1_HEAVYWEIGHTS = new Set([
@@ -409,15 +409,34 @@ function buildDataCoverage(successful, requested, timedOut = false) {
 }
 
 function rankStreaks(streaks) {
-    return (Array.isArray(streaks) ? streaks : [])
-        .filter(item => item && Number(item.streakDays) >= MIN_STREAK_DAYS && Number(item.streakTotalVal) > 0)
-        .sort((a, b) => {
-            const daysDiff = (Number(b.streakDays) || 0) - (Number(a.streakDays) || 0);
-            if (daysDiff !== 0) return daysDiff;
-            const valDiff = (Number(b.streakTotalVal) || 0) - (Number(a.streakTotalVal) || 0);
-            if (valDiff !== 0) return valDiff;
-            return String(a.ticker || '').localeCompare(String(b.ticker || ''));
-        });
+    const valid = (Array.isArray(streaks) ? streaks : [])
+        .filter(item => item && Number(item.streakDays) >= MIN_STREAK_DAYS && Number(item.streakTotalVal) > 0);
+
+    const sorted = [...valid].sort((a, b) => {
+        const daysDiff = (Number(b.streakDays) || 0) - (Number(a.streakDays) || 0);
+        if (daysDiff !== 0) return daysDiff;
+        const valDiff = (Number(b.streakTotalVal) || 0) - (Number(a.streakTotalVal) || 0);
+        if (valDiff !== 0) return valDiff;
+        return String(a.ticker || '').localeCompare(String(b.ticker || ''));
+    });
+
+    const tier3Plus = sorted.filter(item => Number(item.streakDays) >= 3);
+    const tier2 = sorted.filter(item => Number(item.streakDays) === 2);
+
+    // Fallback dinamis: Jika hasil streak >= 3 hari kurang dari 10 emiten,
+    // otomatis sertakan emiten streak 2 hari agar daftar terisi minimal Top 15-20 emiten.
+    if (tier3Plus.length < 10) {
+        return sorted;
+    }
+
+    // Jika emiten streak >= 3 hari sudah mencukupi (>= 10), tetapi di bawah target 20 emiten,
+    // sertakan emiten streak 2 hari hingga minimal 15-20 emiten.
+    if (tier3Plus.length < 20 && tier2.length > 0) {
+        const needed = Math.max(0, 20 - tier3Plus.length);
+        return [...tier3Plus, ...tier2.slice(0, needed)];
+    }
+
+    return tier3Plus;
 }
 
 // ═══════════════════════════════════════════════════════════════

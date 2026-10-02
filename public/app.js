@@ -2784,11 +2784,11 @@ function renderForeignStreakTable() {
     if (!tbodyForeignStreak || !allForeignData?.streak) return;
 
     const rawList = (allForeignData.streak.streaks || (Array.isArray(allForeignData.streak) ? allForeignData.streak : []))
-        .filter(item => item && Number(item.streakDays) >= 4 && Number(item.streakTotalVal) > 0);
+        .filter(item => item && Number(item.streakDays) >= 2 && Number(item.streakTotalVal) > 0);
     const filteredList = filterForeignList(rawList);
 
     if (filteredList.length === 0) {
-        tbodyForeignStreak.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500 italic">Belum ada emiten dengan streak proxy positif minimal 4 hari.</td></tr>`;
+        tbodyForeignStreak.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500 italic">Belum ada emiten dengan streak proxy positif minimal 2 hari.</td></tr>`;
         return;
     }
 

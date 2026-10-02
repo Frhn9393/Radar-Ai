@@ -609,11 +609,12 @@ async function runAllTests() {
         { ticker: 'BIG1', streakDays: 3, streakTotalVal: 90_000_000_000 },
         { ticker: 'BIG2', streakDays: 4, streakTotalVal: 120_000_000_000 },
         { ticker: 'SMALL1', streakDays: 6, streakTotalVal: 12_000_000_000 },
-        { ticker: 'SMALL2', streakDays: 4, streakTotalVal: 8_000_000_000 }
+        { ticker: 'SMALL2', streakDays: 4, streakTotalVal: 8_000_000_000 },
+        { ticker: 'ONE1', streakDays: 1, streakTotalVal: 150_000_000_000 }
     ];
     const rankedFixtureStreaks = rankStreaks(mixedCapStreakFixture);
-    assert(rankedFixtureStreaks.map(item => item.ticker).join(',') === 'SMALL1,BIG2,SMALL2' && !rankedFixtureStreaks.some(item => item.ticker === 'BIG1'), 'Streak ranking keeps all positive 4+ day candidates, prioritizes streak length over nominal inflow, and excludes shorter streaks');
-    assert(allForeign.streak.streaks.every(item => item.streakDays >= 4), 'Streak payload contains only positive-proxy streaks of at least four days');
+    assert(rankedFixtureStreaks.map(item => item.ticker).join(',') === 'SMALL1,BIG2,SMALL2,BIG1' && !rankedFixtureStreaks.some(item => item.ticker === 'ONE1'), 'Streak ranking keeps all positive 2+ day candidates, prioritizes streak length over nominal inflow, and excludes streaks under 2 days');
+    assert(allForeign.streak.streaks.every(item => item.streakDays >= 2), 'Streak payload contains only positive-proxy streaks of at least two days');
     assert(allForeign.streak.streaks.every(item => item.streakTotalVal > 0), 'Every streak item has positive accumulated inflow value');
     assert(allForeign.streak.streaks.every(item => typeof item.name === 'string' && item.name.length > 0), 'Every streak item includes resolved company name');
 
@@ -637,14 +638,24 @@ async function runAllTests() {
         { ticker: 'ZETA', streakDays: 5, streakTotalVal: 10_000_000_000 },
         { ticker: 'ALPHA', streakDays: 5, streakTotalVal: 10_000_000_000 },
         { ticker: 'BETA', streakDays: 5, streakTotalVal: 20_000_000_000 },
-        { ticker: 'SHORT', streakDays: 3, streakTotalVal: 99_000_000_000 },
+        { ticker: 'ONE_DAY', streakDays: 1, streakTotalVal: 99_000_000_000 },
         { ticker: 'ZERO_VAL', streakDays: 5, streakTotalVal: 0 },
         { ticker: 'NEG_VAL', streakDays: 5, streakTotalVal: -500 }
     ];
     const rankedTie = rankStreaks(tieBreakerFixture);
-    assert(rankedTie.length === 3, 'Streak ranking rejects streaks < 4 days or totalVal <= 0');
+    assert(rankedTie.length === 3, 'Streak ranking rejects streaks < 2 days or totalVal <= 0');
     assert(rankedTie[0].ticker === 'BETA', 'Higher streakTotalVal breaks streakDays tie');
     assert(rankedTie[1].ticker === 'ALPHA' && rankedTie[2].ticker === 'ZETA', 'Alphabetical tie-breaker applies when streakDays and streakTotalVal are identical');
+
+    // Test dynamic fallback: if streak >= 3 days is < 10 emiten, includes 2-day streaks
+    const fewTier3Fixture = [
+        { ticker: 'T3_A', streakDays: 3, streakTotalVal: 10_000_000_000 },
+        { ticker: 'T3_B', streakDays: 4, streakTotalVal: 20_000_000_000 },
+        { ticker: 'T2_A', streakDays: 2, streakTotalVal: 30_000_000_000 },
+        { ticker: 'T2_B', streakDays: 2, streakTotalVal: 15_000_000_000 }
+    ];
+    const rankedFewTier3 = rankStreaks(fewTier3Fixture);
+    assert(rankedFewTier3.length === 4 && rankedFewTier3.some(item => item.streakDays === 2), 'Fallback dynamically includes 2-day streaks when tier 3+ has fewer than 10 emiten');
 
     // Direct unit test of streak calculation logic with synthetic OHLCV bars
     const { processQuotesForForeignFlow: testProcessQuotes } = require('./services/foreignFlowService');
@@ -668,10 +679,20 @@ async function runAllTests() {
     assert(res4 && res4.streak && res4.streak.streakDays === 4, 'Streak engine accurately identifies unbroken 4-day inflow sequence');
     assert(res4.streak.name === 'Bank Central Asia Tbk', 'Streak item contains accurate emiten name');
 
-    // 3 consecutive positive days at the end (< 4 days -> disqualified)
+    // 3 consecutive positive days at the end (valid streak >= 2 days)
     const pat3 = ['+','+','+','+','+','+','+','+','+','+','+','+','-','+','+','+'];
     const res3 = testProcessQuotes('BBCA', makeTestBars(16, pat3));
-    assert(res3 && res3.streak === null, 'Streak engine rejects sequences of only 3 positive days');
+    assert(res3 && res3.streak && res3.streak.streakDays === 3, 'Streak engine accurately identifies unbroken 3-day inflow sequence');
+
+    // 2 consecutive positive days at the end (valid streak >= 2 days)
+    const pat2 = ['+','+','+','+','+','+','+','+','+','+','+','+','+','-','+','+'];
+    const res2 = testProcessQuotes('BBCA', makeTestBars(16, pat2));
+    assert(res2 && res2.streak && res2.streak.streakDays === 2, 'Streak engine accurately identifies unbroken 2-day inflow sequence');
+
+    // 1 positive day at the end (< 2 days -> disqualified)
+    const pat1 = ['+','+','+','+','+','+','+','+','+','+','+','+','+','+','-','+'];
+    const res1 = testProcessQuotes('BBCA', makeTestBars(16, pat1));
+    assert(res1 && res1.streak === null, 'Streak engine rejects sequences of only 1 positive day');
 
     // Latest day is negative (disqualified even if prior days were positive)
     const patDown = ['+','+','+','+','+','+','+','+','+','+','+','+','+','+','+','-'];
