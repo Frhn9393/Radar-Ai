@@ -246,6 +246,32 @@ header .flex {
     flex-shrink: 0;
 }
 
+/* Sembunyikan baris navigasi menu atas pada tampilan mobile (<= 768px) */
+@media (max-width: 768px) {
+    #header-nav {
+        display: none !important;
+    }
+    .mobile-header-actions {
+        display: flex !important;
+    }
+    #mobile-bottom-nav {
+        display: flex !important;
+    }
+}
+
+/* Tampilkan navigasi horizontal atas pada desktop (>= 769px) */
+@media (min-width: 769px) {
+    #header-nav {
+        display: flex !important;
+    }
+    .mobile-header-actions {
+        display: none !important;
+    }
+    #mobile-bottom-nav {
+        display: none !important;
+    }
+}
+
 /* ============================================================
    2. RUNNING TICKER PASAR & NEWS TICKER
    ============================================================ */
