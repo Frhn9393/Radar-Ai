@@ -598,3 +598,133 @@ table.table-sticky-col td:first-child {
     opacity: 0.45 !important;
     cursor: not-allowed !important;
 }
+
+/* ============================================================
+   11. NEWS & DEAL CARD — TITLE LINE CLAMPING
+   Prevents visual overflow while keeping titles readable.
+   ============================================================ */
+.news-card-item h4,
+.card-radar h3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+/* ============================================================
+   12. BADGE & TAG ROW — FLEX WRAP + GAP FOR MOBILE
+   Prevents badge text from overlapping ticker tags on narrow screens.
+   ============================================================ */
+.card-radar > div:first-child > .flex:first-child {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    margin-top: 2px !important;
+}
+
+/* ============================================================
+   13. CARD ACTION BUTTONS — WCAG 44px TOUCH TARGET
+   ============================================================ */
+.card-radar a[href],
+.card-radar button,
+.news-card-item .flex > span:last-child {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+}
+
+.card-radar .flex.items-center.gap-2 > a,
+.card-radar .flex.items-center.gap-2 > button {
+    gap: 6px;
+}
+
+/* ============================================================
+   14. AI TECHNICAL CARD — RESPONSIVE HEIGHT & BOTTOM SPACING
+   Ensures footer elements (Target / Stop Loss, Win Rate OOS) never get clipped.
+   ============================================================ */
+#modal-technical-ai-card {
+    position: relative;
+    min-height: 420px;
+    padding-bottom: 28px !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+#modal-technical-ai-card .space-y-2 {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+#modal-ai-patterns-confidence,
+#modal-ai-validation,
+#modal-ai-target-stop {
+    padding-bottom: 2px;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+#modal-technical-suspended-overlay {
+    transition: opacity 0.25s ease-in-out;
+}
+
+/* ============================================================
+   15. MODAL EMITEN DETAIL CARDS — HEADER & BADGE STACKING
+   Prevents badge from overlapping title on all resolutions
+   ============================================================ */
+.modal-card-header {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 4px !important;
+    padding-bottom: 8px !important;
+    width: 100% !important;
+}
+
+.modal-card-header > h4 {
+    font-size: 0.875rem !important; /* 14px */
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    line-height: 1.25 !important;
+    margin: 0 !important;
+    word-break: break-word !important;
+}
+
+.modal-card-badge,
+#modal-val-status,
+#modal-trend-status,
+#modal-fin-badge,
+#modal-foreign-status {
+    margin-top: 4px !important;
+    align-self: flex-start !important;
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+    white-space: normal !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    max-width: 100% !important;
+    word-break: break-word !important;
+}
+
+/* Modal Valuation Card Footnote: compact text & max-height with scroll */
+#modal-val-per-footnote {
+    font-size: 0.75rem !important; /* text-xs */
+    line-height: 1.25 !important; /* leading-tight */
+    max-height: 75px !important;
+    overflow-y: auto !important;
+    scrollbar-width: thin;
+    padding: 6px 8px !important;
+    margin-top: 4px !important;
+    margin-bottom: 4px !important;
+    word-break: break-word !important;
+}
+
+

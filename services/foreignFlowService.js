@@ -88,6 +88,14 @@ function processQuotesForForeignFlow(ticker, quotes, liveQuote = null) {
     const name = STOCK_NAME_MAP.get(ticker) || ticker;
     const baseWeight = getBaseForeignParticipation(ticker);
 
+    // Detect suspended status:
+    // 1. Explicit flag in liveQuote (e.g. liveQuote?.is_suspended)
+    // 2. Volume is 0 consecutively across recent sessions (last 3 sessions) with flat price
+    const recentVolumeZero = valid.length >= 3 && valid.slice(-3).every(q => !q.volume || q.volume === 0);
+    const recentPriceFlat = valid.length >= 3 && valid.slice(-3).every(q => q.close === valid[valid.length - 1].close);
+    const isSuspended = Boolean(liveQuote?.is_suspended || (recentVolumeZero && recentPriceFlat));
+    const isStaleVwap = isSuspended;
+
     // Calculate rolling 20-day Average Daily Volume (ADV20) for volume surge tracking
     const recent20 = valid.slice(Math.max(0, n - 20));
     const avgVol20 = recent20.reduce((acc, q) => acc + (q.volume || 0), 0) / Math.max(1, recent20.length);
@@ -211,7 +219,8 @@ function processQuotesForForeignFlow(ticker, quotes, liveQuote = null) {
         ffpi: latest.ffpi,
         clv: latest.clv,
         estimatedParticipationPct: Math.round(latest.effectiveParticipation * 100),
-        status: dailyStatus
+        status: dailyStatus,
+        is_suspended: isSuspended
     };
 
     // ── 2. Mingguan (Weekly 5D) ───────────────────────────────────────
@@ -259,7 +268,9 @@ function processQuotesForForeignFlow(ticker, quotes, liveQuote = null) {
         flowAcceleration: parseFloat(flowAcceleration.toFixed(2)),
         phase: weeklyPhase,
         institutionalPhase: weeklyPhase,
-        daysNetBuy: last5.filter(d => d.isNetBuy).length
+        daysNetBuy: last5.filter(d => d.isNetBuy).length,
+        is_stale_vwap: isStaleVwap,
+        is_suspended: isSuspended
     };
 
     // ── 3. Bulanan (Monthly 20D) ──────────────────────────────────────
@@ -302,6 +313,8 @@ function processQuotesForForeignFlow(ticker, quotes, liveQuote = null) {
         monthlyNetVol,
         monthlyTurnover,
         foreignVWAP,
+        is_stale_vwap: isStaleVwap,
+        is_suspended: isSuspended,
         foreignFloatingPL: parseFloat(foreignFloatingPL.toFixed(2)),
         floatingPnlPct: parseFloat(foreignFloatingPL.toFixed(2)),
         baseScore: monthlyBaseScore,
@@ -392,7 +405,9 @@ function processQuotesForForeignFlow(ticker, quotes, liveQuote = null) {
         daily,
         weekly,
         monthly,
-        streak: streakItem
+        streak: streakItem,
+        is_suspended: isSuspended,
+        is_stale_vwap: isStaleVwap
     };
 }
 

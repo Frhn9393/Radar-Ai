@@ -209,7 +209,7 @@ router.get('/analyze/:ticker', async (req, res) => {
     try {
         const ticker = (req.params.ticker || '').trim();
         const data = await analyzeStock(ticker);
-        if (!data || !hasUsableRealtimeData(data.realtime, { allowZeroVolume: data.ticker === 'IHSG' })) {
+        if (!data || !hasUsableRealtimeData(data.realtime, { allowZeroVolume: data.ticker === 'IHSG' || Boolean(data.is_suspended) })) {
             return res.status(404).json({ error: 'Data realtime/historis emiten ini tidak tersedia di bursa saat ini.' });
         }
         res.json(data);

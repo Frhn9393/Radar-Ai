@@ -7,6 +7,45 @@
 //  4. DEEP STOCK ANALYSIS MODAL
 // ============================================================
 let stockAnalysisRequestId = 0;
+
+// State khusus status suspensi di tingkat komponen detail emiten
+let modalStockState = {
+    ticker: null,
+    IS_SUSPENDED: false,
+    suspensionReason: null
+};
+
+function checkIsSuspended(data) {
+    if (!data) return { isSuspended: false, reason: null };
+    const rt = data.realtime || {};
+    const trend = data.trend || {};
+    const ff = data.foreignFlow || {};
+    const news = Array.isArray(data.news) ? data.news : [];
+
+    const volume = Number(rt.volume ?? 0);
+    const volumeIsZero = !isNaN(volume) && volume === 0;
+
+    const suspensionRegex = /\b(?:suspens|suspensi|suspended|penghentian sementara|gembok bursa|cool(?:ing)?\s*down)\b/i;
+    const hasSuspensionNews = news.some(n =>
+        suspensionRegex.test(n.title || '') ||
+        suspensionRegex.test(n.impact || '') ||
+        suspensionRegex.test(n.description || '')
+    );
+
+    const backendFlagSuspended = Boolean(data.is_suspended || rt.is_suspended || trend.is_suspended || ff.is_suspended);
+    const rsiSuspended = trend.rsi14 === 'N/A (Suspended)' || trend.rsi_status === 'N/A (Suspended)' || trend.status === 'SUSPENDED';
+    const marketStatusSuspended = String(rt.marketStatus || '').toUpperCase() === 'SUSPENDED';
+
+    if (volumeIsZero && hasSuspensionNews) {
+        return { isSuspended: true, reason: 'Volume = 0 & Ada Berita Penghentian Sementara (Suspensi) BEI' };
+    }
+    if (backendFlagSuspended || rsiSuspended || marketStatusSuspended) {
+        return { isSuspended: true, reason: 'Status Penghentian Sementara Perdagangan (Suspensi) BEI Aktif' };
+    }
+
+    return { isSuspended: false, reason: null };
+}
+
 function isUsableNumber(value, { positive = false } = {}) {
     if (value === null || value === undefined || value === '') return false;
     const number = Number(value);
@@ -26,9 +65,11 @@ function hasUsableRealtimeData(realtime, allowZeroVolume = false) {
 }
 
 function hasUsableHistoricalData(trend) {
-    return Boolean(trend && isUsableNumber(trend.close, { positive: true }) &&
+    if (!trend) return false;
+    const rsiValid = trend.rsi14 === 'N/A (Suspended)' || (isUsableNumber(trend.rsi14) && Number(trend.rsi14) >= 0 && Number(trend.rsi14) <= 100);
+    return Boolean(isUsableNumber(trend.close, { positive: true }) &&
         isUsableNumber(trend.ema20, { positive: true }) &&
-        isUsableNumber(trend.rsi14) && Number(trend.rsi14) >= 0 && Number(trend.rsi14) <= 100 &&
+        rsiValid &&
         isUsableNumber(trend.rvol) && trend.supertrend && typeof trend.supertrend.isBullish === 'boolean');
 }
 
@@ -44,6 +85,27 @@ function setModalMarketStatus(label, isUnavailable = false) {
 }
 
 function resetModalAnalysisData({ unavailable = false } = {}) {
+    modalStockState = {
+        ticker: null,
+        IS_SUSPENDED: false,
+        suspensionReason: null
+    };
+    if (typeof window !== 'undefined') {
+        window.modalStockState = modalStockState;
+    }
+    const suspBadge = document.getElementById('modal-suspended-badge');
+    if (suspBadge) {
+        suspBadge.classList.add('hidden');
+        suspBadge.classList.remove('inline-flex');
+    }
+    const suspBanner = document.getElementById('modal-suspended-banner');
+    if (suspBanner) suspBanner.classList.add('hidden');
+    const suspOverlay = document.getElementById('modal-technical-suspended-overlay');
+    if (suspOverlay) {
+        suspOverlay.classList.add('hidden');
+        suspOverlay.classList.remove('flex');
+    }
+
     const setText = (id, value) => {
         const el = document.getElementById(id);
         if (el) el.textContent = value;
@@ -92,7 +154,7 @@ function updateModalWatchlistButton(ticker) {
     }
 }
 
-if (btnModalToggleWatchlist) {
+if (typeof btnModalToggleWatchlist !== 'undefined' && btnModalToggleWatchlist) {
     btnModalToggleWatchlist.addEventListener('click', () => {
         if (!currentActiveTicker) return;
         const idx = savedWatchlist.indexOf(currentActiveTicker);
@@ -129,7 +191,8 @@ async function executeStockAnalysis(ticker) {
         const res = await fetch(`/api/analyze/${cleanTicker}`);
         const data = await res.json().catch(() => null);
         if (requestId !== stockAnalysisRequestId || currentActiveTicker !== cleanTicker) return;
-        if (!res.ok || !data || !hasUsableRealtimeData(data.realtime, data.ticker === 'IHSG')) {
+        const suspCheck = checkIsSuspended(data);
+        if (!res.ok || !data || !hasUsableRealtimeData(data.realtime, data.ticker === 'IHSG' || suspCheck.isSuspended)) {
             throw new Error('Data unavailable');
         }
 
@@ -140,14 +203,28 @@ async function executeStockAnalysis(ticker) {
         rightsIssueContainer?.classList.add('hidden');
     }
 }
-window.executeStockAnalysis = executeStockAnalysis;
+
+if (typeof window !== 'undefined') {
+    window.executeStockAnalysis = executeStockAnalysis;
+}
 
 function populateAnalysisModal(data) {
     const rt = data.realtime;
     const val = data.valuation || {};
     const trend = data.trend || {};
     const fin = data.financials || {};
-    if (!hasUsableRealtimeData(rt, data.ticker === 'IHSG')) {
+
+    const suspCheck = checkIsSuspended(data);
+    modalStockState = {
+        ticker: data.ticker,
+        IS_SUSPENDED: suspCheck.isSuspended,
+        suspensionReason: suspCheck.reason
+    };
+    if (typeof window !== 'undefined') {
+        window.modalStockState = modalStockState;
+    }
+
+    if (!hasUsableRealtimeData(rt, data.ticker === 'IHSG' || modalStockState.IS_SUSPENDED)) {
         throw new Error('Data unavailable');
     }
     const historyValid = hasUsableHistoricalData(trend);
@@ -159,7 +236,42 @@ function populateAnalysisModal(data) {
     document.getElementById('modal-stock-ticker').textContent = data.ticker;
     document.getElementById('modal-stock-timestamp').textContent = `Waktu Akses: ${rt.timestamp || 'Realtime'}`;
 
-    setModalMarketStatus(rt.marketStatus || 'CLOSED');
+    // Handling Suspended State on Header Badge, Alert Banner & Market Status
+    const suspBadge = document.getElementById('modal-suspended-badge');
+    const suspBanner = document.getElementById('modal-suspended-banner');
+    const suspOverlay = document.getElementById('modal-technical-suspended-overlay');
+
+    if (modalStockState.IS_SUSPENDED) {
+        setModalMarketStatus('SUSPENDED', true);
+        if (suspBadge) {
+            suspBadge.classList.remove('hidden');
+            suspBadge.classList.add('inline-flex');
+        }
+        if (suspBanner) {
+            suspBanner.classList.remove('hidden');
+            const desc = document.getElementById('modal-suspended-banner-desc');
+            if (desc && modalStockState.suspensionReason) {
+                desc.textContent = `Emiten terdeteksi dalam status penghentian sementara perdagangan (suspensi) oleh BEI (${modalStockState.suspensionReason}). Seluruh sinyal teknikal dan transaksi perdagangan dibekukan.`;
+            }
+        }
+        if (suspOverlay) {
+            suspOverlay.classList.remove('hidden');
+            suspOverlay.classList.add('flex');
+        }
+    } else {
+        setModalMarketStatus(rt.marketStatus || 'CLOSED');
+        if (suspBadge) {
+            suspBadge.classList.add('hidden');
+            suspBadge.classList.remove('inline-flex');
+        }
+        if (suspBanner) {
+            suspBanner.classList.add('hidden');
+        }
+        if (suspOverlay) {
+            suspOverlay.classList.add('hidden');
+            suspOverlay.classList.remove('flex');
+        }
+    }
 
     // Price ribbon
     document.getElementById('modal-price').textContent = fmtRp.format(rt.lastPrice);
@@ -209,20 +321,29 @@ function populateAnalysisModal(data) {
 
     // Analisa Teknikal
     const trendStatEl = document.getElementById('modal-trend-status');
-    trendStatEl.textContent = trend.status || 'NEUTRAL';
-    if (trend.status === 'UPTREND') {
-        trendStatEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-500/20 text-emerald-400 shadow-sm';
-    } else if (trend.status === 'DOWNTREND') {
-        trendStatEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-rose-500/20 text-rose-400 shadow-sm';
-    } else {
-        trendStatEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-amber-500/20 text-amber-400 shadow-sm';
+    if (trendStatEl) {
+        if (modalStockState.IS_SUSPENDED) {
+            trendStatEl.textContent = 'SUSPENDED';
+            trendStatEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-sm';
+        } else {
+            trendStatEl.textContent = trend.status || 'NEUTRAL';
+            if (trend.status === 'UPTREND') {
+                trendStatEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-500/20 text-emerald-400 shadow-sm';
+            } else if (trend.status === 'DOWNTREND') {
+                trendStatEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-rose-500/20 text-rose-400 shadow-sm';
+            } else {
+                trendStatEl.className = 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-amber-500/20 text-amber-400 shadow-sm';
+            }
+        }
     }
 
     const stEl = document.getElementById('modal-trend-supertrend');
     if (stEl) {
-        if (trend.supertrend) {
+        if (modalStockState.IS_SUSPENDED) {
+            stEl.innerHTML = `<span class="text-amber-400 font-bold">DITANGGUHKAN 🔒</span>`;
+        } else if (trend.supertrend) {
             const isB = trend.supertrend.isBullish;
-        const suppVal = trend.supertrend.value ?? trend.supertrend.support ?? trend.supertrend.resistance;
+            const suppVal = trend.supertrend.value ?? trend.supertrend.support ?? trend.supertrend.resistance;
             stEl.innerHTML = isB
                 ? `<span class="text-emerald-400 font-bold">BULLISH 🟢</span> <span class="text-slate-400 text-[10px]">(Supp: ${suppVal ? fmtRp.format(suppVal) : '-'})</span>`
                 : `<span class="text-rose-400 font-bold">BEARISH 🔴</span> <span class="text-slate-400 text-[10px]">(Res: ${suppVal ? fmtRp.format(suppVal) : '-'})</span>`;
@@ -254,10 +375,14 @@ function populateAnalysisModal(data) {
 
     const rsiEl = document.getElementById('modal-trend-rsi');
     if (rsiEl) {
-        const rsiVal = isUsableNumber(trend.rsi14) ? Number(trend.rsi14).toFixed(1) : '-';
-        const rsiNum = parseFloat(rsiVal);
-        const rsiColor = rsiNum >= 70 ? 'text-rose-400' : rsiNum >= 50 ? 'text-emerald-400' : 'text-amber-400';
-        rsiEl.innerHTML = `<span class="${rsiColor} font-bold font-mono">${rsiVal}</span> <span class="text-slate-400 text-[10px]">(${rsiNum > 70 ? 'Overbought' : rsiNum < 35 ? 'Oversold' : 'Sweet Zone'})</span>`;
+        if (trend.is_suspended || trend.rsi14 === 'N/A (Suspended)' || String(trend.rsi14).includes('Suspended')) {
+            rsiEl.innerHTML = `<span class="text-amber-400 font-bold font-mono">N/A</span> <span class="text-amber-400/90 text-[10px] bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 font-semibold">(Suspended)</span>`;
+        } else {
+            const rsiVal = isUsableNumber(trend.rsi14) ? Number(trend.rsi14).toFixed(1) : '-';
+            const rsiNum = parseFloat(rsiVal);
+            const rsiColor = rsiNum >= 70 ? 'text-rose-400' : rsiNum >= 50 ? 'text-emerald-400' : 'text-amber-400';
+            rsiEl.innerHTML = `<span class="${rsiColor} font-bold font-mono">${rsiVal}</span> <span class="text-slate-400 text-[10px]">(${rsiNum > 70 ? 'Overbought' : rsiNum < 35 ? 'Oversold' : 'Sweet Zone'})</span>`;
+        }
     }
 
     const macdAdxEl = document.getElementById('modal-trend-macd-adx');
@@ -273,8 +398,13 @@ function populateAnalysisModal(data) {
     const candlestickAi = trend.candlestickAi || {};
     const aiDecisionEl = document.getElementById('modal-ai-decision');
     if (aiDecisionEl) {
-        aiDecisionEl.textContent = candlestickAi.decision || 'NEUTRAL';
-        aiDecisionEl.className = `font-mono font-bold ${candlestickAi.decision === 'STRONG BUY' ? 'text-emerald-300' : candlestickAi.decision === 'BUY' ? 'text-emerald-400' : 'text-slate-300'}`;
+        if (modalStockState.IS_SUSPENDED) {
+            aiDecisionEl.textContent = 'DITANGGUHKAN (SUSPENSI)';
+            aiDecisionEl.className = 'font-mono font-bold text-amber-400';
+        } else {
+            aiDecisionEl.textContent = candlestickAi.decision || 'NEUTRAL';
+            aiDecisionEl.className = `font-mono font-bold ${candlestickAi.decision === 'STRONG BUY' ? 'text-emerald-300' : candlestickAi.decision === 'BUY' ? 'text-emerald-400' : 'text-slate-300'}`;
+        }
     }
     const aiPatternsEl = document.getElementById('modal-ai-patterns-confidence');
     if (aiPatternsEl) {
@@ -494,7 +624,12 @@ function populateAnalysisModal(data) {
         }
         if (ffVwapEl) {
             const vwap = ff.monthly?.foreignVWAP || ff.weekly?.vwap;
-            ffVwapEl.textContent = vwap ? fmtRp.format(vwap) : 'Rp -';
+            const isStale = ff.monthly?.is_stale_vwap || ff.weekly?.is_stale_vwap || ff.is_stale_vwap;
+            if (vwap) {
+                ffVwapEl.innerHTML = `${fmtRp.format(vwap)}${isStale ? ' <span class="text-[9px] px-1 py-0.5 bg-amber-500/20 text-amber-400 font-bold rounded border border-amber-500/30 ml-1">STALE</span>' : ''}`;
+            } else {
+                ffVwapEl.textContent = 'Rp -';
+            }
         }
         if (ffFfpiEl) {
             const ffpi = ff.daily?.ffpi !== undefined ? ff.daily.ffpi : 0;
@@ -621,7 +756,7 @@ function populateAnalysisModal(data) {
         }
 
         // Active recalculator for current stock
-        window.activeCalculateTebus = function () {
+        const calculateTebus = function () {
             const L = Math.max(0, parseInt(inputLots?.value) || 0);
             const pe = Math.max(1, parseFloat(inputPe?.value) || 1000);
             const r = Math.max(0, parseFloat(inputR?.value) || 25);
@@ -652,32 +787,54 @@ function populateAnalysisModal(data) {
             if (calcDilEl) calcDilEl.textContent = `${dilution}%`;
         };
 
-        window.activeCalculateTebus();
+        if (typeof window !== 'undefined') {
+            window.activeCalculateTebus = calculateTebus;
+        }
+        calculateTebus();
     }
 }
 
-btnCloseModal.addEventListener('click', () => {
-    stockAnalysisRequestId += 1;
-    modalAnalysis.classList.add('hidden');
-    modalAnalysis.classList.remove('flex');
-    document.body.style.overflow = 'auto';
-});
+if (typeof btnCloseModal !== 'undefined' && btnCloseModal) {
+    btnCloseModal.addEventListener('click', () => {
+        stockAnalysisRequestId += 1;
+        modalAnalysis.classList.add('hidden');
+        modalAnalysis.classList.remove('flex');
+        if (typeof document !== 'undefined') document.body.style.overflow = 'auto';
+    });
+}
 
 // Close modal when clicking outer backdrop
-modalAnalysis.addEventListener('click', (e) => {
-    if (e.target === modalAnalysis) {
-        btnCloseModal.click();
-    }
-});
+if (typeof modalAnalysis !== 'undefined' && modalAnalysis) {
+    modalAnalysis.addEventListener('click', (e) => {
+        if (e.target === modalAnalysis) {
+            if (typeof btnCloseModal !== 'undefined' && btnCloseModal) {
+                btnCloseModal.click();
+            }
+        }
+    });
+}
 
 // Rights Issue (HMETD) Interactive Tebus Calculator Live Input Handlers
-['input-rights-lots', 'input-rights-pe', 'input-rights-ratio-r'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-        el.addEventListener('input', () => {
-            if (typeof window.activeCalculateTebus === 'function') {
-                window.activeCalculateTebus();
-            }
-        });
-    }
-});
+if (typeof document !== 'undefined') {
+    ['input-rights-lots', 'input-rights-pe', 'input-rights-ratio-r'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', () => {
+                if (typeof window !== 'undefined' && typeof window.activeCalculateTebus === 'function') {
+                    window.activeCalculateTebus();
+                }
+            });
+        }
+    });
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        checkIsSuspended,
+        modalStockState,
+        hasUsableRealtimeData,
+        hasUsableHistoricalData,
+        populateAnalysisModal
+    };
+}
+

@@ -313,7 +313,7 @@ function calculatePositionSize(capital, riskTolerancePct, entryPrice, stopLossPr
 // ═══════════════════════════════════════════════════════════════
 //  2. FULL TECHNICAL INDICATOR PROCESSOR (NODE.JS ENGINE)
 // ═══════════════════════════════════════════════════════════════
-function processTechnicalData(quotes) {
+function processTechnicalData(quotes, options = {}) {
     const validQuotes = quotes.filter(q => q && q.close !== null && q.high !== null && q.low !== null && !isNaN(q.close));
     if (validQuotes.length < 20) {
         throw new Error('Data riwayat tidak cukup untuk analisis teknikal (minimal 20 candle).');
@@ -326,6 +326,13 @@ function processTechnicalData(quotes) {
 
     const latest = validQuotes[validQuotes.length - 1];
     const prev = validQuotes.length > 1 ? validQuotes[validQuotes.length - 2] : latest;
+
+    // Detect suspension:
+    // 1. Explicit options or quote flag
+    // 2. Volume is 0 consecutively on recent candles (at least 3 candles) with flat close price
+    const recentVolumeZero = validQuotes.length >= 3 && volumes.slice(-3).every(v => !v || v === 0);
+    const recentPriceFlat = validQuotes.length >= 3 && closes.slice(-3).every(c => c === latest.close);
+    const isSuspended = Boolean(options.is_suspended || latest.is_suspended || (recentVolumeZero && recentPriceFlat));
 
     // 1. Moving Averages
     const ema20Arr = ti.EMA.calculate({ period: 20, values: closes });
@@ -342,7 +349,17 @@ function processTechnicalData(quotes) {
 
     // 2. RSI (14)
     const rsiArr = ti.RSI.calculate({ period: 14, values: closes });
-    const rsi14 = rsiArr.length > 0 ? rsiArr[rsiArr.length - 1] : 50;
+    const rawRsi14 = rsiArr.length > 0 ? rsiArr[rsiArr.length - 1] : 50;
+
+    // Guardrail: Suspended stock override
+    // Jika saham terdeteksi suspensi, override RSI(14) menjadi status 'N/A (Suspended)'
+    // jangan tampilkan nilai overbought/oversold ekstrem yang keliru.
+    let rsi14 = rawRsi14;
+    let rsiStatus = 'ACTIVE';
+    if (isSuspended) {
+        rsi14 = 'N/A (Suspended)';
+        rsiStatus = 'N/A (Suspended)';
+    }
 
     // 3. MACD (12, 26, 9)
     let macdLine = null;
@@ -436,15 +453,18 @@ function processTechnicalData(quotes) {
         sma20,
         sma50,
         rsi14,
+        rsi14_raw: rawRsi14,
+        rsi_status: rsiStatus,
+        is_suspended: isSuspended,
         macd_line: macdLine,
         macd_signal: macdSignal,
         macd_hist: macdHist,
         adx14,
         atr14,
         supertrend,
-        status,
+        status: isSuspended ? 'SUSPENDED' : status,
         maAlignment,
-        volumeStatus,
+        volumeStatus: isSuspended ? 'Suspended (Tanpa Transaksi)' : volumeStatus,
         smartMoney,
         pivots,
         candlestick,
@@ -455,7 +475,7 @@ function processTechnicalData(quotes) {
 // ═══════════════════════════════════════════════════════════════
 //  3. TECHNICAL INDICATORS API (FAST NODE ENGINE WITH PYTHON FALLBACK)
 // ═══════════════════════════════════════════════════════════════
-async function get_technical_indicators(ticker, timeframe = '1d') {
+async function get_technical_indicators(ticker, timeframe = '1d', options = {}) {
     const clean = sanitizeTicker(ticker);
     const symbol = (clean === 'IHSG' || clean === '^JKSE') ? '^JKSE' : `${clean}.JK`;
 
@@ -466,7 +486,7 @@ async function get_technical_indicators(ticker, timeframe = '1d') {
         if (!chart || !chart.quotes || chart.quotes.length === 0) {
             throw new Error(`Data grafik history untuk ${clean} tidak ditemukan.`);
         }
-        const technical = processTechnicalData(chart.quotes);
+        const technical = processTechnicalData(chart.quotes, options);
         technical.candlestickAi = require('./candlestickAiEngine').analyzeCandlesticks(chart.quotes);
         return technical;
     } catch (nodeErr) {

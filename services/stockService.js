@@ -43,9 +43,32 @@ async function analyzeStock(ticker) {
             fetch_corporate_news(clean).catch(() => []),
             getTickerForeignFlow(clean).catch(() => null)
         ]);
+        const hasSuspensionNews = Array.isArray(news) && news.some(n =>
+            /\b(?:suspens|suspensi|suspended|penghentian sementara|gembok bursa|cool(?:ing)?\s*down)\b/i.test(
+                `${n.title || ''} ${n.impact || ''}`
+            )
+        );
+        const isSuspended = Boolean(
+            realtime?.is_suspended ||
+            trend?.is_suspended ||
+            foreignFlow?.is_suspended ||
+            (Number(realtime?.volume ?? 0) === 0 && hasSuspensionNews) ||
+            String(realtime?.marketStatus || '').toUpperCase() === 'SUSPENDED'
+        );
 
-        if (!hasUsableRealtimeData(realtime, { allowZeroVolume: clean === 'IHSG' })) {
+        if (!hasUsableRealtimeData(realtime, { allowZeroVolume: clean === 'IHSG' || isSuspended })) {
             throw new Error('Market data unavailable');
+        }
+
+        if (isSuspended) {
+            realtime.is_suspended = true;
+            realtime.marketStatus = 'SUSPENDED';
+            if (trend) {
+                trend.is_suspended = true;
+                trend.status = 'SUSPENDED';
+                trend.rsi14 = 'N/A (Suspended)';
+                trend.rsi_status = 'N/A (Suspended)';
+            }
         }
 
         const valuation = financialReport?.valuation || null;
@@ -99,7 +122,8 @@ async function analyzeStock(ticker) {
             foreignFlow,
             rightsIssue,
             positionSizing,
-            news
+            news,
+            is_suspended: isSuspended
         };
     } catch {
         throw new Error('Data realtime/historis emiten ini tidak tersedia di bursa saat ini.');

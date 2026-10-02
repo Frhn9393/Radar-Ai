@@ -61,6 +61,8 @@ combined += `\n// ============================================================\n
     `    window.renderWatchlistDrawer = typeof renderWatchlistDrawer !== 'undefined' ? renderWatchlistDrawer : window.renderWatchlistDrawer;\n` +
     `    window.updateWatchlistBadge = typeof updateWatchlistBadge !== 'undefined' ? updateWatchlistBadge : window.updateWatchlistBadge;\n` +
     `    window.saveWatchlistToStorage = typeof saveWatchlistToStorage !== 'undefined' ? saveWatchlistToStorage : window.saveWatchlistToStorage;\n` +
+    `    window.formatCurrency = typeof formatCurrency !== 'undefined' ? formatCurrency : window.formatCurrency;\n` +
+    `    window.fmtRpMiliar = typeof fmtRpMiliar !== 'undefined' ? fmtRpMiliar : window.fmtRpMiliar;\n` +
     `}\n`;
 
 fs.writeFileSync(outFile, combined, 'utf8');

@@ -93,7 +93,7 @@ async function get_financial_report(ticker) {
     try {
         [summary, quote, timeseries] = await Promise.all([
             yahooFinance.quoteSummary(symbol, {
-                modules: ['financialData', 'defaultKeyStatistics', 'summaryDetail', 'incomeStatementHistory']
+                modules: ['financialData', 'defaultKeyStatistics', 'summaryDetail', 'incomeStatementHistory', 'assetProfile']
             }).catch(() => null),
             yahooFinance.quote(symbol).catch(() => null),
             fetchTimeseriesWithTimeout(symbol, {
@@ -117,6 +117,17 @@ async function get_financial_report(ticker) {
     const ks = summary.defaultKeyStatistics || {};
     const sd = summary.summaryDetail || {};
     const price = quote.regularMarketPrice || 0;
+
+    // Sektor Perbankan (Banking) vs Non-Bank
+    const BANK_TICKERS = [
+        'BBCA', 'BBRI', 'BMRI', 'BBNI', 'BBTN', 'BRIS', 'BDMN', 'BNGA', 'NISP', 'PNBN',
+        'MEGA', 'BTPS', 'ARTO', 'BBYB', 'BANK', 'AGRO', 'BVIC', 'BABP', 'BSIM', 'BCIC',
+        'BGTG', 'BINA', 'DNAR', 'MASB', 'MCOR', 'NOBU', 'SDRA', 'AMAR', 'BJBR', 'BJTM',
+        'BTPN', 'BNLI', 'BNII'
+    ];
+    const assetSector = summary?.assetProfile?.sector || '';
+    const assetIndustry = summary?.assetProfile?.industry || '';
+    const isBanking = BANK_TICKERS.includes(clean) || (assetSector.toLowerCase().includes('financial') && /bank/i.test(assetIndustry));
 
     // ── 1. Quarter-by-Quarter Financial Analysis (Strict Turnaround & Cost Efficiency) ──
     let quarterlyAnalysis = null;
@@ -156,8 +167,17 @@ async function get_financial_report(ticker) {
 
             const curRev = latest.totalRevenue ?? latest.operatingRevenue;
             const priorRev = basePeriod?.totalRevenue ?? basePeriod?.operatingRevenue;
-            const curCOGS = latest.costOfRevenue;
-            const priorCOGS = basePeriod?.costOfRevenue;
+            
+            // Sektor perbankan: Dikecualikan dari COGS manufaktur
+            // Sektor non-bank (termasuk emiten transportasi/logistik seperti TRUK):
+            // Gunakan costOfRevenue atau fallback ke beban pokok pendapatan/beban operasional
+            let curCOGS = null;
+            let priorCOGS = null;
+            if (!isBanking) {
+                curCOGS = latest.costOfRevenue ?? latest.reconciledCostOfRevenue ?? latest.operatingExpense ?? latest.totalOperatingExpenses ?? latest.operatingCost ?? null;
+                priorCOGS = basePeriod?.costOfRevenue ?? basePeriod?.reconciledCostOfRevenue ?? basePeriod?.operatingExpense ?? basePeriod?.totalOperatingExpenses ?? basePeriod?.operatingCost ?? null;
+            }
+
             const curNet = latest.netIncomeCommonStockholders ?? latest.netIncome;
             const priorNet = basePeriod?.netIncomeCommonStockholders ?? basePeriod?.netIncome;
             const curOp = latest.operatingIncome ?? latest.totalOperatingIncomeAsReported;
@@ -169,8 +189,12 @@ async function get_financial_report(ticker) {
             if (curRev !== undefined && priorRev !== undefined && priorRev !== 0) {
                 revGrowthYoY = (curRev - priorRev) / Math.abs(priorRev);
             }
-            if (curCOGS !== undefined && priorCOGS !== undefined && priorCOGS !== 0) {
-                cogsGrowthYoY = (curCOGS - priorCOGS) / Math.abs(priorCOGS);
+            if (!isBanking) {
+                if (curCOGS !== null && curCOGS !== undefined && priorCOGS !== null && priorCOGS !== undefined && priorCOGS !== 0) {
+                    cogsGrowthYoY = (curCOGS - priorCOGS) / Math.abs(priorCOGS);
+                } else if (curCOGS !== null && curCOGS !== undefined && priorCOGS === 0) {
+                    cogsGrowthYoY = curCOGS > 0 ? 1.0 : 0;
+                }
             }
             if (curNet !== undefined && priorNet !== undefined && priorNet !== 0) {
                 netProfitGrowthYoY = (curNet - priorNet) / Math.abs(priorNet);
@@ -180,10 +204,6 @@ async function get_financial_report(ticker) {
             }
 
             // Strict Turnaround Logic & Operating Profit Guard (PHASE 1.3):
-            // Assign status 'TURNAROUND / PEMULIHAN' ONLY IF:
-            // 1. Net Income flipped from negative in prior period to positive in current quarter, AND
-            // 2. Operating Income (Laba Operasional) is ALSO positive or significantly improving.
-            // Guard: Do NOT assign turnaround if Net Income is positive purely due to one-offs while Operating Income remains negative.
             const prevNet = prev?.netIncomeCommonStockholders ?? prev?.netIncome;
             const netTurnaround = (priorNet !== undefined && priorNet < 0 && curNet !== undefined && curNet > 0);
             const qoqNetTurnaround = (prevNet !== undefined && prevNet < 0 && curNet !== undefined && curNet > 0);
@@ -206,8 +226,8 @@ async function get_financial_report(ticker) {
             }
 
             // COGS vs Revenue Efficiency:
-            // If Revenue dropped but COGS dropped deeper (cogsGrowth < revGrowth) leading to improved operating margins
-            if (revGrowthYoY !== null && revGrowthYoY < 0 && cogsGrowthYoY !== null && cogsGrowthYoY < revGrowthYoY && (curNet > priorNet || curOp > priorOp || isTurnaround)) {
+            // Sektor non-bank: jika Revenue drop tapi COGS drop lebih dalam, efisien!
+            if (!isBanking && revGrowthYoY !== null && revGrowthYoY < 0 && cogsGrowthYoY !== null && cogsGrowthYoY < revGrowthYoY && (curNet > priorNet || curOp > priorOp || isTurnaround)) {
                 isCostEfficient = true;
             }
 
@@ -232,8 +252,12 @@ async function get_financial_report(ticker) {
         const prev = hist[1] || {};
         const curRev = cur.totalRevenue?.raw ?? cur.totalRevenue;
         const priorRev = prev.totalRevenue?.raw ?? prev.totalRevenue;
-        const curCOGS = cur.costOfRevenue?.raw ?? cur.costOfRevenue;
-        const priorCOGS = prev.costOfRevenue?.raw ?? prev.costOfRevenue;
+        let curCOGS = null;
+        let priorCOGS = null;
+        if (!isBanking) {
+            curCOGS = cur.costOfRevenue?.raw ?? cur.costOfRevenue ?? cur.reconciledCostOfRevenue?.raw ?? cur.reconciledCostOfRevenue ?? cur.totalOperatingExpenses?.raw ?? cur.totalOperatingExpenses ?? cur.operatingExpense?.raw ?? cur.operatingExpense ?? null;
+            priorCOGS = prev.costOfRevenue?.raw ?? prev.costOfRevenue ?? prev.reconciledCostOfRevenue?.raw ?? prev.reconciledCostOfRevenue ?? prev.totalOperatingExpenses?.raw ?? prev.totalOperatingExpenses ?? prev.operatingExpense?.raw ?? prev.operatingExpense ?? null;
+        }
         const curNet = cur.netIncome?.raw ?? cur.netIncome;
         const priorNet = prev.netIncome?.raw ?? prev.netIncome;
         const curOp = cur.operatingIncome?.raw ?? cur.operatingIncome;
@@ -242,8 +266,12 @@ async function get_financial_report(ticker) {
         if (curRev !== undefined && priorRev !== undefined && priorRev !== 0) {
             revGrowthYoY = (curRev - priorRev) / Math.abs(priorRev);
         }
-        if (curCOGS !== undefined && priorCOGS !== undefined && priorCOGS !== 0) {
-            cogsGrowthYoY = (curCOGS - priorCOGS) / Math.abs(priorCOGS);
+        if (!isBanking) {
+            if (curCOGS !== null && curCOGS !== undefined && priorCOGS !== null && priorCOGS !== undefined && priorCOGS !== 0) {
+                cogsGrowthYoY = (curCOGS - priorCOGS) / Math.abs(priorCOGS);
+            } else if (curCOGS !== null && curCOGS !== undefined && priorCOGS === 0) {
+                cogsGrowthYoY = curCOGS > 0 ? 1.0 : 0;
+            }
         }
         if (curNet !== undefined && priorNet !== undefined && priorNet !== 0) {
             netProfitGrowthYoY = (curNet - priorNet) / Math.abs(priorNet);
@@ -449,8 +477,6 @@ async function get_financial_report(ticker) {
     }
 
     // C. Evaluasi Struktur Modal (Bebas Kontradiksi & Ramah Sektor Perbankan - PHASE 1.4)
-    const BANK_TICKERS = ['BBCA', 'BBRI', 'BMRI', 'BBNI', 'BBTN', 'BRIS', 'BDMN', 'BNGA', 'NISP', 'PNBN', 'MEGA', 'BTPS', 'ARTO', 'BBYB', 'BANK', 'AGRO', 'BVIC', 'BABP', 'BSIM', 'BCIC', 'BGTG', 'BINA', 'DNAR', 'MASB', 'MCOR', 'NOBU', 'SDRA', 'AMAR'];
-    const isBanking = clean.startsWith('BB') || BANK_TICKERS.includes(clean);
 
     const BANK_METRICS_MAP = {
         'BBCA': { car: '29.1%', npl: '1.8%', ldr: '82.0%', note: 'Kualitas Aset Prima & Likuiditas DPK Melimpah' },
@@ -546,6 +572,7 @@ async function get_financial_report(ticker) {
             healthSentiment,
             isCostEfficient,
             cogsGrowth: cogsGrowthYoY,
+            cogsExempt: isBanking,
             netProfitGrowth: netProfitGrowthYoY,
             opIncomeGrowth: opIncomeGrowthYoY,
             currency: financialCurrency,

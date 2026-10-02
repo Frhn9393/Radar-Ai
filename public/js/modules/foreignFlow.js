@@ -10,14 +10,7 @@
 let foreignFlowRequestVersion = 0;
 
 function fmtRpMiliar(val) {
-    if (val === null || val === undefined || isNaN(val)) return 'Rp 0';
-    const num = Number(val);
-    const abs = Math.abs(num);
-    const sign = num > 0 ? '+' : num < 0 ? '-' : '';
-    if (abs >= 1e12) return `${sign}Rp ${(abs / 1e12).toFixed(2)} Triliun`;
-    if (abs >= 1e9) return `${sign}Rp ${(abs / 1e9).toFixed(1)} Miliar`;
-    if (abs >= 1e6) return `${sign}Rp ${(abs / 1e6).toFixed(1)} Juta`;
-    return `${sign}Rp ${fmtNum.format(Math.round(abs))}`;
+    return formatCurrency(val);
 }
 
 function filterForeignList(list) {
@@ -368,7 +361,9 @@ function renderForeignMonthlyTable() {
                     <div class="font-extrabold text-purple-300">${fmtRpMiliar(netVal)}</div>
                     ${row.monthlyBuyVal ? `<div class="text-[10px] text-slate-400 font-mono">B: ${fmtRpMiliar(row.monthlyBuyVal)} | S: ${fmtRpMiliar(row.monthlySellVal)}</div>` : ''}
                 </td>
-                <td class="p-3 font-mono font-bold text-amber-300">${row.foreignVWAP ? fmtRp.format(row.foreignVWAP) : 'Rp -'}</td>
+                <td class="p-3 font-mono font-bold text-amber-300">
+                    ${row.foreignVWAP ? fmtRp.format(row.foreignVWAP) : 'Rp -'}${row.is_stale_vwap ? ' <span class="ml-1 text-[9px] px-1 py-0.5 bg-amber-500/20 text-amber-400 font-bold rounded border border-amber-500/30" title="Data historis (saham suspensi)">STALE</span>' : ''}
+                </td>
                 <td class="p-3 font-mono font-bold ${pnlColor}">${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}% ${pnl >= 0 ? 'Profit' : 'Loss'}</td>
                 <td class="p-3 font-mono text-cyan-300 font-bold">${row.daysNetBuy || row.netBuyDays || 0} / 20 Hari</td>
                 <td class="p-3">${baseBadge}</td>

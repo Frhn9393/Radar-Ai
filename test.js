@@ -730,7 +730,7 @@ async function runAllTests() {
     assert(bbcaSummary.includes('sektor perbankan') || bbcaSummary.includes('DPK'), 'Banking sector leverage properly recognized as funding/DPK gearing');
 
     // ── 10. Automated Quantitative Backtest Engine ────────────────
-    console.log('\n▶ [10/10] Testing Automated Quantitative Backtest Engine...');
+    console.log('\n▶ [10/11] Testing Automated Quantitative Backtest Engine...');
     const { runBacktest, getAvailableStrategies, quickAudit } = require('./services/backtestEngine');
 
     const strats = getAvailableStrategies();
@@ -747,6 +747,150 @@ async function runAllTests() {
 
     const quickAuditBbca = await quickAudit('BBRI');
     assert(quickAuditBbca && quickAuditBbca.ticker === 'BBRI' && (quickAuditBbca.unavailable || quickAuditBbca.winRate), 'quickAudit(BBRI) returns computed backtest metrics or an explicit unavailable state, never fabricated fallback metrics');
+
+    // ── 11. Currency Formatting, Non-Bank Financial Logic & Suspended Stock Guardrails ──
+    console.log('\n▶ [11/11] Testing Currency Formatting, Non-Bank Financial Logic & Suspended Stock Guardrails...');
+    const { formatCurrency } = require('./utils/formatter');
+    const { formatCurrency: feFormatCurrency } = require('./public/js/modules/utils');
+    const { processTechnicalData } = require('./services/technicalService');
+    const { processQuotesForForeignFlow } = require('./services/foreignFlowService');
+
+    // 1. Centralized Currency Formatter
+    assert(formatCurrency(2_000_000_000_000) === 'Rp 2,00 T', 'formatCurrency formats >= 1 Triliun as Rp X,XX T');
+    assert(formatCurrency(372_600_000_000) === 'Rp 372,60 M', 'formatCurrency formats >= 1 Miliar as Rp X,XX M');
+    assert(formatCurrency(500_000_000) === 'Rp 500.000.000', 'formatCurrency formats < 1 Miliar as Rp X');
+    assert(formatCurrency(1500) === 'Rp 1.500', 'formatCurrency formats base thousands properly');
+    assert(formatCurrency(0) === 'Rp 0', 'formatCurrency formats zero as Rp 0');
+    assert(formatCurrency(null) === 'Rp 0', 'formatCurrency handles null gracefully by defaulting to Rp 0');
+    assert(formatCurrency(undefined) === 'Rp 0', 'formatCurrency handles undefined gracefully by defaulting to Rp 0');
+    assert(formatCurrency(NaN) === 'Rp 0', 'formatCurrency handles NaN gracefully by defaulting to Rp 0');
+    assert(formatCurrency(null, { fallback: '-' }) === '-', 'formatCurrency supports custom fallback');
+
+    // String normalization and legacy hardcoded replacement
+    assert(formatCurrency('RP 2 TRILIUN') === 'Rp 2,00 T', 'formatCurrency normalizes uppercase "RP 2 TRILIUN"');
+    assert(formatCurrency('Rp372,6 MILIAR') === 'Rp 372,60 M', 'formatCurrency normalizes "Rp372,6 MILIAR"');
+    assert(formatCurrency('Rp 700 Miliar') === 'Rp 700,00 M', 'formatCurrency normalizes "Rp 700 Miliar"');
+    assert(formatCurrency('Rp 500 Juta') === 'Rp 500.000.000', 'formatCurrency normalizes "Rp 500 Juta"');
+    assert(feFormatCurrency(2e12) === 'Rp 2,00 T', 'Frontend utils.formatCurrency behaves consistently with backend formatter');
+
+    // 2. Non-bank vs Banking Financial Logic & COGS Exemption
+    assert(bbcaFin.financials.isBanking === true, 'BBCA is categorized as banking sector (isBanking: true)');
+    assert(bbcaFin.financials.cogsExempt === true, 'BBCA banking sector is exempted from COGS (cogsExempt: true)');
+    assert(bbcaFin.financials.debtToEquity === null, 'BBCA banking sector suppresses misleading non-financial DER');
+
+    assert(bipiFin.financials.isBanking === false, 'BIPI is categorized as non-bank (isBanking: false)');
+    assert(bipiFin.financials.cogsExempt === false, 'BIPI non-bank sector requires COGS evaluation (cogsExempt: false)');
+    assert(bipiFin.financials.cogsGrowth !== null, 'BIPI non-bank sector calculates COGS growth correctly');
+
+    // 3. Suspended Stock Guardrails (Technical Indicator & Foreign VWAP)
+    const mockQuotes = [];
+    const mockNow = Date.now();
+    for (let i = 0; i < 30; i++) {
+        mockQuotes.push({
+            date: new Date(mockNow - (30 - i) * 86400000),
+            open: 1000 + i * 10,
+            high: 1020 + i * 10,
+            low: 990 + i * 10,
+            close: 1010 + i * 10,
+            volume: 500000
+        });
+    }
+
+    const activeTech = processTechnicalData(mockQuotes);
+    assert(typeof activeTech.rsi14 === 'number' && activeTech.is_suspended === false, 'Active stock computes standard numerical RSI(14) with is_suspended: false');
+
+    const suspendedQuotes = mockQuotes.map((q, idx) => {
+        if (idx >= 25) {
+            return { ...q, open: 1250, high: 1250, low: 1250, close: 1250, volume: 0 };
+        }
+        return q;
+    });
+
+    const suspTech = processTechnicalData(suspendedQuotes);
+    assert(suspTech.is_suspended === true, 'Suspended stock detected automatically from zero-volume and flat-price series');
+    assert(suspTech.rsi14 === 'N/A (Suspended)', 'Suspended stock overrides RSI(14) to "N/A (Suspended)"');
+    assert(suspTech.rsi_status === 'N/A (Suspended)', 'Suspended stock sets rsi_status to "N/A (Suspended)"');
+
+    const manualSuspTech = processTechnicalData(mockQuotes, { is_suspended: true });
+    assert(manualSuspTech.is_suspended === true && manualSuspTech.rsi14 === 'N/A (Suspended)', 'Explicit options.is_suspended overrides RSI(14) safely');
+
+    const activeFf = processQuotesForForeignFlow('BBCA', mockQuotes);
+    assert(activeFf.is_suspended === false && activeFf.monthly.is_stale_vwap === false, 'Active stock foreign flow marks is_stale_vwap: false');
+
+    const suspFf = processQuotesForForeignFlow('TRUK', suspendedQuotes);
+    assert(suspFf.is_suspended === true, 'Suspended stock in foreign flow detected as is_suspended: true');
+    assert(suspFf.is_stale_vwap === true && suspFf.monthly.is_stale_vwap === true, 'Suspended stock foreign VWAP is flagged with is_stale_vwap: true');
+
+    // 4. BEI Suspended State Logic & UI Component Integration (Chart & AI Technical Overlay)
+    const fs = require('fs');
+    const { checkIsSuspended, hasUsableHistoricalData } = require('./public/js/modules/analysisModal');
+
+    // State detection: Volume = 0 & Ada Berita Suspensi
+    const suspendedEmitenData = {
+        ticker: 'SRIL',
+        realtime: { lastPrice: 50, high: 50, low: 50, volume: 0 },
+        trend: {
+            close: 50,
+            ema20: 50,
+            rsi14: 'N/A (Suspended)',
+            rvol: 0,
+            supertrend: { isBullish: false },
+            status: 'SUSPENDED'
+        },
+        news: [
+            { title: 'Pengumuman Penghentian Sementara Perdagangan (Suspensi) Efek PT Sri Rejeki Isman Tbk', pubDate: new Date().toISOString() }
+        ]
+    };
+    const checkSuspended = checkIsSuspended(suspendedEmitenData);
+    assert(checkSuspended.isSuspended === true, 'checkIsSuspended identifies suspension when Volume = 0 and news mentions suspensi');
+    assert(checkSuspended.reason && checkSuspended.reason.includes('Suspensi'), 'checkIsSuspended provides informative suspension reason');
+
+    const activeEmitenData = {
+        ticker: 'BBCA',
+        realtime: { lastPrice: 9800, high: 9900, low: 9750, volume: 25000000 },
+        trend: {
+            close: 9800,
+            ema20: 9700,
+            rsi14: 58.2,
+            rvol: 1.2,
+            supertrend: { isBullish: true },
+            status: 'BULLISH'
+        },
+        news: [
+            { title: 'BCA Bukukan Laba Bersih Tumbuh Positif Kuartal Ini', pubDate: new Date().toISOString() }
+        ]
+    };
+    const checkActive = checkIsSuspended(activeEmitenData);
+    assert(checkActive.isSuspended === false, 'checkIsSuspended returns false for active stock with normal volume and news');
+
+    // Historical data guard for suspended stocks
+    assert(hasUsableHistoricalData(activeEmitenData.trend) === true, 'hasUsableHistoricalData validates normal numerical RSI');
+    assert(hasUsableHistoricalData(suspendedEmitenData.trend) === true, 'hasUsableHistoricalData accepts "N/A (Suspended)" RSI without breaking modal cards');
+    assert(hasUsableHistoricalData({ rsi14: 'INVALID' }) === false, 'hasUsableHistoricalData rejects invalid RSI strings');
+
+    // UI Structure & Responsive Styling for AI Technical Card & Suspended State
+    const indexHtml = fs.readFileSync('public/index.html', 'utf8');
+    const styleCss = fs.readFileSync('public/css/style.css', 'utf8');
+
+    assert(indexHtml.includes('id="modal-suspended-badge"') && indexHtml.includes('PERDAGANGAN DISUSPENSI (BEI)'), 'index.html contains modal-suspended-badge with "PERDAGANGAN DISUSPENSI (BEI)"');
+    assert(indexHtml.includes('id="modal-suspended-banner"') && indexHtml.includes('PERDAGANGAN DISUSPENSI (BEI)'), 'index.html contains modal-suspended-banner for emiten header notification');
+    assert(indexHtml.includes('id="modal-technical-ai-card"'), 'index.html identifies AI technical card with id modal-technical-ai-card');
+    assert(indexHtml.includes('id="modal-technical-suspended-overlay"') && indexHtml.includes('Sinyal Ditangguhkan (Saham Disuspensi)'), 'index.html provides transparent overlay on AI technical indicators with text "Sinyal Ditangguhkan (Saham Disuspensi)"');
+
+    assert(styleCss.includes('#modal-technical-ai-card') && styleCss.includes('min-height: 420px'), 'style.css enforces min-height: 420px on modal-technical-ai-card to prevent content clipping');
+    assert(styleCss.includes('padding-bottom: 28px !important'), 'style.css enforces generous padding-bottom on modal-technical-ai-card so target/stop loss is never cut off');
+    assert(styleCss.includes('#modal-technical-suspended-overlay'), 'style.css styles the transparent suspension overlay with smooth blur and visual cues');
+
+    // 5. Emiten Detail Modal Card Header & Badge Stacking + Footnote Spacing
+    assert(indexHtml.includes('class="modal-card-header flex flex-col items-start gap-1 pb-2.5"'), 'index.html organizes modal analysis card headers with vertical flex-col layout to avoid overlap');
+    assert(indexHtml.includes('id="modal-val-status"') && indexHtml.includes('modal-card-badge mt-1 self-start'), 'index.html includes self-start badge with top margin on valuation card');
+    assert(indexHtml.includes('id="modal-trend-status"') && indexHtml.includes('modal-card-badge mt-1 self-start'), 'index.html includes self-start badge with top margin on technical card');
+    assert(indexHtml.includes('id="modal-fin-badge"') && indexHtml.includes('modal-card-badge mt-1 self-start'), 'index.html includes self-start badge with top margin on financial card');
+    assert(indexHtml.includes('id="modal-foreign-status"') && indexHtml.includes('modal-card-badge mt-1 self-start'), 'index.html includes self-start badge with top margin on proxy card');
+    assert(indexHtml.includes('id="modal-val-per-footnote"') && indexHtml.includes('text-xs') && indexHtml.includes('leading-tight') && indexHtml.includes('max-h-[75px]'), 'index.html adjusts PER footnote with compact text and max-height');
+    assert(styleCss.includes('.modal-card-header') && styleCss.includes('flex-direction: column !important'), 'style.css enforces vertical flex-col layout on modal-card-header');
+    assert(styleCss.includes('.modal-card-badge') && styleCss.includes('margin-top: 4px !important'), 'style.css enforces margin-top: 4px on modal card badges to prevent text collision');
+    assert(styleCss.includes('#modal-val-per-footnote') && styleCss.includes('max-height: 75px !important'), 'style.css enforces max-height and scroll on valuation PER footnote');
 
     // ── Summary ──────────────────────────────────────────────────
     console.log('\n════════════════════════════════════════════════════════════════');

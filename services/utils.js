@@ -46,10 +46,14 @@ function sanitizeTicker(ticker) {
     return clean;
 }
 
+const { formatCurrency } = require('../utils/formatter');
+
 module.exports = {
     formatWibTime,
     formatWibDate,
     calcTimeAgo,
     getTickSize,
-    sanitizeTicker
+    sanitizeTicker,
+    formatCurrency
 };
+

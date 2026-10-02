@@ -1889,12 +1889,16 @@
                         <span id="modal-ticker-icon">$</span>
                     </div>
                     <div>
-                        <div class="flex items-center gap-2 sm:gap-3">
+                        <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
                             <h2 id="modal-stock-ticker"
                                 class="text-2xl sm:text-3xl font-black text-white font-mono tracking-tight">
                                 BBRI</h2>
                             <span id="modal-market-status"
                                 class="px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-emerald-950/80 text-emerald-400 shadow-sm">OPEN</span>
+                            <span id="modal-suspended-badge"
+                                class="hidden px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-extrabold bg-rose-500/20 text-rose-400 border border-rose-500/40 shadow-sm items-center gap-1.5 animate-pulse">
+                                🔒 PERDAGANGAN DISUSPENSI (BEI)
+                            </span>
                         </div>
                         <p id="modal-stock-timestamp" class="text-[11px] sm:text-xs text-slate-400 mt-0.5 sm:mt-1">Data
                             realtime Bursa Efek
@@ -1920,6 +1924,22 @@
                                 d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
                     </button>
+                </div>
+            </div>
+
+            <!-- Suspended Stock Global Alert Banner -->
+            <div id="modal-suspended-banner" class="hidden bg-rose-950/40 border border-rose-500/40 rounded-xl p-3 sm:p-4 text-xs sm:text-sm text-rose-200 flex items-start sm:items-center gap-3 shadow-lg">
+                <div class="w-8 h-8 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center text-base shrink-0 border border-rose-500/30">
+                    🔒
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="font-bold text-rose-300 uppercase tracking-wide flex items-center gap-2 flex-wrap">
+                        <span>PERDAGANGAN DISUSPENSI (BEI)</span>
+                        <span class="text-[10px] bg-rose-500/30 px-1.5 py-0.5 rounded text-rose-200 font-semibold">Gembok Bursa</span>
+                    </div>
+                    <p id="modal-suspended-banner-desc" class="text-[11px] sm:text-xs text-rose-300/80 mt-0.5 leading-relaxed">
+                        Emiten terdeteksi dalam status penghentian sementara perdagangan (suspensi) oleh BEI. Sinyal teknikal dan transaksi perdagangan dibekukan.
+                    </p>
                 </div>
             </div>
 
@@ -1978,10 +1998,10 @@
 
                 <!-- Card 1: Valuasi & Harga Wajar -->
                 <div id="modal-valuation-card" class="bg-[#090e1a] rounded-xl p-5 space-y-3 shadow-lg hidden">
-                    <div class="flex items-center justify-between  pb-2.5">
-                        <h4 class="font-bold text-white text-sm">Valuasi & Harga Wajar</h4>
+                    <div class="modal-card-header flex flex-col items-start gap-1 pb-2.5">
+                        <h4 class="font-bold text-white text-sm leading-tight">Valuasi & Harga Wajar</h4>
                         <span id="modal-val-status"
-                            class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-500/20 text-emerald-400 shadow-sm">UNDERVALUED</span>
+                            class="modal-card-badge mt-1 self-start px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-500/20 text-emerald-400 shadow-sm">UNDERVALUED</span>
                     </div>
                     <div class="space-y-2 text-xs">
                         <div class="flex justify-between py-1 "><span class="text-slate-400">Harga Wajar
@@ -1990,7 +2010,7 @@
                         <div class="flex justify-between py-1 "><span class="text-slate-400">PER (Trailing)</span><span
                                 id="modal-val-per" class="font-mono text-white font-semibold">8.40x</span></div>
                         <div id="modal-val-per-footnote"
-                            class="text-[11px] text-amber-300 bg-amber-950/40  rounded p-2 leading-relaxed hidden">
+                            class="text-xs text-amber-300 bg-amber-950/40 rounded p-2 leading-tight max-h-[75px] overflow-y-auto hidden">
                         </div>
                         <div class="flex justify-between py-1 "><span class="text-slate-400">PBV (Price to
                                 Book)</span><span id="modal-val-pbv"
@@ -2003,11 +2023,22 @@
                 </div>
 
                 <!-- Card 2: Analisa Teknikal -->
-                <div class="bg-[#090e1a] rounded-xl p-5 space-y-3 shadow-lg">
-                    <div class="flex items-center justify-between  pb-2.5">
-                        <h4 class="font-bold text-white text-sm">Analisa Teknikal AI</h4>
+                <div id="modal-technical-ai-card" class="bg-[#090e1a] rounded-xl p-5 space-y-3 shadow-lg relative flex flex-col justify-between overflow-hidden">
+                    <!-- Suspended Transparent Visual Overlay -->
+                    <div id="modal-technical-suspended-overlay" class="hidden absolute inset-0 bg-[#090e1a]/90 backdrop-blur-[2px] rounded-xl z-20 flex flex-col items-center justify-center p-4 text-center border border-amber-500/40">
+                        <div class="w-12 h-12 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-xl mb-2.5 border border-amber-500/40 shadow-lg">
+                            🔒
+                        </div>
+                        <div class="text-amber-400 font-black text-xs sm:text-sm uppercase tracking-wider mb-1">Sinyal Ditangguhkan (Saham Disuspensi)</div>
+                        <p class="text-slate-300 text-[11px] sm:text-xs leading-relaxed max-w-xs">
+                            Indikator teknikal (Supertrend, RSI, MACD) dibekukan selama periode gembok bursa untuk mencegah sinyal beli/jual palsu.
+                        </p>
+                    </div>
+
+                    <div class="modal-card-header flex flex-col items-start gap-1 pb-2.5">
+                        <h4 class="font-bold text-white text-sm leading-tight">Analisa Teknikal AI</h4>
                         <span id="modal-trend-status"
-                            class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-500/20 text-emerald-400 shadow-sm">UPTREND</span>
+                            class="modal-card-badge mt-1 self-start px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-500/20 text-emerald-400 shadow-sm">UPTREND</span>
                     </div>
                     <div class="space-y-2 text-xs">
                         <div class="flex justify-between py-1 "><span class="text-slate-400">Supertrend (10,
@@ -2041,10 +2072,10 @@
 
                 <!-- Card 3: Kesehatan Finansial -->
                 <div id="modal-financial-card" class="bg-[#090e1a] rounded-xl p-5 space-y-3 shadow-lg hidden">
-                    <div class="flex items-center justify-between  pb-2.5">
-                        <h4 class="font-bold text-white text-sm">Kesehatan Finansial</h4>
+                    <div class="modal-card-header flex flex-col items-start gap-1 pb-2.5">
+                        <h4 class="font-bold text-white text-sm leading-tight">Kesehatan Finansial</h4>
                         <span id="modal-fin-badge"
-                            class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-slate-800 text-slate-300 shadow-sm">Q-Report</span>
+                            class="modal-card-badge mt-1 self-start px-2 py-0.5 rounded text-[11px] font-extrabold bg-slate-800 text-slate-300 shadow-sm">Q-Report</span>
                     </div>
                     <div class="space-y-2 text-xs">
                         <div class="flex justify-between py-1 "><span class="text-slate-400">ROE (Return on
@@ -2073,11 +2104,11 @@
                 </div>
 
                 <!-- Card 4: Proxy Harga dan Volume -->
-                <div class="bg-[#090e1a] rounded-xl p-5 space-y-3 shadow-lg">
-                    <div class="flex items-center justify-between  pb-2.5">
-                        <h4 class="font-bold text-white text-sm">Proxy Aliran Harga/Volume</h4>
+                <div id="modal-proxy-card" class="bg-[#090e1a] rounded-xl p-5 space-y-3 shadow-lg">
+                    <div class="modal-card-header flex flex-col items-start gap-1 pb-2.5">
+                        <h4 class="font-bold text-white text-sm leading-tight">Proxy Aliran Harga/Volume</h4>
                         <span id="modal-foreign-status"
-                            class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-cyan-500/20 text-cyan-300 shadow-sm">NETRAL</span>
+                            class="modal-card-badge mt-1 self-start px-2 py-0.5 rounded text-[11px] font-extrabold bg-cyan-500/20 text-cyan-300 shadow-sm">NETRAL</span>
                     </div>
                     <div class="space-y-2 text-xs">
                         <div class="flex justify-between py-1 "><span class="text-slate-400">Net Proxy (1D)</span><span

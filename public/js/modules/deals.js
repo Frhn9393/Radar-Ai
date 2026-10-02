@@ -109,7 +109,7 @@ function renderDeals() {
                     <span class="text-amber-400/90 text-xs font-semibold flex items-center gap-1 shrink-0">
                         <span class="text-amber-400 font-bold">$</span> Estimasi Nilai Deal:
                     </span>
-                    <span class="text-amber-400 font-bold text-xs font-mono text-left xs:text-right break-words leading-tight">${escapeHtml(deal.dealValue)}</span>
+                    <span class="text-amber-400 font-bold text-xs font-mono text-left xs:text-right break-words leading-tight">${escapeHtml(formatCurrency(deal.dealValue))}</span>
                 </div>
 
                 <!-- Footer Row: Impact, Baca Berita & Lihat Analisis -->

@@ -1,5 +1,5 @@
 const Parser = require('rss-parser');
-const { formatWibTime, formatWibDate, calcTimeAgo } = require('./utils');
+const { formatWibTime, formatWibDate, calcTimeAgo, formatCurrency } = require('./utils');
 const { enqueueNewsAlerts, findNewNewsItems } = require('./newsAlertService');
 
 const parser = new Parser();
@@ -539,9 +539,7 @@ async function fetchMaDealsFresh(previousDeals) {
             let dealValue = 'Nilai Dalam Pembahasan / Belum Dirilis';
             const valMatch = title.match(/(?:Rp\s*[\d,.]+\s*(?:Triliun|Miliar|T\b|M\b))|(?:US\$\s*[\d,.]+\s*(?:Juta|Miliar|Billion|Million))|(?:Rp\s*[\d,.]+\s*\/\s*saham)/i);
             if (valMatch) {
-                dealValue = valMatch[0].toUpperCase()
-                    .replace(/\bT\b/g, 'TRILIUN')
-                    .replace(/\bM\b/g, 'MILIAR');
+                dealValue = formatCurrency(valMatch[0]);
             }
 
             // Impact tag
