@@ -57,7 +57,7 @@
 
     <!-- ================= 1. HEADER (STOCKRADAR AI) ================= -->
     <header class="bg-[#090d16] py-2 lg:py-2.5 shadow-md px-3 sm:px-4 md:px-6 sticky top-0 z-50">
-        <div class="w-full max-w-full min-w-0 mx-auto flex flex-col lg:flex-row items-center justify-between gap-2.5 lg:gap-3">
+        <div class="header-container w-full max-w-full min-w-0 mx-auto flex flex-col lg:flex-row items-center justify-between gap-2.5 lg:gap-3">
 
             <!-- Left / Top Bar: Brand Logo & Mobile Action Bar -->
             <div class="flex items-center gap-3 w-full lg:w-auto shrink-0 justify-between lg:justify-start">
@@ -119,7 +119,7 @@
 
             <!-- Center: Desktop Navigation Pills (Hidden on mobile, pristine on lg) -->
             <nav id="header-nav"
-                class="hidden lg:flex flex-nowrap items-center gap-1 xl:gap-2 bg-[#060910] p-1 px-2.5 rounded-full shadow-inner w-auto justify-center shrink">
+                class="hidden lg:flex flex-nowrap items-center gap-2 bg-[#060910] p-1 px-2.5 rounded-full shadow-inner w-auto justify-center shrink overflow-x-auto no-scrollbar">
                 <button id="tab-deals"
                     class="nav-tab active-tab bg-[#101826] shadow-sm text-white font-semibold px-4 py-1.5 rounded-full text-xs sm:text-sm flex items-center gap-2 transition shadow-inner cursor-pointer">
                     <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -186,7 +186,7 @@
 
                     <!-- Dynamic Autocomplete Dropdown -->
                     <div id="search-suggest-dropdown"
-                        class="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-full sm:w-80 bg-[#090e1a] rounded-xl shadow-2xl overflow-hidden z-50 hidden max-h-80 overflow-y-auto backdrop-blur-md">
+                        class="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-full sm:w-80 bg-[#090e1a] rounded-xl shadow-2xl overflow-hidden z-[60] hidden max-h-80 overflow-y-auto backdrop-blur-md">
                         <!-- Populated dynamically via JS -->
                     </div>
                 </div>
@@ -245,7 +245,7 @@
     </header>
 
     <!-- ================= 2. INDEX TICKER BAR ================= -->
-    <div class="bg-[#060a12] py-1 sm:py-1.5 overflow-hidden relative flex items-center">
+    <div class="ticker-bar-container bg-[#060a12] py-2 overflow-hidden relative flex items-center z-10">
         <!-- Stationary Label -->
         <div
             class="index-ticker-label flex-shrink-0 z-30 bg-[#060a12] pl-3 sm:pl-4 pr-3 py-1 flex items-center gap-1.5 text-xs font-extrabold text-emerald-400 border-r border-slate-800 shadow-[8px_0_12px_rgba(6,10,18,0.95)]">
@@ -289,7 +289,7 @@
     </div>
 
     <!-- ================= 3. SECONDARY CORPORATE NEWS TICKER ================= -->
-    <div class="bg-[#070c16] py-1.5 sm:py-2 overflow-hidden relative flex items-center">
+    <div class="ticker-bar-container bg-[#070c16] py-2 overflow-hidden relative flex items-center z-10">
         <div class="w-full overflow-hidden ticker-mask px-3">
             <div id="corporate-news-ticker" class="marquee-news-track flex items-center gap-6 text-xs">
                 <!-- Fallback item before live load -->
@@ -555,7 +555,7 @@
                             Filter Sektor:
                         </span>
                         <select id="screener-sector-select"
-                            class="bg-[#070b13] shadow-sm text-xs rounded-lg px-3 py-1.5 text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/60 font-medium">
+                            class="bg-[#070b13] shadow-sm text-xs rounded-lg px-3 text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/60 font-medium h-10 min-h-[40px]">
                             <option value="all">Semua Sektor (80+ Emiten Terpilih)</option>
                             <option value="Financials">Perbankan & Finansial (BBCA, BBRI, BMRI, dkk)</option>
                             <option value="Energy">Energi & Komoditas Batubara (ADRO, PTBA, MEDC, dkk)</option>
@@ -935,21 +935,21 @@
                 <!-- Secondary Sub-Menu & Filter Bar -->
                 <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 pt-2 text-xs">
                     <!-- Sub-menu Nav Pills (Horizontal scroll on mobile) -->
-                    <div class="flex items-center gap-2 overflow-x-auto no-scrollbar max-w-full py-1">
+                    <div class="foreign-filter-group flex items-center gap-[10px] overflow-x-auto no-scrollbar max-w-full py-1">
                         <button id="btn-foreign-daily"
-                            class="foreign-sub-btn active bg-cyan-500/20 text-cyan-300 shadow-sm text-xs font-bold px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 shadow-sm cursor-pointer whitespace-nowrap min-h-[36px]">
+                            class="foreign-sub-btn active bg-cyan-500/20 text-cyan-300 shadow-sm text-xs font-bold px-3.5 h-10 min-h-[40px] rounded-xl transition flex items-center gap-1.5 shadow-sm cursor-pointer whitespace-nowrap">
                             <span>🌅 Harian (Daily 1D)</span>
                         </button>
                         <button id="btn-foreign-weekly"
-                            class="foreign-sub-btn text-slate-400 hover:text-slate-200 text-xs font-bold px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap min-h-[36px]">
+                            class="foreign-sub-btn text-slate-400 hover:text-slate-200 text-xs font-bold px-3.5 h-10 min-h-[40px] rounded-xl transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
                             <span>📅 Mingguan (Weekly 5D)</span>
                         </button>
                         <button id="btn-foreign-monthly"
-                            class="foreign-sub-btn text-slate-400 hover:text-slate-200 text-xs font-bold px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap min-h-[36px]">
+                            class="foreign-sub-btn text-slate-400 hover:text-slate-200 text-xs font-bold px-3.5 h-10 min-h-[40px] rounded-xl transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
                             <span>🗓️ Bulanan (Monthly 20D)</span>
                         </button>
                         <button id="btn-foreign-streak"
-                            class="foreign-sub-btn text-amber-400 hover:text-amber-300  bg-amber-950/40 text-xs font-bold px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap min-h-[36px]">
+                            class="foreign-sub-btn text-amber-400 hover:text-amber-300 bg-amber-950/40 text-xs font-bold px-3.5 h-10 min-h-[40px] rounded-xl transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
                             <span>🔥 Streak Pembelian</span>
                             <span class="bg-amber-500 text-black text-[10px] font-black px-1.5 rounded-full" id="badge-streak-count">0</span>
                         </button>
@@ -959,9 +959,9 @@
                     <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full md:w-auto">
                         <input type="text" id="foreign-search-input"
                             placeholder="Cari kode saham..."
-                            class="bg-[#070b13] shadow-sm rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/60 uppercase font-mono font-semibold flex-1 sm:w-44 min-h-[36px]">
+                            class="bg-[#070b13] shadow-sm rounded-lg px-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/60 uppercase font-mono font-semibold flex-1 sm:w-44 h-10 min-h-[40px]">
                         <select id="foreign-sector-select"
-                            class="bg-[#070b13] shadow-sm text-xs rounded-lg px-3 py-1.5 text-slate-300 focus:outline-none focus:ring-2 focus:ring-cyan-500/60 font-medium flex-1 sm:w-auto min-h-[36px]">
+                            class="bg-[#070b13] shadow-sm text-xs rounded-lg px-3 text-slate-300 focus:outline-none focus:ring-2 focus:ring-cyan-500/60 font-medium flex-1 sm:w-auto h-10 min-h-[40px]">
                             <option value="all">Semua Sektor</option>
                             <option value="Finansial">Perbankan / Finansial</option>
                             <option value="Energi">Energi & Batubara</option>
@@ -998,7 +998,7 @@
                             </h3>
                             <span class="text-xs text-emerald-400 font-mono font-bold bg-emerald-950/80  px-2 py-0.5 rounded">NET INFLOW 🟢</span>
                         </div>
-                        <div class="overflow-x-auto flex-1">
+                        <div class="screener-table-scroll w-full max-w-full min-w-0 overflow-x-auto flex-1">
                             <div class="text-[10px] text-slate-400 sm:hidden px-3 py-1.5 bg-[#070b13]  flex items-center justify-between">
                                 <span class="flex items-center gap-1"><svg class="w-3 h-3 text-emerald-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg> Geser ke kanan untuk rincian</span>
                                 <span class="text-emerald-400 font-mono text-[9px] bg-emerald-950/80 px-1.5 py-0.5 rounded ">KODE TERKUNCI</span>
@@ -1029,7 +1029,7 @@
                             </h3>
                             <span class="text-xs text-rose-400 font-mono font-bold bg-rose-950/80  px-2 py-0.5 rounded">NET OUTFLOW 🔴</span>
                         </div>
-                        <div class="overflow-x-auto flex-1">
+                        <div class="screener-table-scroll w-full max-w-full min-w-0 overflow-x-auto flex-1">
                             <div class="text-[10px] text-slate-400 sm:hidden px-3 py-1.5 bg-[#070b13]  flex items-center justify-between">
                                 <span class="flex items-center gap-1"><svg class="w-3 h-3 text-rose-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg> Geser ke kanan untuk rincian</span>
                                 <span class="text-rose-400 font-mono text-[9px] bg-rose-950/80 px-1.5 py-0.5 rounded ">KODE TERKUNCI</span>
@@ -1064,7 +1064,7 @@
                         </h3>
                         <span class="text-xs text-slate-400">Konsistensi estimasi pergerakan harga dan volume selama lima sesi terakhir</span>
                     </div>
-                    <div class="overflow-x-auto">
+                    <div class="screener-table-scroll w-full max-w-full min-w-0 overflow-x-auto">
                         <div class="text-[10px] text-slate-400 sm:hidden px-3 py-1.5 bg-[#070b13]  flex items-center justify-between">
                             <span class="flex items-center gap-1"><svg class="w-3 h-3 text-cyan-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg> Geser ke kanan untuk rincian</span>
                             <span class="text-cyan-400 font-mono text-[9px] bg-cyan-950/80 px-1.5 py-0.5 rounded ">KODE TERKUNCI</span>
@@ -1099,7 +1099,7 @@
                         </h3>
                         <span class="text-xs text-slate-400">VWAP ini diturunkan dari estimasi proxy harga dan volume, bukan data transaksi asing.</span>
                     </div>
-                    <div class="overflow-x-auto">
+                    <div class="screener-table-scroll w-full max-w-full min-w-0 overflow-x-auto">
                         <div class="text-[10px] text-slate-400 sm:hidden px-3 py-1.5 bg-[#070b13]  flex items-center justify-between">
                             <span class="flex items-center gap-1"><svg class="w-3 h-3 text-purple-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg> Geser ke kanan untuk rincian</span>
                             <span class="text-purple-400 font-mono text-[9px] bg-purple-950/80 px-1.5 py-0.5 rounded ">KODE TERKUNCI</span>
@@ -1143,7 +1143,7 @@
                             </span>
                         </div>
                     </div>
-                    <div class="overflow-x-auto">
+                    <div class="screener-table-scroll w-full max-w-full min-w-0 overflow-x-auto">
                         <div class="text-[10px] text-slate-400 sm:hidden px-3 py-1.5 bg-[#070b13]  flex items-center justify-between">
                             <span class="flex items-center gap-1"><svg class="w-3 h-3 text-amber-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg> Geser ke kanan untuk rincian</span>
                             <span class="text-amber-400 font-mono text-[9px] bg-amber-950/80 px-1.5 py-0.5 rounded ">KODE TERKUNCI</span>

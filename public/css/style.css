@@ -183,12 +183,21 @@ body {
 }
 
 /* ============================================================
-   HEADER BRANDING & NAVIGATION POLISH
+   1. HEADER BRANDING & NAVIGATION LAYOUT
    ============================================================ */
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
 .brand-logo-container {
     display: flex !important;
     align-items: center !important;
-    gap: 0.5rem !important;
+    gap: 0.625rem !important;
     white-space: nowrap !important;
     flex-shrink: 0 !important;
     overflow: visible !important;
@@ -204,16 +213,21 @@ body {
     overflow: visible !important;
 }
 
-/* Ensure header parent container doesn't clip brand text */
+.brand-logo-title span {
+    white-space: nowrap !important;
+}
+
+/* Header parent container allows overflow without clipping */
 header .flex {
     overflow: visible;
 }
 
+/* Main Top Navigation Pills Container */
 #header-nav {
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
-    gap: 4px;
+    gap: 8px !important;
     padding: 4px 8px;
     background-color: #060910;
     border-radius: 9999px;
@@ -221,10 +235,113 @@ header .flex {
     overflow-x: auto;
     -ms-overflow-style: none;
     scrollbar-width: none;
+    max-width: 100%;
 }
 
 #header-nav::-webkit-scrollbar {
     display: none;
+}
+
+#header-nav .nav-tab {
+    flex-shrink: 0;
+}
+
+/* ============================================================
+   2. RUNNING TICKER PASAR & NEWS TICKER
+   ============================================================ */
+.ticker-bar-container {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+    position: relative;
+    z-index: 10;
+}
+
+.index-ticker-label {
+    flex-shrink: 0;
+    z-index: 15;
+    padding-right: 0.75rem;
+}
+
+/* Ensure Search Suggestion Dropdown stays strictly above tickers */
+#search-suggest-dropdown {
+    z-index: 60 !important;
+}
+
+/* ============================================================
+   3. TABLE STREAK PROXY & SCREENER RESPONSIVENESS
+   ============================================================ */
+.screener-table-scroll {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    scrollbar-color: #334155 #090d16;
+}
+
+.screener-table-scroll table,
+table.table-sticky-col {
+    width: 100%;
+    max-width: 100%;
+    border-collapse: collapse;
+}
+
+/* Compact cell padding (8px 12px) for clean standard-screen fit */
+.screener-table-scroll table th,
+.screener-table-scroll table td,
+table.table-sticky-col th,
+table.table-sticky-col td {
+    padding: 8px 12px !important;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+/* Proportional min-widths for important columns to prevent cramped text */
+.screener-table-scroll table th:first-child,
+.screener-table-scroll table td:first-child,
+table.table-sticky-col th:first-child,
+table.table-sticky-col td:first-child {
+    min-width: 130px;
+}
+
+/* Price & changes columns */
+.screener-table-scroll table td:nth-child(2),
+.screener-table-scroll table td:nth-child(3) {
+    min-width: 85px;
+}
+
+/* ============================================================
+   4. HARMONISASI FILTER DAN INPUT PENCARIAN
+   ============================================================ */
+.foreign-filter-group {
+    display: flex;
+    align-items: center;
+    gap: 10px !important;
+    overflow-x: auto;
+}
+
+.foreign-sub-btn {
+    height: 40px !important;
+    min-height: 40px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 14px !important;
+    box-sizing: border-box !important;
+    border-radius: 0.75rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+}
+
+#foreign-search-input,
+#foreign-sector-select,
+#screener-sector-select {
+    height: 40px !important;
+    min-height: 40px !important;
+    box-sizing: border-box !important;
 }
 
 /* 16px Bottom padding for news and M&A cards */
@@ -239,11 +356,4 @@ header .flex {
     font-size: 0.75rem !important;
     line-height: 1rem !important;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace !important;
-}
-
-/* Index ticker stationary label right spacing */
-.index-ticker-label {
-    flex-shrink: 0;
-    z-index: 30;
-    padding-right: 0.75rem;
 }

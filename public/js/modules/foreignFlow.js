@@ -47,9 +47,9 @@ function switchForeignSubmenu(submenuName) {
         if (sub.el) {
             sub.el.classList.remove('bg-cyan-500/20', 'text-cyan-300', 'shadow-sm', 'bg-purple-500/20', 'text-purple-300', 'bg-amber-500/30', 'text-amber-300');
             if (sub.name === submenuName) {
-                sub.el.className = `foreign-sub-btn active ${sub.activeClass} text-xs font-bold px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 shadow-sm cursor-pointer`;
+                sub.el.className = `foreign-sub-btn active ${sub.activeClass} text-xs font-bold px-3.5 h-10 min-h-[40px] rounded-xl transition flex items-center gap-1.5 shadow-sm cursor-pointer whitespace-nowrap`;
             } else {
-                sub.el.className = 'foreign-sub-btn text-slate-400 hover:text-slate-200 text-xs font-bold px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer';
+                sub.el.className = 'foreign-sub-btn text-slate-400 hover:text-slate-200 text-xs font-bold px-3.5 h-10 min-h-[40px] rounded-xl transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap';
             }
         }
         if (sub.view) {
