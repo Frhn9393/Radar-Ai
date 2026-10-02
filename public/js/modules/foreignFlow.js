@@ -26,6 +26,7 @@ function filterForeignList(list) {
     const sectorFilter = foreignSectorSelect?.value || 'all';
 
     return list.filter(item => {
+        if (!item) return false;
         const matchesTicker = !query || item.ticker?.toUpperCase().includes(query) || (item.name && item.name.toUpperCase().includes(query));
         const itemSector = item.sector || '';
         const matchesSector = sectorFilter === 'all' || itemSector.toLowerCase().includes(sectorFilter.toLowerCase());

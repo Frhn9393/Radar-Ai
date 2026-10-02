@@ -52,13 +52,17 @@ async function loadBroksumForPeriod() {
 }
 
 function openBroksum(ticker) {
+    if (!broksumModal) return;
     activeBroksumTicker = String(ticker || '').toUpperCase();
-    document.getElementById('broksum-ticker').textContent = `$${activeBroksumTicker}`;
+    const tickerEl = document.getElementById('broksum-ticker');
+    if (tickerEl) tickerEl.textContent = `$${activeBroksumTicker}`;
     const endDate = broksumJakartaDate();
     const startDate = new Date(`${endDate}T00:00:00Z`);
     startDate.setUTCDate(startDate.getUTCDate() - 6);
-    document.getElementById('broksum-start').value = startDate.toISOString().slice(0, 10);
-    document.getElementById('broksum-end').value = endDate;
+    const startInput = document.getElementById('broksum-start');
+    const endInput = document.getElementById('broksum-end');
+    if (startInput) startInput.value = startDate.toISOString().slice(0, 10);
+    if (endInput) endInput.value = endDate;
     broksumModal.classList.remove('hidden'); broksumModal.classList.add('flex');
     loadBroksumForPeriod();
 }
@@ -68,6 +72,6 @@ document.addEventListener('click', event => {
     if (button) { event.preventDefault(); event.stopPropagation(); openBroksum(button.dataset.broksumTicker); }
 });
 document.getElementById('broksum-load')?.addEventListener('click', loadBroksumForPeriod);
-document.getElementById('broksum-close')?.addEventListener('click', () => { broksumModal.classList.add('hidden'); broksumModal.classList.remove('flex'); });
-broksumModal?.addEventListener('click', event => { if (event.target === broksumModal) document.getElementById('broksum-close').click(); });
-document.addEventListener('keydown', event => { if (event.key === 'Escape' && broksumModal && !broksumModal.classList.contains('hidden')) document.getElementById('broksum-close').click(); });
+document.getElementById('broksum-close')?.addEventListener('click', () => { broksumModal?.classList.add('hidden'); broksumModal?.classList.remove('flex'); });
+broksumModal?.addEventListener('click', event => { if (event.target === broksumModal) document.getElementById('broksum-close')?.click(); });
+document.addEventListener('keydown', event => { if (event.key === 'Escape' && broksumModal && !broksumModal.classList.contains('hidden')) document.getElementById('broksum-close')?.click(); });

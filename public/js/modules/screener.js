@@ -58,7 +58,7 @@ function filterScreenerList(items) {
     let result = items;
     const selectedSector = (typeof screenerSectorSelect !== 'undefined' && screenerSectorSelect?.value) || 'all';
     if (selectedSector !== 'all') {
-        result = result.filter(item => (item.sector || '').toLowerCase().includes(selectedSector.toLowerCase()));
+        result = result.filter(item => item && (item.sector || '').toLowerCase().includes(selectedSector.toLowerCase()));
     }
     const limit = typeof screenerViewLimit !== 'undefined' ? screenerViewLimit : 'all';
     if (limit === 'top3') {

@@ -73,8 +73,9 @@ async function fetchFeed(url, timeoutMs = 6000) {
             return fallbackRegexExtract(xml);
         }
     } catch (err) {
-        clearTimeout(timer);
         return [];
+    } finally {
+        clearTimeout(timer);
     }
 }
 

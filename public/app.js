@@ -1690,13 +1690,13 @@ headerSearchInput.addEventListener('keydown', (e) => {
 
 // Close dropdown on click outside
 document.addEventListener('click', (e) => {
-    if (searchSuggestDropdown && !headerSearchInput.contains(e.target) && !searchSuggestDropdown.contains(e.target)) {
+    if (searchSuggestDropdown && !(headerSearchInput && headerSearchInput.contains(e.target)) && !searchSuggestDropdown.contains(e.target)) {
         searchSuggestDropdown.classList.add('hidden');
         activeSuggestIndex = -1;
     }
 });
 
-btnClearSearch.addEventListener('click', () => {
+btnClearSearch?.addEventListener('click', () => {
     headerSearchInput.value = '';
     if (searchSuggestDropdown) searchSuggestDropdown.classList.add('hidden');
     activeSuggestIndex = -1;
@@ -1766,7 +1766,7 @@ function filterScreenerList(items) {
     let result = items;
     const selectedSector = (typeof screenerSectorSelect !== 'undefined' && screenerSectorSelect?.value) || 'all';
     if (selectedSector !== 'all') {
-        result = result.filter(item => (item.sector || '').toLowerCase().includes(selectedSector.toLowerCase()));
+        result = result.filter(item => item && (item.sector || '').toLowerCase().includes(selectedSector.toLowerCase()));
     }
     const limit = typeof screenerViewLimit !== 'undefined' ? screenerViewLimit : 'all';
     if (limit === 'top3') {
@@ -2429,6 +2429,7 @@ function filterForeignList(list) {
     const sectorFilter = foreignSectorSelect?.value || 'all';
 
     return list.filter(item => {
+        if (!item) return false;
         const matchesTicker = !query || item.ticker?.toUpperCase().includes(query) || (item.name && item.name.toUpperCase().includes(query));
         const itemSector = item.sector || '';
         const matchesSector = sectorFilter === 'all' || itemSector.toLowerCase().includes(sectorFilter.toLowerCase());
@@ -3128,13 +3129,17 @@ async function loadBroksumForPeriod() {
 }
 
 function openBroksum(ticker) {
+    if (!broksumModal) return;
     activeBroksumTicker = String(ticker || '').toUpperCase();
-    document.getElementById('broksum-ticker').textContent = `$${activeBroksumTicker}`;
+    const tickerEl = document.getElementById('broksum-ticker');
+    if (tickerEl) tickerEl.textContent = `$${activeBroksumTicker}`;
     const endDate = broksumJakartaDate();
     const startDate = new Date(`${endDate}T00:00:00Z`);
     startDate.setUTCDate(startDate.getUTCDate() - 6);
-    document.getElementById('broksum-start').value = startDate.toISOString().slice(0, 10);
-    document.getElementById('broksum-end').value = endDate;
+    const startInput = document.getElementById('broksum-start');
+    const endInput = document.getElementById('broksum-end');
+    if (startInput) startInput.value = startDate.toISOString().slice(0, 10);
+    if (endInput) endInput.value = endDate;
     broksumModal.classList.remove('hidden'); broksumModal.classList.add('flex');
     loadBroksumForPeriod();
 }
@@ -3144,9 +3149,9 @@ document.addEventListener('click', event => {
     if (button) { event.preventDefault(); event.stopPropagation(); openBroksum(button.dataset.broksumTicker); }
 });
 document.getElementById('broksum-load')?.addEventListener('click', loadBroksumForPeriod);
-document.getElementById('broksum-close')?.addEventListener('click', () => { broksumModal.classList.add('hidden'); broksumModal.classList.remove('flex'); });
-broksumModal?.addEventListener('click', event => { if (event.target === broksumModal) document.getElementById('broksum-close').click(); });
-document.addEventListener('keydown', event => { if (event.key === 'Escape' && broksumModal && !broksumModal.classList.contains('hidden')) document.getElementById('broksum-close').click(); });
+document.getElementById('broksum-close')?.addEventListener('click', () => { broksumModal?.classList.add('hidden'); broksumModal?.classList.remove('flex'); });
+broksumModal?.addEventListener('click', event => { if (event.target === broksumModal) document.getElementById('broksum-close')?.click(); });
+document.addEventListener('keydown', event => { if (event.key === 'Escape' && broksumModal && !broksumModal.classList.contains('hidden')) document.getElementById('broksum-close')?.click(); });
 
 // --- END MODULE: broksum.js ---
 

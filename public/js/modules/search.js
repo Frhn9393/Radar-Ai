@@ -144,13 +144,13 @@ headerSearchInput.addEventListener('keydown', (e) => {
 
 // Close dropdown on click outside
 document.addEventListener('click', (e) => {
-    if (searchSuggestDropdown && !headerSearchInput.contains(e.target) && !searchSuggestDropdown.contains(e.target)) {
+    if (searchSuggestDropdown && !(headerSearchInput && headerSearchInput.contains(e.target)) && !searchSuggestDropdown.contains(e.target)) {
         searchSuggestDropdown.classList.add('hidden');
         activeSuggestIndex = -1;
     }
 });
 
-btnClearSearch.addEventListener('click', () => {
+btnClearSearch?.addEventListener('click', () => {
     headerSearchInput.value = '';
     if (searchSuggestDropdown) searchSuggestDropdown.classList.add('hidden');
     activeSuggestIndex = -1;
