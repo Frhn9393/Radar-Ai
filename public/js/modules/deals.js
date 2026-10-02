@@ -42,7 +42,7 @@ function renderDeals() {
 
     filtered.forEach(deal => {
         const card = document.createElement('div');
-        card.className = 'card-radar rounded-xl p-3.5 sm:p-5 flex flex-col justify-between group overflow-hidden w-full';
+        card.className = 'card-radar rounded-xl p-3.5 sm:p-5 pb-4 sm:pb-4 flex flex-col justify-between group overflow-hidden w-full';
 
         // Badge type color configuration
         let typeBadgeClass = 'bg-emerald-950/70 shadow-sm text-emerald-400';
@@ -76,7 +76,7 @@ function renderDeals() {
                         <span>${typeIcon}</span>
                         <span class="truncate">${escapeHtml(deal.typeLabel)}</span>
                     </span>
-                    <span class="bg-amber-950/40 text-amber-400 text-[11px] font-bold px-2 py-0.5 rounded-md font-mono shadow-sm shrink-0">
+                    <span class="bg-amber-950/40 text-amber-400 text-xs font-bold px-2 py-0.5 rounded-md font-mono shadow-sm shrink-0">
                         ${escapeHtml(deal.accuracy)}% Akurasi
                     </span>
                 </div>

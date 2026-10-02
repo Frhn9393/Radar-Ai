@@ -37,6 +37,8 @@ body {
 
 /* Continuous seamless tickers */
 .marquee-track {
+    padding-left: 12px;
+    padding-right: 12px;
     display: flex;
     width: max-content;
     animation: marqueeScroll 45s linear infinite;
@@ -59,6 +61,8 @@ body {
 }
 
 .marquee-news-track {
+    padding-left: 12px;
+    padding-right: 12px;
     display: flex;
     width: max-content;
     animation: marqueeNewsScroll 55s linear infinite;
@@ -82,6 +86,8 @@ body {
 
 /* Gradient mask for smooth ticker edges */
 .ticker-mask {
+    padding-left: 12px;
+    padding-right: 12px;
     width: 100%;
     max-width: 100%;
     min-width: 0;
@@ -112,6 +118,7 @@ body {
 
 /* Modern borderless dark surface with soft depth */
 .card-radar {
+    padding-bottom: 16px !important;
     background: #0d1424;
     box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.45);
     transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
@@ -166,4 +173,47 @@ body {
 .touch-target-44 {
     min-height: 44px;
     min-width: 44px;
+}
+
+/* ============================================================
+   HEADER BRANDING & NAVIGATION POLISH
+   ============================================================ */
+.brand-logo-container {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.brand-logo-title {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+#header-nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    background-color: #060910;
+    border-radius: 9999px;
+}
+
+/* 16px Bottom padding for news and M&A cards */
+.news-card-item {
+    padding-bottom: 16px !important;
+}
+
+/* Consistent price and percentage badges across mobile & desktop */
+.price-tag,
+.badge-price,
+.badge-percent {
+    font-size: 0.75rem !important;
+    line-height: 1rem !important;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace !important;
 }

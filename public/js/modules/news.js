@@ -93,15 +93,15 @@ function renderMarketNews() {
         card.href = safeExternalUrl(news.link);
         card.target = '_blank';
         card.rel = 'noopener noreferrer';
-        card.className = 'bg-[#0d1424] hover:bg-[#111a2e] rounded-xl p-3.5 sm:p-4 flex flex-col justify-between transition-all duration-200 group block shadow-md hover:shadow-xl overflow-hidden w-full';
+        card.className = 'news-card-item bg-[#0d1424] hover:bg-[#111a2e] rounded-xl p-3.5 sm:p-4 pb-4 sm:pb-4 flex flex-col justify-between transition-all duration-200 group block shadow-md hover:shadow-xl overflow-hidden w-full';
 
         card.innerHTML = `
             <div>
                 <div class="flex items-center justify-between gap-2 mb-2">
-                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-[#101a2c] text-cyan-400 shadow-sm shrink-0">
+                    <span class="text-xs font-bold uppercase px-2 py-0.5 rounded bg-[#101a2c] text-cyan-400 shadow-sm shrink-0">
                         ${escapeHtml(news.category || 'Market')}
                     </span>
-                    <span class="inline-flex items-center gap-1 text-[11px] text-emerald-400/90 font-mono font-semibold bg-[#071d22] shadow-sm px-2 py-0.5 rounded shrink-0">
+                    <span class="inline-flex items-center gap-1 text-xs text-emerald-400/90 font-mono font-semibold bg-[#071d22] shadow-sm px-2 py-0.5 rounded shrink-0">
                         <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2"/></svg>
                         <span>${escapeHtml(news.timeAgo || timeAgo(news.pubDate))}</span>
                         <span class="text-slate-400 font-normal hidden sm:inline">(${escapeHtml(news.timeStr)})</span>

@@ -467,7 +467,7 @@ function renderDeals() {
 
     filtered.forEach(deal => {
         const card = document.createElement('div');
-        card.className = 'card-radar rounded-xl p-3.5 sm:p-5 flex flex-col justify-between group overflow-hidden w-full';
+        card.className = 'card-radar rounded-xl p-3.5 sm:p-5 pb-4 sm:pb-4 flex flex-col justify-between group overflow-hidden w-full';
 
         // Badge type color configuration
         let typeBadgeClass = 'bg-emerald-950/70 shadow-sm text-emerald-400';
@@ -501,7 +501,7 @@ function renderDeals() {
                         <span>${typeIcon}</span>
                         <span class="truncate">${escapeHtml(deal.typeLabel)}</span>
                     </span>
-                    <span class="bg-amber-950/40 text-amber-400 text-[11px] font-bold px-2 py-0.5 rounded-md font-mono shadow-sm shrink-0">
+                    <span class="bg-amber-950/40 text-amber-400 text-xs font-bold px-2 py-0.5 rounded-md font-mono shadow-sm shrink-0">
                         ${escapeHtml(deal.accuracy)}% Akurasi
                     </span>
                 </div>
@@ -700,15 +700,15 @@ function renderMarketNews() {
         card.href = safeExternalUrl(news.link);
         card.target = '_blank';
         card.rel = 'noopener noreferrer';
-        card.className = 'bg-[#0d1424] hover:bg-[#111a2e] rounded-xl p-3.5 sm:p-4 flex flex-col justify-between transition-all duration-200 group block shadow-md hover:shadow-xl overflow-hidden w-full';
+        card.className = 'news-card-item bg-[#0d1424] hover:bg-[#111a2e] rounded-xl p-3.5 sm:p-4 pb-4 sm:pb-4 flex flex-col justify-between transition-all duration-200 group block shadow-md hover:shadow-xl overflow-hidden w-full';
 
         card.innerHTML = `
             <div>
                 <div class="flex items-center justify-between gap-2 mb-2">
-                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-[#101a2c] text-cyan-400 shadow-sm shrink-0">
+                    <span class="text-xs font-bold uppercase px-2 py-0.5 rounded bg-[#101a2c] text-cyan-400 shadow-sm shrink-0">
                         ${escapeHtml(news.category || 'Market')}
                     </span>
-                    <span class="inline-flex items-center gap-1 text-[11px] text-emerald-400/90 font-mono font-semibold bg-[#071d22] shadow-sm px-2 py-0.5 rounded shrink-0">
+                    <span class="inline-flex items-center gap-1 text-xs text-emerald-400/90 font-mono font-semibold bg-[#071d22] shadow-sm px-2 py-0.5 rounded shrink-0">
                         <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2"/></svg>
                         <span>${escapeHtml(news.timeAgo || timeAgo(news.pubDate))}</span>
                         <span class="text-slate-400 font-normal hidden sm:inline">(${escapeHtml(news.timeStr)})</span>
@@ -3183,7 +3183,7 @@ async function loadMarketIndices() {
             const sign = isUp ? '+' : '';
             const colorClass = isUp ? 'text-emerald-400' : 'text-rose-400';
             const flag = idx.flag || '🌐';
-            return `<span class="inline-flex items-center gap-1.5"><span class="text-slate-400">${escapeHtml(flag)}</span> <b class="text-white">${escapeHtml(idx.name)}:</b> <span class="text-slate-200">${escapeHtml(idx.priceFormatted || idx.price)}</span> <span class="${colorClass} font-bold">${sign}${escapeHtml(idx.changePct)}%</span></span>`;
+            return `<span class="inline-flex items-center gap-1.5 text-xs"><span class="text-slate-400">${escapeHtml(flag)}</span> <b class="text-white">${escapeHtml(idx.name)}:</b> <span class="text-slate-200 font-mono">${escapeHtml(idx.priceFormatted || idx.price)}</span> <span class="${colorClass} font-bold font-mono">${sign}${escapeHtml(idx.changePct)}%</span></span>`;
         }).join('');
 
         // Duplicate set for seamless infinite marquee scroll

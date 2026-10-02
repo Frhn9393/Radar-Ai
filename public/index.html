@@ -61,7 +61,7 @@
 
             <!-- Left / Top Bar: Brand Logo & Mobile Action Bar -->
             <div class="flex items-center gap-3 w-full max-w-full min-w-0 lg:w-auto justify-between lg:justify-start">
-                <div class="flex items-center gap-2 sm:gap-2.5 cursor-pointer flex-shrink-0" onclick="window.location.reload()">
+                <div class="brand-logo-container flex items-center gap-2 sm:gap-2.5 cursor-pointer flex-shrink-0 whitespace-nowrap" onclick="window.location.reload()">
                     <!-- Icon Pulse/Radar -->
                     <div
                         class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-[#00e699] to-[#059669] flex items-center justify-center shadow-lg shadow-emerald-500/20 text-black">
@@ -71,12 +71,12 @@
                         </svg>
                     </div>
                     <div>
-                        <div class="flex items-center gap-1.5 leading-none">
-                            <span class="text-lg sm:text-xl font-extrabold text-white tracking-tight">STOCKRADAR</span>
+                        <div class="brand-logo-title flex items-center gap-1.5 leading-none whitespace-nowrap">
+                            <span class="text-lg sm:text-xl font-extrabold text-white tracking-tight whitespace-nowrap">STOCKRADAR</span>
                             <span
-                                class="bg-[#00e699] text-[#052e1f] font-black text-[10px] sm:text-[11px] px-1.5 py-0.5 rounded shadow-sm">AI</span>
+                                class="bg-[#00e699] text-[#052e1f] font-black text-[10px] sm:text-[11px] px-1.5 py-0.5 rounded shadow-sm shrink-0 whitespace-nowrap">AI</span>
                         </div>
-                        <p class="text-[10px] sm:text-[11px] text-slate-400 font-normal mt-0.5 hidden xs:block sm:block">Radar Berita, Sentimen NLP & Screener</p>
+                        <p class="text-[10px] sm:text-[11px] text-slate-400 font-normal mt-0.5 hidden xs:block sm:block whitespace-nowrap">Radar Berita, Sentimen NLP & Screener</p>
                     </div>
                 </div>
 
@@ -119,7 +119,7 @@
 
             <!-- Center: Desktop Navigation Pills (Hidden on mobile, pristine on lg) -->
             <nav id="header-nav"
-                class="hidden lg:flex flex-wrap items-center gap-2 bg-[#060910] p-1 rounded-full shadow-inner w-auto justify-center">
+                class="hidden lg:flex flex-wrap items-center gap-2 bg-[#060910] p-1 px-2 rounded-full shadow-inner w-auto justify-center">
                 <button id="tab-deals"
                     class="nav-tab active-tab bg-[#101826] shadow-sm text-white font-semibold px-4 py-1.5 rounded-full text-xs sm:text-sm flex items-center gap-2 transition shadow-inner cursor-pointer">
                     <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -259,7 +259,7 @@
         </div>
 
         <!-- Scrolling Ticker Items -->
-        <div class="w-full overflow-hidden ticker-mask">
+        <div class="w-full overflow-hidden ticker-mask px-3">
             <div id="index-ticker-track" class="marquee-track flex items-center gap-8 text-xs font-mono">
                 <!-- Duplicate sets for seamless infinite loop -->
                 <div class="flex items-center gap-8">
@@ -326,7 +326,7 @@
 
     <!-- ================= 3. SECONDARY CORPORATE NEWS TICKER ================= -->
     <div class="bg-[#070c16] py-1.5 sm:py-2 overflow-hidden relative flex items-center">
-        <div class="w-full overflow-hidden ticker-mask px-2">
+        <div class="w-full overflow-hidden ticker-mask px-3">
             <div id="corporate-news-ticker" class="marquee-news-track flex items-center gap-6 text-xs">
                 <!-- Fallback item before live load -->
                 <div class="flex items-center gap-4 text-slate-300">
