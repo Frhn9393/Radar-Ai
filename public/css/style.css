@@ -183,32 +183,31 @@ body {
 }
 
 /* ============================================================
-   1. STRICT 3-ZONE FLEXBOX HEADER LAYOUT
+   1. ISOLATED 3-ZONE CSS GRID HEADER LAYOUT
    ============================================================ */
 .header-container {
-    display: flex !important;
+    display: grid !important;
+    grid-template-columns: auto 1fr auto !important;
     align-items: center !important;
-    justify-content: space-between !important;
     gap: 16px !important;
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
-    flex-wrap: nowrap !important;
 }
 
-/* ZONA KIRI: Logo Brand */
+/* ZONA KIRI (Grid Column 1): Logo Brand — fixed size, never shrinks */
 .header-brand-zone {
+    grid-column: 1 !important;
     display: flex !important;
     align-items: center !important;
-    flex-shrink: 0 !important;
     min-width: max-content !important;
+    white-space: nowrap !important;
 }
 
 .brand-logo-container {
     display: flex !important;
     align-items: center !important;
     gap: 10px !important;
-    flex-shrink: 0 !important;
     min-width: max-content !important;
     white-space: nowrap !important;
 }
@@ -218,7 +217,6 @@ body {
     align-items: center !important;
     gap: 6px !important;
     white-space: nowrap !important;
-    flex-shrink: 0 !important;
     line-height: 1 !important;
 }
 
@@ -226,11 +224,10 @@ body {
     white-space: nowrap !important;
 }
 
-/* ZONA TENGAH: Navigasi Menu Dinamis & Scrollable */
+/* ZONA TENGAH (Grid Column 2): Navigasi Menu — fills remaining space, scrollable */
 #header-nav {
-    flex: 1 1 auto !important;
+    grid-column: 2 !important;
     min-width: 0 !important;
-    max-width: 100% !important;
     display: flex !important;
     flex-wrap: nowrap !important;
     align-items: center !important;
@@ -258,24 +255,25 @@ body {
     white-space: nowrap !important;
 }
 
-/* ZONA KANAN: Search & Actions */
+/* ZONA KANAN (Grid Column 3): Search & Actions — fixed size, never shrinks */
 #header-right-controls {
+    grid-column: 3 !important;
     display: flex !important;
     align-items: center !important;
     gap: 8px !important;
-    flex-shrink: 0 !important;
     justify-content: flex-end !important;
+    white-space: nowrap !important;
 }
 
 .header-search-wrapper {
-    flex-shrink: 0 !important;
     max-width: 220px !important;
     width: 200px !important;
 }
 
-/* Responsif Mobile (<= 768px): Header 1 baris ringkas (Logo kiri, Action bar kanan) */
+/* Responsif Mobile (<= 768px): Single-row header (Logo left, Actions right) */
 @media (max-width: 768px) {
     .header-container {
+        display: flex !important;
         flex-direction: row !important;
         justify-content: space-between !important;
         gap: 8px !important;
@@ -292,18 +290,17 @@ body {
     }
     .mobile-header-actions {
         display: flex !important;
-        flex-shrink: 0 !important;
     }
     #mobile-bottom-nav {
         display: flex !important;
     }
 }
 
-/* Responsif Tablet & Desktop (>= 769px): 3 Zona dalam 1 baris rapi */
+/* Responsif Tablet & Desktop (>= 769px): 3-Column Grid — fully isolated zones */
 @media (min-width: 769px) {
     .header-container {
-        flex-direction: row !important;
-        justify-content: space-between !important;
+        display: grid !important;
+        grid-template-columns: auto 1fr auto !important;
         gap: 16px !important;
     }
     .header-brand-zone {
@@ -322,6 +319,15 @@ body {
     #mobile-bottom-nav {
         display: none !important;
     }
+}
+
+/* ============================================================
+   1b. M&A CARD BADGE SPACING
+   ============================================================ */
+.card-radar .badge-source,
+.card-radar .badge-tag {
+    margin-right: 8px !important;
+    margin-top: 4px !important;
 }
 
 /* ============================================================
